@@ -169,4 +169,30 @@ public class SecurityService {
                 .stream()
                 .map(GrantedAuthority::getAuthority);
     }
+
+    public static Optional<Long> getCurrentUserId() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(extractUserId(securityContext.getAuthentication()));
+    }
+
+    private static Long extractUserId(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            Map<String, Object> userClaim = jwt.getClaim("user");
+            if (userClaim != null && userClaim.get("id") != null) {
+                Object idObj = userClaim.get("id");
+                if (idObj instanceof Number number) {
+                    return number.longValue();
+                }
+                try {
+                    return Long.parseLong(String.valueOf(idObj));
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
 }
