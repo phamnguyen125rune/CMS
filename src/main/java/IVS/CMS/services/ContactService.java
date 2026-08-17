@@ -9,7 +9,7 @@ import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 public interface ContactService {
     Contact createContact(ReqCreateContactDTO dto);
     Contact getContactById(Long id);
-PaginationResponseDTO getAllContacts(String search, String status, int page, int size);
+    PaginationResponseDTO getAllContacts(String search, String status, int page, int size);
     Contact replyContact(Long id, ReqReplyContactDTO dto);
     void deleteContact(Long id);
 }

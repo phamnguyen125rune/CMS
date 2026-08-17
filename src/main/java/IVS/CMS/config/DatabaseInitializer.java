@@ -264,7 +264,9 @@ public class DatabaseInitializer implements CommandLineRunner {
                 """
                             INSERT INTO users (employee_code, fullname, email, password, phone, age, gender, status, role_id, deleted, created_at, created_by, updated_at, updated_by)
                             SELECT 'EMP0001', 'Admin System', :email, :pwd, :phone, 20, 'OTHER', 'ACTIVE', :roleId, FALSE, NOW(6), 'system', NOW(6), 'system'
-                            WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = :email)
+                            WHERE NOT EXISTS (
+                                SELECT 1 FROM users WHERE email = :email OR employee_code = 'EMP0001'
+                            )
                         """,
                 new MapSqlParameterSource("email", defaultAdminEmail.trim())
                         .addValue("pwd", passwordEncoder.encode(defaultAdminPassword))

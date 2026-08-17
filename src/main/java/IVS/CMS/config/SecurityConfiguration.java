@@ -45,7 +45,7 @@ public class SecurityConfiguration {
             "/uploads/**",
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",
-
+            "/api/v1/contacts",
     };
 
     @Bean
@@ -68,8 +68,7 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(publicEndpoints).permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
                         .authenticationEntryPoint(customAuthenticationEntryPoint))

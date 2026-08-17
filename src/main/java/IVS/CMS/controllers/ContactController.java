@@ -11,6 +11,7 @@ import IVS.CMS.services.ContactService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -36,19 +37,19 @@ public class ContactController {
 
     // Admin endpoint: Lấy danh sách phân trang + search
     @GetMapping
-public ResponseEntity<RestResponse<PaginationResponseDTO>> getAllContacts(
-        @RequestParam(value = "search", required = false) String search,
-        @RequestParam(value = "status", required = false, defaultValue = "ALL") String status,
-        @RequestParam(value = "page", defaultValue = "1") int page,
-        @RequestParam(value = "size", defaultValue = "10") int size
-) {
-    PaginationResponseDTO data = contactService.getAllContacts(search, status, page, size);
-    RestResponse<PaginationResponseDTO> response = new RestResponse<>();
-    response.setStatusCode(HttpStatus.OK.value());
-    response.setMessage("Lấy danh sách liên hệ thành công");
-    response.setData(data);
-    return ResponseEntity.ok(response);
-}
+    public ResponseEntity<RestResponse<PaginationResponseDTO>> getAllContacts(
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "status", required = false, defaultValue = "ALL") String status,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        PaginationResponseDTO data = contactService.getAllContacts(search, status, page, size);
+        RestResponse<PaginationResponseDTO> response = new RestResponse<>();
+        response.setStatusCode(HttpStatus.OK.value());
+        response.setMessage("Lấy danh sách liên hệ thành công");
+        response.setData(data);
+        return ResponseEntity.ok(response);
+    }
 
     // Admin endpoint: Xem chi tiết liên hệ
     @GetMapping("/{id}")
@@ -84,4 +85,5 @@ public ResponseEntity<RestResponse<PaginationResponseDTO>> getAllContacts(
         response.setMessage("Xóa liên hệ thành công");
         return ResponseEntity.ok(response);
     }
+
 }

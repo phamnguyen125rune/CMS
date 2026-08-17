@@ -33,6 +33,8 @@ public class ContactRowMapper implements RowMapper<Contact> {
         Timestamp updatedAt = rs.getTimestamp("updated_at");
         if (updatedAt != null) contact.setUpdatedAt(updatedAt.toLocalDateTime());
 
+        System.out.println("[ContactRowMapper] Mapped row " + rowNum + ": id=" + contact.getId() + ", name=" + contact.getName() + ", status=" + contact.getStatus());
+        
         return contact;
     }
 }
