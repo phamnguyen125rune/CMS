@@ -52,38 +52,38 @@ public class ContactServiceImpl implements ContactService {
     }
 
    @Override
-    public PaginationResponseDTO getAllContacts(String search, String status, int page, int size) {
-        try {
-            System.out.println("[ContactServiceImpl.getAllContacts] Called with - search: " + search + ", status: " + status + ", page: " + page + ", size: " + size);
-            
-            List<Contact> list = contactRepository.findAll(search, status, page, size);
-            System.out.println("[ContactServiceImpl.getAllContacts] Retrieved " + (list != null ? list.size() : 0) + " contacts");
-            
-            long totalElements = contactRepository.count(search, status);
-            System.out.println("[ContactServiceImpl.getAllContacts] Total elements: " + totalElements);
-            
-            int totalPages = (int) Math.ceil((double) totalElements / size);
+public PaginationResponseDTO getAllContacts(String search, String status, int page, int size) {
+    try {
+        System.out.println("[ContactServiceImpl.getAllContacts] Called with - search: " + search + ", status: " + status + ", page: " + page + ", size: " + size);
+        
+        List<Contact> list = contactRepository.findAll(search, status, page, size);
+        System.out.println("[ContactServiceImpl.getAllContacts] Retrieved " + (list != null ? list.size() : 0) + " contacts");
+        
+        long totalElements = contactRepository.count(search, status);
+        System.out.println("[ContactServiceImpl.getAllContacts] Total elements: " + totalElements);
+        
+        int totalPages = (int) Math.ceil((double) totalElements / size);
 
-            // 1. Tạo và set thông tin cho đối tượng Meta
-            PaginationResponseDTO.Meta meta = new PaginationResponseDTO.Meta();
-            meta.setPage(page);
-            meta.setPageSize(size);
-            meta.setPages(totalPages);
-            meta.setTotal(totalElements);
+        // 1. Tạo và set thông tin cho đối tượng Meta
+        PaginationResponseDTO.Meta meta = new PaginationResponseDTO.Meta();
+        meta.setPage(page);
+        meta.setPageSize(size);
+        meta.setPages(totalPages);
+        meta.setTotal(totalElements);
 
-            // 2. Tạo và set thông tin cho PaginationResponseDTO
-            PaginationResponseDTO response = new PaginationResponseDTO();
-            response.setMeta(meta);
-            response.setResult(list);
+        // 2. Tạo và set thông tin cho PaginationResponseDTO
+        PaginationResponseDTO response = new PaginationResponseDTO();
+        response.setMeta(meta);
+        response.setResult(list);
 
-            System.out.println("[ContactServiceImpl.getAllContacts] Response prepared - meta: " + meta.getTotal() + " total");
-            return response;
-        } catch (Exception e) {
-            System.err.println("[ContactServiceImpl.getAllContacts] ERROR: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        System.out.println("[ContactServiceImpl.getAllContacts] Response prepared - meta: " + meta.getTotal() + " total");
+        return response;
+    } catch (Exception e) {
+        System.err.println("[ContactServiceImpl.getAllContacts] ERROR: " + e.getMessage());
+        e.printStackTrace();
+        throw e;
     }
+}
 
     @Override
     public Contact replyContact(Long id, ReqReplyContactDTO dto) {
