@@ -76,7 +76,27 @@ public class DatabaseInitializer implements CommandLineRunner {
                             CONSTRAINT fk_rp_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
                             CONSTRAINT fk_rp_perm FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
                         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                        """)
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS contacts (
+                            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            name VARCHAR(255) NOT NULL,
+                            email VARCHAR(255) NOT NULL,
+                            phone VARCHAR(20) NOT NULL,
+                            company VARCHAR(255),
+                            service VARCHAR(255),
+                            subject VARCHAR(255),
+                            message TEXT NOT NULL,
+                            status VARCHAR(30) NOT NULL DEFAULT 'NEW',
+                            reply_message TEXT,
+                            created_at DATETIME(6),
+                            created_by VARCHAR(255),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """
+                                
+                    )
                 .forEach(jdbcTemplate.getJdbcTemplate()::execute);
     }
 
@@ -186,7 +206,9 @@ public class DatabaseInitializer implements CommandLineRunner {
                 { "Quản lý quyền", "permissions", "EDIT" }, { "Xem chức năng A", "screen_a", "VIEW" },
                 { "Sửa chức năng A", "screen_a", "EDIT" }, { "Xem chức năng B", "screen_b", "VIEW" },
                 { "Sửa chức năng B", "screen_b", "EDIT" }, { "Xem chức năng C", "screen_c", "VIEW" },
-                { "Sửa chức năng C", "screen_c", "EDIT" }
+                { "Sửa chức năng C", "screen_c", "EDIT" },
+                { "Xem liên hệ", "contacts", "VIEW" },
+                { "Quản lý & Phản hồi liên hệ", "contacts", "EDIT" }
         };
         for (String[] p : perms)
             insertPermission(p[0], p[1], p[2]);
