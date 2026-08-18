@@ -189,7 +189,7 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("Email " + req.getEmail() + " đã tồn tại!");
         }
         User user = this.userMapper.reqCreateToUser(req);
-        validateCreatableRole(user);
+        applyDefaultRegisteredRole(user);
         user.setStatus(STATUS_ACTIVE);
         user.setEmployeeCode(generateEmployeeCode());
 
@@ -256,6 +256,20 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
         this.userRepository.restore(user.getId());
+        this.permissionCacheService.evictUser(user.getId());
+    }
+
+    @Override
+    @Transactional
+    public void resetPasswordByEmail(String email, String newPassword) {
+        User user = this.userRepository.findByEmail(email);
+        if (user == null) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng");
+        }
+
+        user.setPassword(this.passwordEncoder.encode(newPassword));
+        user.setRefreshToken(null);
+        this.userRepository.save(user);
         this.permissionCacheService.evictUser(user.getId());
     }
 
@@ -397,6 +411,16 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setRole(role);
+    }
+
+    private void applyDefaultRegisteredRole(User user) {
+        if (user == null) {
+            return;
+        }
+
+        Role normalUserRole = this.roleRepository.findByName("NORMAL_USER")
+                .orElseThrow(() -> new ResourceNotFoundException("Role NORMAL_USER không tồn tại"));
+        user.setRole(normalUserRole);
     }
 
     private User getCurrentAuthenticatedUser() {

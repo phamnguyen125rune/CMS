@@ -55,7 +55,13 @@ DB_URL=jdbc:mysql://localhost:3306/CMS
 DB_USERNAME=root
 DB_PASSWORD=your_mysql_password
 JWT_SECRET=ZGFmNDhjNWM1MmM3NDJjMzU5YjU5MjJkMzM4NTRmNTM5N2Q5ZjFjZDU5MzJhNDIzNTg2MDNhYTllZGViMzI4Zg==
+MAIL_USERNAME=ivs.cms.1@gmail.com
+MAIL_PASSWORD=your_gmail_app_password
+MAIL_FROM=ivs.cms.1@gmail.com
 ```
+
+> Gmail không cho gửi SMTP bằng mật khẩu đăng nhập thường. Hãy bật 2-Step Verification cho
+> `ivs.cms.1@gmail.com`, tạo **App Password**, rồi đặt giá trị đó vào `MAIL_PASSWORD`.
 
 ### 3. Khởi tạo cơ sở dữ liệu
 Đảm bảo bạn đã tạo Database `CMS` trong MySQL:
