@@ -43,8 +43,17 @@ public class SecurityConfiguration {
     private final String[] publicEndpoints = {
             "/",
             "/uploads/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs",
+            "/v3/api-docs/**",
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",
+            "/api/v1/auth/register/request-otp",
+            "/api/v1/auth/register/verify-otp",
+            "/api/v1/auth/forgot-password/request-otp",
+            "/api/v1/auth/forgot-password/verify-otp",
+            "/api/v1/auth/forgot-password/reset",
 
     };
 

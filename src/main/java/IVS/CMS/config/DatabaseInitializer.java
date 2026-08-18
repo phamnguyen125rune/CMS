@@ -260,13 +260,16 @@ public class DatabaseInitializer implements CommandLineRunner {
         if (roleId == null || isBlank(defaultAdminEmail) || isBlank(defaultAdminPassword))
             return;
 
+        String employeeCode = findNextEmployeeCode();
         jdbcTemplate.update(
                 """
                             INSERT INTO users (employee_code, fullname, email, password, phone, age, gender, status, role_id, deleted, created_at, created_by, updated_at, updated_by)
-                            SELECT 'EMP0001', 'Admin System', :email, :pwd, :phone, 20, 'OTHER', 'ACTIVE', :roleId, FALSE, NOW(6), 'system', NOW(6), 'system'
+                            SELECT :employeeCode, 'Admin System', :email, :pwd, :phone, 20, 'OTHER', 'ACTIVE', :roleId, FALSE, NOW(6), 'system', NOW(6), 'system'
                             WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = :email)
+                              AND NOT EXISTS (SELECT 1 FROM users WHERE employee_code = :employeeCode)
                         """,
                 new MapSqlParameterSource("email", defaultAdminEmail.trim())
+                        .addValue("employeeCode", employeeCode)
                         .addValue("pwd", passwordEncoder.encode(defaultAdminPassword))
                         .addValue("phone", isBlank(defaultAdminPhone) ? null : defaultAdminPhone.trim())
                         .addValue("roleId", roleId));
@@ -280,5 +283,23 @@ public class DatabaseInitializer implements CommandLineRunner {
         List<Long> ids = jdbcTemplate.query("SELECT id FROM roles WHERE name = :name LIMIT 1",
                 new MapSqlParameterSource("name", roleName), (rs, rowNum) -> rs.getLong("id"));
         return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    private String findNextEmployeeCode() {
+        String maxCode = jdbcTemplate.queryForObject(
+                "SELECT MAX(employee_code) FROM users WHERE employee_code LIKE 'EMP%'",
+                new MapSqlParameterSource(),
+                String.class);
+
+        if (isBlank(maxCode)) {
+            return "EMP0001";
+        }
+
+        try {
+            int currentNumber = Integer.parseInt(maxCode.substring(3));
+            return String.format("EMP%04d", currentNumber + 1);
+        } catch (RuntimeException ignored) {
+            return "EMP0001";
+        }
     }
 }
