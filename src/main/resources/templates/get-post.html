@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Post</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            padding: 8px;
+            flex: 1;
+        }
+
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        #article {
+            display: none;
+        }
+
+        .category {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .meta {
+            color: #666;
+            font-size: 14px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary {
+            font-style: italic;
+            margin-bottom: 25px;
+        }
+
+        .content {
+            line-height: 1.7;
+        }
+
+        .content img {
+            max-width: 100%;
+        }
+
+        .content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .content th,
+        .content td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+
+        .content blockquote {
+            border-left: 3px solid #999;
+            padding-left: 15px;
+        }
+
+        #loading {
+            display: none;
+        }
+
+        #message {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Test Post API</h2>
+
+    <div class="toolbar">
+        <input type="number" id="postId" placeholder="Nhập Post ID">
+
+        <button onclick="fetchPost()">
+            Đọc
+        </button>
+    </div>
+
+    <div id="loading">
+        Đang tải...
+    </div>
+
+    <div id="message"></div>
+
+
+    <div id="article">
+
+        <div class="category" id="category"></div>
+
+        <h1 id="title"></h1>
+
+        <div class="meta">
+            <span id="date"></span>
+            |
+            <span id="author"></span>
+            |
+            <span id="status"></span>
+        </div>
+
+        <div class="summary" id="summary"></div>
+
+        <div class="content" id="content"></div>
+
+    </div>
+
+
+    <script>
+
+        const API_BASE = "http://localhost:8080/api/v1";
+
+        /*
+         * Gán JWT trực tiếp tại đây
+         */
+        const TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjbXNAZ21haWwuY29tIiwiZXhwIjoxNzk1NTgxMDQyLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzg2OTQxMDQyLCJ1c2VyIjp7ImF2YXRhclVybCI6bnVsbCwicm9sZUlkIjoxLCJyb2xlTmFtZSI6IlNVUEVSX0FETUlOIiwiaWQiOjEsImZ1bGxuYW1lIjoiQWRtaW4gU3lzdGVtIiwiZW1haWwiOiJjbXNAZ21haWwuY29tIiwiZW1wbG95ZWVDb2RlIjoiRU1QMDAwMSJ9fQ.kreiYHiIdVCximbYNKXxSwRnaZhWF2kcXgIfpyKreysjbpwOyjCfgO8ivpSdaHwsJUmjLJa0bbcz7zmvt0m_7A";
+
+
+        function formatDate(dateString) {
+
+            if (!dateString) {
+                return "Không rõ";
+            }
+
+            const date = new Date(dateString);
+
+            return date.toLocaleDateString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
+
+
+        async function fetchPost() {
+
+            const postId =
+                document.getElementById("postId").value.trim();
+
+            const article =
+                document.getElementById("article");
+
+            const loading =
+                document.getElementById("loading");
+
+            const message =
+                document.getElementById("message");
+
+
+            if (!postId) {
+
+                alert("Vui lòng nhập ID bài viết!");
+
+                return;
+            }
+
+
+            article.style.display = "none";
+
+            loading.style.display = "block";
+
+            message.textContent = "";
+
+
+            try {
+
+                const response = await fetch(
+                    `${API_BASE}/posts/${postId}`,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${TOKEN}`
+                        }
+                    }
+                );
+
+
+                const data = await response.json();
+
+
+                if (!response.ok) {
+
+                    alert(
+                        data.message ||
+                        "Không tìm thấy bài viết"
+                    );
+
+                    return;
+                }
+
+
+                /*
+                 * Category
+                 */
+                document.getElementById("category")
+                    .textContent =
+                    data.category?.categoryName ||
+                    "Không có danh mục";
+
+
+                /*
+                 * Title
+                 */
+                document.getElementById("title")
+                    .textContent =
+                    data.title || "";
+
+
+                /*
+                 * Meta
+                 */
+                document.getElementById("date")
+                    .textContent =
+                    formatDate(data.createdAt);
+
+
+                document.getElementById("author")
+                    .textContent =
+                    `Tác giả ID: ${data.createdBy || "N/A"}`;
+
+
+                document.getElementById("status")
+                    .textContent =
+                    data.status || "";
+
+
+                /*
+                 * Summary
+                 */
+                const summary =
+                    document.getElementById("summary");
+
+
+                if (data.summary) {
+
+                    summary.textContent =
+                        data.summary;
+
+                    summary.style.display = "block";
+
+                } else {
+
+                    summary.style.display = "none";
+                }
+
+
+                /*
+                 * Content
+                 *
+                 * Backend trả HTML từ CKEditor
+                 */
+                document.getElementById("content")
+                    .innerHTML =
+                    data.content ||
+                    "<p>Bài viết trống.</p>";
+
+
+                article.style.display = "block";
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Lỗi kết nối server: " +
+                    error.message
+                );
+
+            } finally {
+
+                loading.style.display = "none";
+            }
+        }
+
+
+        /*
+         * Enter để đọc bài viết
+         */
+        document
+            .getElementById("postId")
+            .addEventListener("keypress", function (event) {
+
+                if (event.key === "Enter") {
+                    fetchPost();
+                }
+
+            });
+
+    </script>
+
+</body>
+
+</html>
