@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -49,8 +50,6 @@ public class SecurityConfiguration {
             "/v3/api-docs/**",
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",
-            "/api/v1/auth/register/request-otp",
-            "/api/v1/auth/register/verify-otp",
             "/api/v1/auth/forgot-password/request-otp",
             "/api/v1/auth/forgot-password/verify-otp",
             "/api/v1/auth/forgot-password/reset",
@@ -77,6 +76,7 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.POST, "/api/v1/contacts").permitAll()
                         .requestMatchers(publicEndpoints).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

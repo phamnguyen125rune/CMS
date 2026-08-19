@@ -49,6 +49,12 @@ public interface UserService {
 
     void resetPasswordByEmail(String email, String newPassword);
 
+    String recordFailedLogin(User user);
+
+    void clearLoginFailures(long id);
+
+    void resetLoginSecurity(long id);
+
     String uploadMyAvatar(MultipartFile file);
 
     ResUserDTO getMyProfile();

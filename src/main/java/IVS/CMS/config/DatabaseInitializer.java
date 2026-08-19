@@ -65,6 +65,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                             email VARCHAR(255) NOT NULL UNIQUE, password VARCHAR(255) NOT NULL, avatar_url VARCHAR(500),
                             refresh_token TEXT, phone VARCHAR(20), date_of_birth DATE, age INT DEFAULT 0, gender VARCHAR(20),
                             address VARCHAR(500), role_id BIGINT, status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+                            failed_login_attempts INT NOT NULL DEFAULT 0, lock_count INT NOT NULL DEFAULT 0, locked_until DATETIME(6),
                             deleted BOOLEAN NOT NULL DEFAULT FALSE, deleted_at DATETIME(6), deleted_by VARCHAR(255),
                             created_at DATETIME(6), created_by VARCHAR(255), updated_at DATETIME(6), updated_by VARCHAR(255),
                             CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL
@@ -101,16 +102,26 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
 
     private void migrateUsersTable() {
-        Map.of(
-                "employee_code", "VARCHAR(50) UNIQUE", "date_of_birth", "DATE",
-                "status", "VARCHAR(30) NOT NULL DEFAULT 'ACTIVE'", "deleted", "BOOLEAN NOT NULL DEFAULT FALSE",
-                "deleted_at", "DATETIME(6)", "deleted_by", "VARCHAR(255)",
-                "created_at", "DATETIME(6)", "created_by", "VARCHAR(255)",
-                "updated_at", "DATETIME(6)", "updated_by", "VARCHAR(255)")
+        Map.<String, String>ofEntries(
+                Map.entry("employee_code", "VARCHAR(50) UNIQUE"),
+                Map.entry("date_of_birth", "DATE"),
+                Map.entry("status", "VARCHAR(30) NOT NULL DEFAULT 'ACTIVE'"),
+                Map.entry("deleted", "BOOLEAN NOT NULL DEFAULT FALSE"),
+                Map.entry("failed_login_attempts", "INT NOT NULL DEFAULT 0"),
+                Map.entry("lock_count", "INT NOT NULL DEFAULT 0"),
+                Map.entry("locked_until", "DATETIME(6)"),
+                Map.entry("deleted_at", "DATETIME(6)"),
+                Map.entry("deleted_by", "VARCHAR(255)"),
+                Map.entry("created_at", "DATETIME(6)"),
+                Map.entry("created_by", "VARCHAR(255)"),
+                Map.entry("updated_at", "DATETIME(6)"),
+                Map.entry("updated_by", "VARCHAR(255)"))
                 .forEach((col, def) -> ensureColumn("users", col, def));
 
         executeIgnore("UPDATE users SET status = 'ACTIVE' WHERE status IS NULL OR status = ''");
         executeIgnore("UPDATE users SET deleted = FALSE WHERE deleted IS NULL");
+        executeIgnore("UPDATE users SET failed_login_attempts = 0 WHERE failed_login_attempts IS NULL");
+        executeIgnore("UPDATE users SET lock_count = 0 WHERE lock_count IS NULL");
     }
 
     private void migratePermissionsTable() {

@@ -1,5 +1,6 @@
 package IVS.CMS.services.impl;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,8 @@ public class UserServiceImpl implements UserService {
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String STATUS_LOCKED = "LOCKED";
     private static final String DEFAULT_RESET_PASSWORD = "123456";
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long[] LOCK_MINUTES = { 1, 5, 15, 30, 60 };
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -58,6 +61,9 @@ public class UserServiceImpl implements UserService {
 
         validateCreatableRole(user);
         user.setStatus(STATUS_ACTIVE);
+        user.setFailedLoginAttempts(0);
+        user.setLockCount(0);
+        user.setLockedUntil(null);
         user.setEmployeeCode(generateEmployeeCode());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -151,7 +157,10 @@ public class UserServiceImpl implements UserService {
         }
         user.setPassword(this.passwordEncoder.encode(req.getNewPassword()));
         user.setRefreshToken(null);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
         this.userRepository.save(user);
+        this.userRepository.clearLoginFailures(user.getId());
         this.permissionCacheService.evictUser(user.getId());
     }
 
@@ -191,6 +200,9 @@ public class UserServiceImpl implements UserService {
         User user = this.userMapper.reqCreateToUser(req);
         applyDefaultRegisteredRole(user);
         user.setStatus(STATUS_ACTIVE);
+        user.setFailedLoginAttempts(0);
+        user.setLockCount(0);
+        user.setLockedUntil(null);
         user.setEmployeeCode(generateEmployeeCode());
 
         user.setPassword(this.passwordEncoder.encode(user.getPassword()));
@@ -269,8 +281,52 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(this.passwordEncoder.encode(newPassword));
         user.setRefreshToken(null);
+        user.setFailedLoginAttempts(0);
+        user.setLockCount(0);
+        user.setLockedUntil(null);
         this.userRepository.save(user);
+        this.userRepository.resetLoginSecurity(user.getId());
         this.permissionCacheService.evictUser(user.getId());
+    }
+
+    @Override
+    @Transactional
+    public String recordFailedLogin(User user) {
+        if (user == null) {
+            return "Email hoặc mật khẩu không chính xác";
+        }
+
+        int failedAttempts = Math.max(0, user.getFailedLoginAttempts()) + 1;
+        int remainingAttempts = MAX_LOGIN_ATTEMPTS - failedAttempts;
+
+        if (remainingAttempts <= 0) {
+            int lockCount = Math.max(0, user.getLockCount()) + 1;
+            long lockMinutes = resolveLockMinutes(lockCount);
+            Instant lockedUntil = Instant.now().plusSeconds(lockMinutes * 60);
+            this.userRepository.updateLoginSecurity(user.getId(), 0, lockCount, lockedUntil);
+            this.permissionCacheService.evictUser(user.getId());
+            return "Bạn đã nhập sai mật khẩu quá nhiều lần. Tài khoản bị khóa trong "
+                    + lockMinutes + " phút. Hãy bấm Quên mật khẩu để lấy lại mật khẩu nếu bạn không nhớ.";
+        }
+
+        this.userRepository.updateLoginSecurity(user.getId(), failedAttempts, user.getLockCount(), null);
+        if (remainingAttempts == 1) {
+            return "Mật khẩu không chính xác. Bạn còn 1 lần thử trước khi tài khoản bị khóa. Hãy bấm Quên mật khẩu để lấy lại mật khẩu.";
+        }
+
+        return "Email hoặc mật khẩu không chính xác. Bạn còn " + remainingAttempts + " lần thử.";
+    }
+
+    @Override
+    @Transactional
+    public void clearLoginFailures(long id) {
+        this.userRepository.clearLoginFailures(id);
+    }
+
+    @Override
+    @Transactional
+    public void resetLoginSecurity(long id) {
+        this.userRepository.resetLoginSecurity(id);
     }
 
     private String generateEmployeeCode() {
@@ -320,7 +376,11 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(this.passwordEncoder.encode(DEFAULT_RESET_PASSWORD));
         user.setRefreshToken(null);
+        user.setFailedLoginAttempts(0);
+        user.setLockCount(0);
+        user.setLockedUntil(null);
         this.userRepository.save(user);
+        this.userRepository.resetLoginSecurity(user.getId());
         this.permissionCacheService.evictUser(user.getId());
     }
 
@@ -478,6 +538,11 @@ public class UserServiceImpl implements UserService {
 
     private boolean isSuperAdminRole(Role role) {
         return role != null && role.getName() != null && ROLE_SUPER_ADMIN.equalsIgnoreCase(role.getName().trim());
+    }
+
+    private long resolveLockMinutes(int lockCount) {
+        int index = Math.max(0, Math.min(lockCount - 1, LOCK_MINUTES.length - 1));
+        return LOCK_MINUTES[index];
     }
 
     private String normalizeStatus(String status) {

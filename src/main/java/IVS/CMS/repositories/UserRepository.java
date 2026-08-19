@@ -46,6 +46,12 @@ public interface UserRepository {
 
     void updateStatus(long id, String status);
 
+    void updateLoginSecurity(long id, int failedLoginAttempts, int lockCount, java.time.Instant lockedUntil);
+
+    void clearLoginFailures(long id);
+
+    void resetLoginSecurity(long id);
+
     User findByEmployeeCode(String employeeCode);
 
     User findByEmailOrEmployeeCode(String loginId);

@@ -30,6 +30,9 @@ public class User {
     private String employeeCode;
     private LocalDate dateOfBirth;
     private String status;
+    private int failedLoginAttempts;
+    private int lockCount;
+    private Instant lockedUntil;
 
     private Boolean deleted;
     private Instant deletedAt;

@@ -4,7 +4,6 @@ import IVS.CMS.domain.Contact;
 import IVS.CMS.domain.dto.request.ReqCreateContactDTO;
 import IVS.CMS.domain.dto.request.ReqReplyContactDTO;
 import IVS.CMS.domain.dto.response.PaginationResponseDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 import IVS.CMS.repositories.ContactRepository;
 import IVS.CMS.services.ContactService;
 import org.springframework.stereotype.Service;
@@ -51,26 +50,40 @@ public class ContactServiceImpl implements ContactService {
         return contact;
     }
 
-   @Override
-public PaginationResponseDTO getAllContacts(String search, String status, int page, int size) {
-    List<Contact> list = contactRepository.findAll(search, status, page, size);
-    long totalElements = contactRepository.count(search, status);
-    int totalPages = (int) Math.ceil((double) totalElements / size);
+    @Override
+    public PaginationResponseDTO getAllContacts(String search, String status, int page, int size) {
+        try {
+            System.out.println("[ContactServiceImpl.getAllContacts] Called with - search: " + search + ", status: "
+                    + status + ", page: " + page + ", size: " + size);
 
-    // 1. Tạo và set thông tin cho đối tượng Meta
-    PaginationResponseDTO.Meta meta = new PaginationResponseDTO.Meta();
-    meta.setPage(page);
-    meta.setPageSize(size);
-    meta.setPages(totalPages);
-    meta.setTotal(totalElements);
+            List<Contact> list = contactRepository.findAll(search, status, page, size);
+            System.out.println("[ContactServiceImpl.getAllContacts] Retrieved "
+                    + (list != null ? list.size() : 0) + " contacts");
 
-    // 2. Tạo và set thông tin cho PaginationResponseDTO
-    PaginationResponseDTO response = new PaginationResponseDTO();
-    response.setMeta(meta);
-    response.setResult(list);
+            long totalElements = contactRepository.count(search, status);
+            System.out.println("[ContactServiceImpl.getAllContacts] Total elements: " + totalElements);
 
-    return response;
-}
+            int totalPages = (int) Math.ceil((double) totalElements / size);
+
+            PaginationResponseDTO.Meta meta = new PaginationResponseDTO.Meta();
+            meta.setPage(page);
+            meta.setPageSize(size);
+            meta.setPages(totalPages);
+            meta.setTotal(totalElements);
+
+            PaginationResponseDTO response = new PaginationResponseDTO();
+            response.setMeta(meta);
+            response.setResult(list);
+
+            System.out.println("[ContactServiceImpl.getAllContacts] Response prepared - meta: "
+                    + meta.getTotal() + " total");
+            return response;
+        } catch (Exception e) {
+            System.err.println("[ContactServiceImpl.getAllContacts] ERROR: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
     @Override
     public Contact replyContact(Long id, ReqReplyContactDTO dto) {

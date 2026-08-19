@@ -36,6 +36,15 @@ public class UserRowMapper implements RowMapper<User> {
         user.setAge(rs.getInt("age"));
         user.setAddress(rs.getString("address"));
         user.setStatus(rs.getString("status"));
+        if (hasColumn(rs, "failed_login_attempts")) {
+            user.setFailedLoginAttempts(rs.getInt("failed_login_attempts"));
+        }
+        if (hasColumn(rs, "lock_count")) {
+            user.setLockCount(rs.getInt("lock_count"));
+        }
+        if (hasColumn(rs, "locked_until") && rs.getTimestamp("locked_until") != null) {
+            user.setLockedUntil(rs.getTimestamp("locked_until").toInstant());
+        }
         user.setDeleted(rs.getBoolean("deleted"));
 
         if (rs.getTimestamp("deleted_at") != null) {
@@ -114,6 +123,9 @@ public class UserRowMapper implements RowMapper<User> {
                 .addValue("gender", user.getGender() != null ? user.getGender().name() : null)
                 .addValue("roleId", user.getRole() != null ? user.getRole().getId() : null)
                 .addValue("status", user.getStatus())
+                .addValue("failedLoginAttempts", user.getFailedLoginAttempts())
+                .addValue("lockCount", user.getLockCount())
+                .addValue("lockedUntil", user.getLockedUntil() != null ? Timestamp.from(user.getLockedUntil()) : null)
                 .addValue("deleted", user.getDeleted())
                 .addValue("deletedAt", user.getDeletedAt() != null ? Timestamp.from(user.getDeletedAt()) : null)
                 .addValue("deletedBy", user.getDeletedBy())

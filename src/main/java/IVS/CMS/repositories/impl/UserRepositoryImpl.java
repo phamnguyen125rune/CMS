@@ -30,8 +30,8 @@ public class UserRepositoryImpl implements UserRepository {
         if (user.getId() == 0) {
             user.handleBeforeCreate();
 
-            String sql = "INSERT INTO users (employee_code, fullname, email, password, avatar_url, refresh_token, phone, date_of_birth, age, address, gender, role_id, status, deleted, deleted_at, deleted_by, created_at, created_by, updated_at, updated_by) "
-                    + "VALUES (:employeeCode, :fullname, :email, :password, :avatarUrl, :refreshToken, :phone, :dateOfBirth, :age, :address, :gender, :roleId, :status, FALSE, NULL, NULL, :createdAt, :createdBy, :updatedAt, :updatedBy)";
+            String sql = "INSERT INTO users (employee_code, fullname, email, password, avatar_url, refresh_token, phone, date_of_birth, age, address, gender, role_id, status, failed_login_attempts, lock_count, locked_until, deleted, deleted_at, deleted_by, created_at, created_by, updated_at, updated_by) "
+                    + "VALUES (:employeeCode, :fullname, :email, :password, :avatarUrl, :refreshToken, :phone, :dateOfBirth, :age, :address, :gender, :roleId, :status, :failedLoginAttempts, :lockCount, :lockedUntil, FALSE, NULL, NULL, :createdAt, :createdBy, :updatedAt, :updatedBy)";
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
             MapSqlParameterSource params = mapperDb.toParams(user);
@@ -46,7 +46,7 @@ public class UserRepositoryImpl implements UserRepository {
 
             String sql = "UPDATE users SET fullname = :fullname, email = :email, password = :password, avatar_url = :avatarUrl, "
                     + "refresh_token = :refreshToken, phone = :phone, age = :age, address = :address, gender = :gender, "
-                    + "date_of_birth = :dateOfBirth, status = :status, role_id = :roleId, "
+                    + "date_of_birth = :dateOfBirth, status = :status, role_id = :roleId, failed_login_attempts = :failedLoginAttempts, lock_count = :lockCount, locked_until = :lockedUntil, "
                     + "created_at = :createdAt, created_by = :createdBy, updated_at = :updatedAt, updated_by = :updatedBy "
                     + "WHERE id = :id";
 
@@ -297,6 +297,52 @@ public class UserRepositoryImpl implements UserRepository {
                 .addValue("status", status)
                 .addValue("updatedBy", SecurityService.getCurrentUserLogin().orElse("system"));
         jdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public void updateLoginSecurity(long id, int failedLoginAttempts, int lockCount, java.time.Instant lockedUntil) {
+        String sql = """
+                UPDATE users
+                SET failed_login_attempts = :failedLoginAttempts,
+                    lock_count = :lockCount,
+                    locked_until = :lockedUntil,
+                    updated_at = NOW(6),
+                    updated_by = 'system'
+                WHERE id = :id AND deleted = FALSE
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("id", id)
+                .addValue("failedLoginAttempts", failedLoginAttempts)
+                .addValue("lockCount", lockCount)
+                .addValue("lockedUntil", lockedUntil == null ? null : java.sql.Timestamp.from(lockedUntil));
+        jdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public void clearLoginFailures(long id) {
+        String sql = """
+                UPDATE users
+                SET failed_login_attempts = 0,
+                    locked_until = NULL,
+                    updated_at = NOW(6),
+                    updated_by = 'system'
+                WHERE id = :id AND deleted = FALSE
+                """;
+        jdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
+    }
+
+    @Override
+    public void resetLoginSecurity(long id) {
+        String sql = """
+                UPDATE users
+                SET failed_login_attempts = 0,
+                    lock_count = 0,
+                    locked_until = NULL,
+                    updated_at = NOW(6),
+                    updated_by = 'system'
+                WHERE id = :id AND deleted = FALSE
+                """;
+        jdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
     }
 
     @Override

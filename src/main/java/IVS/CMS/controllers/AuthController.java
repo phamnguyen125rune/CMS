@@ -1,5 +1,7 @@
 package IVS.CMS.controllers;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -26,13 +29,11 @@ import IVS.CMS.domain.dto.request.ReqChangePasswordDTO;
 import IVS.CMS.domain.dto.request.ReqEmailDTO;
 import IVS.CMS.domain.dto.request.ReqLoginDTO;
 import IVS.CMS.domain.dto.request.ReqResetPasswordWithOtpDTO;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
 import IVS.CMS.domain.dto.request.ReqVerifyOtpDTO;
 import IVS.CMS.domain.dto.response.ResLoginDTO;
 import IVS.CMS.domain.dto.response.ResLoginDTO.RoleLogin;
 import IVS.CMS.domain.dto.response.ResLoginDTO.UserLogin;
 import IVS.CMS.domain.dto.response.ResOtpVerifyDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
 import IVS.CMS.services.AuthOtpService;
 import IVS.CMS.services.PermissionCacheService;
 import IVS.CMS.services.SecurityService;
@@ -87,11 +88,19 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
+        User loginUser = this.userService.handleGetUserByEmailOrEmployeeCode(loginDTO.getLoginId());
+        ensureLoginAllowed(loginUser);
+
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 loginDTO.getLoginId(),
                 loginDTO.getPassword());
 
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        Authentication authentication;
+        try {
+            authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        } catch (BadCredentialsException ex) {
+            throw new BadRequestException(this.userService.recordFailedLogin(loginUser));
+        }
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User currentUserDB = this.userService.handleGetUserByEmailOrEmployeeCode(loginDTO.getLoginId());
@@ -99,6 +108,7 @@ public class AuthController {
             throw new BadRequestException("Thông tin đăng nhập không hợp lệ");
         }
 
+        this.userService.clearLoginFailures(currentUserDB.getId());
         this.permissionCacheService.cacheUser(currentUserDB);
 
         ResLoginDTO res = new ResLoginDTO();
@@ -177,23 +187,35 @@ public class AuthController {
         return user != null && "LOCKED".equalsIgnoreCase(user.getStatus());
     }
 
+    private void ensureLoginAllowed(User user) {
+        if (user == null) {
+            return;
+        }
+
+        if (isLockedUser(user)) {
+            throw new BadRequestException("Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên hoặc bấm Quên mật khẩu để lấy lại mật khẩu.");
+        }
+
+        Instant lockedUntil = user.getLockedUntil();
+        if (lockedUntil == null) {
+            return;
+        }
+
+        Instant now = Instant.now();
+        if (now.isBefore(lockedUntil)) {
+            long remainingMinutes = Math.max(1, ChronoUnit.MINUTES.between(now, lockedUntil) + 1);
+            throw new BadRequestException("Tài khoản đang tạm khóa. Vui lòng thử lại sau "
+                    + remainingMinutes + " phút hoặc bấm Quên mật khẩu để lấy lại mật khẩu.");
+        }
+
+        this.userService.clearLoginFailures(user.getId());
+    }
+
     @PutMapping("/auth/change-password")
     @PreAuthorize("hasAuthority('auth:EDIT')")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ReqChangePasswordDTO req) {
         this.userService.changePassword(req);
         return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/auth/register/request-otp")
-    public ResponseEntity<Void> requestRegisterOtp(@Valid @RequestBody ReqUserCreateDTO req) {
-        this.authOtpService.sendRegisterOtp(req);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/auth/register/verify-otp")
-    public ResponseEntity<ResUserCreateDTO> verifyRegisterOtp(@Valid @RequestBody ReqVerifyOtpDTO req) {
-        ResUserCreateDTO res = this.authOtpService.verifyRegisterOtp(req.getEmail(), req.getOtp());
-        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/auth/forgot-password/request-otp")
