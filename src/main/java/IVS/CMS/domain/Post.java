@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 import IVS.CMS.domain.constants.PostStatusEnum;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 @Getter
 @Setter
@@ -23,7 +22,7 @@ public class Post {
     private String content;
 
     private PostStatusEnum status;
-    @NotNull(message = "Danh mục bài viết không được để trống")
+    @NotBlank(message = "Danh mục bài viết không được để trống")
     private Long categoryId;
 
     private LocalDateTime createdAt;

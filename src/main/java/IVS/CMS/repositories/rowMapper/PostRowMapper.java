@@ -84,12 +84,20 @@ public class PostRowMapper implements RowMapper<Post> {
 
             if (rs.getTimestamp("created_at") != null)
                 dto.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            if (rs.getObject("created_by") != null)
-                dto.setCreatedBy(rs.getLong("created_by"));
+
+            Long creatorId = rs.getObject("created_by") != null ? rs.getLong("created_by") : null;
+            String creatorName = creatorId != null ? rs.getString("created_by_name") : null;
+            if (creatorId != null) {
+                dto.setCreatedBy(new ResPostListDTO.UserPost(creatorId, creatorName));
+            }
             if (rs.getTimestamp("updated_at") != null)
                 dto.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
-            if (rs.getObject("updated_by") != null)
-                dto.setUpdatedBy(rs.getLong("updated_by"));
+
+            Long updaterId = rs.getObject("updated_by") != null ? rs.getLong("updated_by") : null;
+            String updaterName = updaterId != null ? rs.getString("updated_by_name") : null;
+            if (updaterId != null) {
+                dto.setUpdatedBy(new ResPostListDTO.UserPost(updaterId, updaterName));
+            }
 
             if (rs.getObject("category_id") != null) {
                 dto.setCategory(new ResPostListDTO.CategoryPost(

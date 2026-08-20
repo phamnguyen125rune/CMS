@@ -54,10 +54,15 @@ public class PostMapper {
         res.setSummary(post.getSummary());
         res.setStatus(post.getStatus());
         res.setCreatedAt(post.getCreatedAt());
-        res.setCreatedBy(post.getCreatedBy());
         res.setUpdatedAt(post.getUpdatedAt());
-        res.setUpdatedBy(post.getUpdatedBy());
         res.setContent(post.getContent());
+
+        if (post.getCreatedBy() != null) {
+            res.setCreatedBy(new ResPostDTO.UserPost(post.getCreatedBy(), null));
+        }
+        if (post.getUpdatedBy() != null) {
+            res.setUpdatedBy(new ResPostDTO.UserPost(post.getUpdatedBy(), null));
+        }
 
         if (category != null) {
             res.setCategory(new ResPostDTO.CategoryPost(category.getCategoryId(), category.getCategoryName()));
@@ -78,9 +83,13 @@ public class PostMapper {
         res.setSummary(post.getSummary());
         res.setStatus(post.getStatus());
         res.setCreatedAt(post.getCreatedAt());
-        res.setCreatedBy(post.getCreatedBy());
         res.setUpdatedAt(post.getUpdatedAt());
-        res.setUpdatedBy(post.getUpdatedBy());
+        if (post.getCreatedBy() != null) {
+            res.setCreatedBy(new ResPostListDTO.UserPost(post.getCreatedBy(), null));
+        }
+        if (post.getUpdatedBy() != null) {
+            res.setUpdatedBy(new ResPostListDTO.UserPost(post.getUpdatedBy(), null));
+        }
 
         if (category != null) {
             res.setCategory(new ResPostListDTO.CategoryPost(category.getCategoryId(), category.getCategoryName()));

@@ -16,6 +16,7 @@ import IVS.CMS.domain.dto.response.ResPostListDTO;
 import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 import IVS.CMS.repositories.CategoryRepository;
 import IVS.CMS.repositories.PostRepository;
+import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.services.PostService;
 import IVS.CMS.services.SecurityService;
 import IVS.CMS.services.error.BadRequestException;
@@ -31,6 +32,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
     private final PostMapper postMapper;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -46,7 +48,6 @@ public class PostServiceImpl implements PostService {
         post.setCreatedAt(LocalDateTime.now());
         post.setCreatedBy(SecurityService.getCurrentUserId().orElse(null));
 
-        
         Post savedPost = this.postRepository.save(post);
         return this.postMapper.postToResPostDTO(savedPost, category);
     }
@@ -87,8 +88,17 @@ public class PostServiceImpl implements PostService {
         Post post = this.postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
         Category category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
+        ResPostDTO res = this.postMapper.postToResPostDTO(post, category);
 
-        return this.postMapper.postToResPostDTO(post, category);
+        if (post.getCreatedBy() != null) {
+            this.userRepository.findById(post.getCreatedBy())
+                    .ifPresent(u -> res.getCreatedBy().setFullname(u.getFullname()));
+        }
+        if (post.getUpdatedBy() != null) {
+            this.userRepository.findById(post.getUpdatedBy())
+                    .ifPresent(u -> res.getUpdatedBy().setFullname(u.getFullname()));
+        }
+        return res;
     }
 
     @Override

@@ -17,7 +17,7 @@ public class ReqPostCreateDTO {
 
     private String summary;
 
-    @NotNull(message = "Nội dung bài viết không được để trống")
+    @NotBlank(message = "Nội dung bài viết không được để trống")
     private String content;
 
     @NotNull(message = "Danh mục bài viết không được để trống")

@@ -21,9 +21,9 @@ public class ResPostDTO {
     private CategoryPost category;
 
     private LocalDateTime createdAt;
-    private Long createdBy;
+    private UserPost createdBy;
     private LocalDateTime updatedAt;
-    private Long updatedBy;
+    private UserPost updatedBy;
 
     @Getter
     @Setter
@@ -32,5 +32,14 @@ public class ResPostDTO {
     public static class CategoryPost {
         private Long categoryId;
         private String categoryName;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class UserPost {
+        private Long id;
+        private String fullname;
     }
 }

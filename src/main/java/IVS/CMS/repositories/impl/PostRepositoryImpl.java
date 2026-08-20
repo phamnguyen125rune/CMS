@@ -66,16 +66,19 @@ public class PostRepositoryImpl implements PostRepository {
     public List<ResPostListDTO> findAll(int limit, int offset) {
         String sql = """
                 SELECT p.post_id, p.title, p.slug, p.summary, p.status, p.created_at, p.created_by, p.updated_at, p.updated_by,
-                       c.category_id, c.category_name
+                       c.category_id, c.category_name,
+                       uc.fullname AS created_by_name,
+                       uu.fullname AS updated_by_name
                 FROM posts p
                 LEFT JOIN categories c ON p.category_id = c.category_id
+                LEFT JOIN users uc ON p.created_by = uc.id
+                LEFT JOIN users uu ON p.updated_by = uu.id
                 ORDER BY p.created_at DESC
                 LIMIT :limit OFFSET :offset
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("limit", limit)
                 .addValue("offset", offset);
-
         return jdbcTemplate.query(sql, params, mapperDb.rowMapperForListDTO());
     }
 
