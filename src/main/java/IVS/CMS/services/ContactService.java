@@ -12,4 +12,5 @@ public interface ContactService {
     PaginationResponseDTO getAllContacts(String search, String status, int page, int size);
     Contact replyContact(Long id, ReqReplyContactDTO dto);
     void deleteContact(Long id);
+    Contact updateContactStatus(Long id, String status);
 }
