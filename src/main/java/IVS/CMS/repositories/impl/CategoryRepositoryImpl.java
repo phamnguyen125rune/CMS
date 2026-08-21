@@ -8,7 +8,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 import IVS.CMS.repositories.CategoryRepository;
 import IVS.CMS.repositories.rowMapper.CategoryRowMapper;
 
@@ -24,7 +24,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     @Override
-    public Category save(Category category) {
+    public PostCategory save(PostCategory category) {
         if (category.getCategoryId() == null || category.getCategoryId() == 0) {
             String sql = """
                     INSERT INTO categories (category_name, created_at, created_by, last_updated_at, last_updated_by)
@@ -50,7 +50,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     @Override
-    public Optional<Category> findById(long id) {
+    public Optional<PostCategory> findById(long id) {
         String sql = """
                 SELECT category_id, category_name, created_at, created_by, last_updated_at, last_updated_by
                 FROM categories
@@ -61,7 +61,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     @Override
-    public List<Category> findAll() {
+    public List<PostCategory> findAll() {
         String sql = """
                 SELECT category_id, category_name, created_at, created_by, last_updated_at, last_updated_by
                 FROM categories

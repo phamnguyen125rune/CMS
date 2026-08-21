@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 import IVS.CMS.services.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,27 +28,27 @@ public class CategoryController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('categories:EDIT')")
-    public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
+    public ResponseEntity<PostCategory> createCategory(@Valid @RequestBody PostCategory category) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(this.categoryService.createCategory(category));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('categories:EDIT')")
-    public ResponseEntity<Category> updateCategory(@PathVariable("id") long id,
-            @Valid @RequestBody Category category) {
+    public ResponseEntity<PostCategory> updateCategory(@PathVariable("id") long id,
+            @Valid @RequestBody PostCategory category) {
         return ResponseEntity.ok(this.categoryService.updateCategory(id, category));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('categories:VIEW')")
-    public ResponseEntity<Category> getCategoryById(@PathVariable("id") long id) {
+    public ResponseEntity<PostCategory> getCategoryById(@PathVariable("id") long id) {
         return ResponseEntity.ok(this.categoryService.fetchById(id));
     }
 
     @GetMapping
     @PreAuthorize("permitAll()")
-    public ResponseEntity<List<Category>> getAllCategories() {
+    public ResponseEntity<List<PostCategory>> getAllCategories() {
         return ResponseEntity.ok(this.categoryService.fetchAll());
     }
 

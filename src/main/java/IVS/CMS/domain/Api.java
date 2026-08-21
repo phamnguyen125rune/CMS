@@ -8,4 +8,5 @@ import lombok.Setter;
 public class Api {
     private Long apiId;
     private String apiLink;
+    private String apiDescription;
 }

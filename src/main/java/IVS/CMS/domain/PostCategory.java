@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Getter
 @Setter
-public class Category {
+public class PostCategory {
     private Long categoryId;
 
     @NotBlank(message = "Tên danh mục không được để trống")

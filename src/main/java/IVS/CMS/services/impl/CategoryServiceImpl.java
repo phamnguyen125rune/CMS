@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 import IVS.CMS.repositories.CategoryRepository;
 import IVS.CMS.services.CategoryService;
 import IVS.CMS.services.SecurityService;
@@ -23,7 +23,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public Category createCategory(Category category) {
+    public PostCategory createCategory(PostCategory category) {
         String categoryName = category.getCategoryName();
 
         if (categoryName == null || categoryName.trim().isEmpty()) {
@@ -45,8 +45,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public Category updateCategory(long id, Category category) {
-        Category currentCategory = this.fetchById(id);
+    public PostCategory updateCategory(long id, PostCategory category) {
+        PostCategory currentCategory = this.fetchById(id);
         String newName = category.getCategoryName();
 
         if (newName == null || newName.trim().isEmpty()) {
@@ -66,20 +66,20 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category fetchById(long id) {
+    public PostCategory fetchById(long id) {
         return this.categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Danh mục với id " + id + " không tồn tại"));
     }
 
     @Override
-    public List<Category> fetchAll() {
+    public List<PostCategory> fetchAll() {
         return this.categoryRepository.findAll();
     }
 
     @Override
     @Transactional
     public void deleteCategory(long id) {
-        Category currentCategory = this.fetchById(id);
+        PostCategory currentCategory = this.fetchById(id);
         this.categoryRepository.delete(currentCategory.getCategoryId());
     }
 

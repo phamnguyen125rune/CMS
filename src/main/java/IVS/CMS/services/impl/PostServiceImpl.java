@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 import IVS.CMS.domain.Post;
 import IVS.CMS.domain.constants.PostStatusEnum;
 import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
@@ -40,7 +40,7 @@ public class PostServiceImpl implements PostService {
         if (this.postRepository.existsBySlug(req.getSlug())) {
             throw new BadRequestException("Đường dẫn (slug) '" + req.getSlug() + "' đã tồn tại");
         }
-        Category category = this.categoryRepository.findById(req.getCategoryId())
+        PostCategory category = this.categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại"));
 
         Post post = this.postMapper.reqCreateToPost(req);
@@ -62,7 +62,7 @@ public class PostServiceImpl implements PostService {
             throw new BadRequestException("Đường dẫn (slug) '" + req.getSlug() + "' đã tồn tại");
         }
 
-        Category category = this.categoryRepository.findById(req.getCategoryId())
+        PostCategory category = this.categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại"));
 
         Post tempPost = this.postMapper.reqUpdateToPost(req);
@@ -87,7 +87,7 @@ public class PostServiceImpl implements PostService {
     public ResPostDTO getPostById(long id) {
         Post post = this.postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
-        Category category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
+        PostCategory category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
         ResPostDTO res = this.postMapper.postToResPostDTO(post, category);
 
         if (post.getCreatedBy() != null) {

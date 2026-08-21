@@ -2,14 +2,14 @@ package IVS.CMS.repositories;
 
 import java.util.List;
 import java.util.Optional;
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 
 public interface CategoryRepository {
-    Category save(Category category);
+    PostCategory save(PostCategory category);
 
-    Optional<Category> findById(long id);
+    Optional<PostCategory> findById(long id);
 
-    List<Category> findAll();
+    List<PostCategory> findAll();
 
     void delete(long id);
 

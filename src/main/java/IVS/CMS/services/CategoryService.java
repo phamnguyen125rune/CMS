@@ -1,16 +1,16 @@
 package IVS.CMS.services;
 
 import java.util.List;
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 
 public interface CategoryService {
-    Category createCategory(Category category);
+    PostCategory createCategory(PostCategory category);
 
-    Category updateCategory(long id, Category category);
+    PostCategory updateCategory(long id, PostCategory category);
 
-    Category fetchById(long id);
+    PostCategory fetchById(long id);
 
-    List<Category> fetchAll();
+    List<PostCategory> fetchAll();
 
     void deleteCategory(long id);
 }

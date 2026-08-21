@@ -6,14 +6,14 @@ import java.sql.Timestamp;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Component;
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 
 @Component
-public class CategoryRowMapper implements RowMapper<Category> {
+public class CategoryRowMapper implements RowMapper<PostCategory> {
 
     @Override
-    public Category mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Category category = new Category();
+    public PostCategory mapRow(ResultSet rs, int rowNum) throws SQLException {
+        PostCategory category = new PostCategory();
         category.setCategoryId(rs.getLong("category_id"));
         category.setCategoryName(rs.getString("category_name"));
 
@@ -40,7 +40,7 @@ public class CategoryRowMapper implements RowMapper<Category> {
         return category;
     }
 
-    public MapSqlParameterSource toParams(Category category) {
+    public MapSqlParameterSource toParams(PostCategory category) {
         return new MapSqlParameterSource()
                 .addValue("id", category.getCategoryId())
                 .addValue("categoryName", category.getCategoryName())

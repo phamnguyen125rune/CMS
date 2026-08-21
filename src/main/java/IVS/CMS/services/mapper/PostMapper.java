@@ -1,7 +1,7 @@
 package IVS.CMS.services.mapper;
 
 import org.springframework.stereotype.Component;
-import IVS.CMS.domain.Category;
+import IVS.CMS.domain.PostCategory;
 import IVS.CMS.domain.Post;
 import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
 import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
@@ -43,7 +43,7 @@ public class PostMapper {
         return post;
     }
 
-    public ResPostDTO postToResPostDTO(Post post, Category category) {
+    public ResPostDTO postToResPostDTO(Post post, PostCategory category) {
         if (post == null) {
             return null;
         }
@@ -72,7 +72,7 @@ public class PostMapper {
         return res;
     }
 
-    public ResPostListDTO postToResPostListDTO(Post post, Category category) {
+    public ResPostListDTO postToResPostListDTO(Post post, PostCategory category) {
         if (post == null) {
             return null;
         }
