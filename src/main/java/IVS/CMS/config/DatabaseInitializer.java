@@ -66,7 +66,8 @@ public class DatabaseInitializer implements CommandLineRunner {
                 """
                         CREATE TABLE IF NOT EXISTS apis (
                             api_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                            api_link VARCHAR(255) NOT NULL
+                            api_link VARCHAR(255) NOT NULL UNIQUE,
+                            description VARCHAR(255)
                         )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         """,
                 """
@@ -187,48 +188,48 @@ public class DatabaseInitializer implements CommandLineRunner {
                         )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         """,
                 """
-                            CREATE TABLE IF NOT EXISTS post_reviews (
-                                review_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                                post_id INTEGER UNSIGNED NOT NULL,
-                                reviewer_id INTEGER UNSIGNED,
-                                action ENUM('rejected', 'published', 'unpublished', 'approved') NOT NULL,
-                                comment TEXT(65535),
-                                created_at DATETIME(6),
-                                updated_at DATETIME(6),
-                                updated_by INTEGER UNSIGNED,
-                                CONSTRAINT fk_review_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
-                                CONSTRAINT fk_review_reviewer FOREIGN KEY (reviewer_id) REFERENCES users(user_id) ON DELETE SET NULL
-                            )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        CREATE TABLE IF NOT EXISTS post_reviews (
+                            review_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            post_id INTEGER UNSIGNED NOT NULL,
+                            reviewer_id INTEGER UNSIGNED,
+                            action ENUM('rejected', 'published', 'unpublished', 'approved') NOT NULL,
+                            comment TEXT(65535),
+                            created_at DATETIME(6),
+                            updated_at DATETIME(6),
+                            updated_by INTEGER UNSIGNED,
+                            CONSTRAINT fk_review_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+                            CONSTRAINT fk_review_reviewer FOREIGN KEY (reviewer_id) REFERENCES users(user_id) ON DELETE SET NULL
+                        )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         """,
                 """
-                            CREATE TABLE IF NOT EXISTS tags (
-                                tag_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                                tag_name VARCHAR(60) NOT NULL,
-                                slug VARCHAR(255) NOT NULL UNIQUE,
-                                created_at DATETIME(6),
-                                created_by INTEGER UNSIGNED,
-                                updated_at DATETIME(6),
-                                updated_by INTEGER UNSIGNED
-                            )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        CREATE TABLE IF NOT EXISTS tags (
+                            tag_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                            tag_name VARCHAR(60) NOT NULL,
+                            slug VARCHAR(255) NOT NULL UNIQUE,
+                            created_at DATETIME(6),
+                            created_by INTEGER UNSIGNED,
+                            updated_at DATETIME(6),
+                            updated_by INTEGER UNSIGNED
+                        )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         """,
                 """
-                            CREATE TABLE IF NOT EXISTS post_tag (
-                                tag_id INTEGER UNSIGNED NOT NULL,
-                                post_id INTEGER UNSIGNED NOT NULL,
-                                PRIMARY KEY(tag_id, post_id),
-                                CONSTRAINT fk_post_tag_tag FOREIGN KEY (tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE,
-                                CONSTRAINT fk_post_tag_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
-                            )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        CREATE TABLE IF NOT EXISTS post_tag (
+                            tag_id INTEGER UNSIGNED NOT NULL,
+                            post_id INTEGER UNSIGNED NOT NULL,
+                            PRIMARY KEY(tag_id, post_id),
+                            CONSTRAINT fk_post_tag_tag FOREIGN KEY (tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE,
+                            CONSTRAINT fk_post_tag_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
+                        )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         """,
                 """
-                            CREATE TABLE IF NOT EXISTS post_media (
-                                post_id INTEGER UNSIGNED NOT NULL,
-                                media_id INTEGER UNSIGNED NOT NULL,
-                                display_order TINYINT NOT NULL,
-                                PRIMARY KEY(post_id, media_id),
-                                CONSTRAINT fk_post_media_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
-                                CONSTRAINT fk_post_media_media FOREIGN KEY (media_id) REFERENCES media_library(media_id) ON DELETE CASCADE
-                            )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        CREATE TABLE IF NOT EXISTS post_media (
+                            post_id INTEGER UNSIGNED NOT NULL,
+                            media_id INTEGER UNSIGNED NOT NULL,
+                            display_order TINYINT NOT NULL,
+                            PRIMARY KEY(post_id, media_id),
+                            CONSTRAINT fk_post_media_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+                            CONSTRAINT fk_post_media_media FOREIGN KEY (media_id) REFERENCES media_library(media_id) ON DELETE CASCADE
+                        )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         """,
                 """
                         CREATE TABLE IF NOT EXISTS form_categories (
@@ -299,185 +300,513 @@ public class DatabaseInitializer implements CommandLineRunner {
         Map.<String, String>ofEntries(
                 Map.entry("employee_code", "VARCHAR(50) UNIQUE"),
                 Map.entry("date_of_birth", "DATE"),
-                Map.entry("status", "VARCHAR(30) NOT NULL DEFAULT 'ACTIVE'"),
-                Map.entry("deleted", "BOOLEAN NOT NULL DEFAULT FALSE"),
                 Map.entry("failed_login_attempts", "INT NOT NULL DEFAULT 0"),
                 Map.entry("lock_count", "INT NOT NULL DEFAULT 0"),
                 Map.entry("locked_until", "DATETIME(6)"),
                 Map.entry("deleted_at", "DATETIME(6)"),
-                Map.entry("deleted_by", "VARCHAR(255)"),
+                Map.entry("deleted_by", "INTEGER"),
                 Map.entry("created_at", "DATETIME(6)"),
-                Map.entry("created_by", "VARCHAR(255)"),
+                Map.entry("created_by", "INTEGER UNSIGNED"),
                 Map.entry("updated_at", "DATETIME(6)"),
-                Map.entry("updated_by", "VARCHAR(255)"))
-                .forEach((col, def) -> ensureColumn("users", col, def));
+                Map.entry("updated_by", "INTEGER UNSIGNED"))
+                .forEach((column, definition) -> ensureColumn("users", column, definition));
 
-        executeIgnore("UPDATE users SET status = 'ACTIVE' WHERE status IS NULL OR status = ''");
-        executeIgnore("UPDATE users SET deleted = FALSE WHERE deleted IS NULL");
-        executeIgnore("UPDATE users SET failed_login_attempts = 0 WHERE failed_login_attempts IS NULL");
-        executeIgnore("UPDATE users SET lock_count = 0 WHERE lock_count IS NULL");
+        executeIgnore("""
+                UPDATE users
+                SET failed_login_attempts = 0
+                WHERE failed_login_attempts IS NULL
+                """);
+
+        executeIgnore("""
+                UPDATE users
+                SET lock_count = 0
+                WHERE lock_count IS NULL
+                """);
     }
 
     private void migratePermissionsTable() {
-        ensureColumn("permissions", "permission_code", "VARCHAR(150)");
+        ensureColumn(
+                "permissions",
+                "action_id",
+                "INTEGER UNSIGNED");
 
-        jdbcTemplate.update("""
-                    UPDATE permissions SET permission_code = CONCAT(LOWER(resource_code), ':', UPPER(action))
-                    WHERE permission_code IS NULL OR permission_code = ''
-                """, new MapSqlParameterSource());
+        ensureColumn(
+                "permissions",
+                "api_id",
+                "INTEGER UNSIGNED");
 
-        mergeDuplicatePermissions();
+        ensureColumn(
+                "permissions",
+                "created_at",
+                "DATETIME(6)");
 
-        executeIgnore("ALTER TABLE permissions DROP INDEX uk_permission_unique");
-        executeIgnore("ALTER TABLE permissions DROP INDEX uk_permission_code");
-        List.of("api_path", "method").forEach(col -> {
-            if (columnExists("permissions", col))
-                executeIgnore("ALTER TABLE permissions DROP COLUMN " + col);
-        });
+        ensureColumn(
+                "permissions",
+                "created_by",
+                "INTEGER UNSIGNED");
 
-        executeIgnore("ALTER TABLE permissions MODIFY permission_code VARCHAR(150) NOT NULL");
-        executeIgnore("ALTER TABLE permissions ADD UNIQUE KEY uk_permission_code (permission_code)");
+        ensureColumn(
+                "permissions",
+                "updated_at",
+                "DATETIME(6)");
+
+        ensureColumn(
+                "permissions",
+                "updated_by",
+                "INTEGER UNSIGNED");
     }
 
-    private void mergeDuplicatePermissions() {
-        if (!columnExists("permissions", "permission_code"))
-            return;
-
-        List<Map<String, Object>> duplicates = jdbcTemplate.queryForList("""
-                    SELECT permission_code, MIN(id) AS keep_id FROM permissions
-                    WHERE permission_code IS NOT NULL AND permission_code <> ''
-                    GROUP BY permission_code HAVING COUNT(*) > 1
-                """, new MapSqlParameterSource());
-
-        for (Map<String, Object> duplicate : duplicates) {
-            String pCode = String.valueOf(duplicate.get("permission_code"));
-            long keepId = ((Number) duplicate.get("keep_id")).longValue();
-
-            List<Long> dupIds = jdbcTemplate.queryForList(
-                    "SELECT id FROM permissions WHERE permission_code = :pCode AND id <> :keepId",
-                    new MapSqlParameterSource().addValue("pCode", pCode).addValue("keepId", keepId), Long.class);
-
-            if (dupIds.isEmpty())
-                continue;
-
-            MapSqlParameterSource params = new MapSqlParameterSource().addValue("keepId", keepId).addValue("dupIds",
-                    dupIds);
-            jdbcTemplate.update(
-                    "INSERT IGNORE INTO role_permission (role_id, permission_id) SELECT role_id, :keepId FROM role_permission WHERE permission_id IN (:dupIds)",
-                    params);
-            jdbcTemplate.update("DELETE FROM role_permission WHERE permission_id IN (:dupIds)", params);
-            jdbcTemplate.update("DELETE FROM permissions WHERE id IN (:dupIds)", params);
-        }
-    }
-
-    private void ensureColumn(String tableName, String columnName, String definition) {
+    private void ensureColumn(
+            String tableName,
+            String columnName,
+            String definition) {
         if (!columnExists(tableName, columnName)) {
-            executeIgnore("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition);
+            executeIgnore(
+                    "ALTER TABLE " + tableName
+                            + " ADD COLUMN " + columnName
+                            + " " + definition);
         }
     }
 
-    private boolean columnExists(String tableName, String columnName) {
+    private boolean columnExists(
+            String tableName,
+            String columnName) {
         return jdbcTemplate.queryForObject(
-                "SELECT COUNT(1) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t AND COLUMN_NAME = :c",
-                new MapSqlParameterSource("t", tableName).addValue("c", columnName), Integer.class) > 0;
+                """
+                        SELECT COUNT(1)
+                        FROM information_schema.COLUMNS
+                        WHERE TABLE_SCHEMA = DATABASE()
+                        AND TABLE_NAME = :tableName
+                        AND COLUMN_NAME = :columnName
+                        """,
+                new MapSqlParameterSource()
+                        .addValue("tableName", tableName)
+                        .addValue("columnName", columnName),
+                Integer.class) > 0;
     }
 
     private void executeIgnore(String sql) {
         try {
             jdbcTemplate.getJdbcTemplate().execute(sql);
         } catch (DataAccessException ignored) {
+            // Ignore migration errors
         }
     }
 
     private void insertRoles() {
-        insertRole(ROLE_SUPER_ADMIN, "Quản trị hệ thống, có toàn quyền");
-        insertRole(ROLE_NORMAL_USER, "Người dùng mặc định, chưa thuộc nhóm quyền nghiệp vụ");
+        insertRole(
+                ROLE_SUPER_ADMIN,
+                "Quản trị hệ thống, có toàn quyền",
+                true);
+
+        insertRole(
+                ROLE_NORMAL_USER,
+                "Người dùng mặc định, chưa thuộc nhóm quyền nghiệp vụ",
+                false);
     }
 
-    private void insertRole(String name, String description) {
-        jdbcTemplate.update("""
-                    INSERT INTO roles (name, description, active, created_at, created_by, updated_at, updated_by)
-                    SELECT :name, :desc, TRUE, NOW(6), 'system', NOW(6), 'system'
-                    WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = :name)
-                """, new MapSqlParameterSource("name", name).addValue("desc", description));
+    private void insertRole(
+            String roleName,
+            String description,
+            boolean isSystem) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO roles (
+                            role_name,
+                            role_description,
+                            is_active,
+                            is_system,
+                            created_at,
+                            created_by
+                        )
+                        SELECT
+                            :roleName,
+                            :description,
+                            TRUE,
+                            :isSystem,
+                            NOW(6),
+                            NULL
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM roles
+                            WHERE role_name = :roleName
+                        )
+                        """,
+                new MapSqlParameterSource()
+                        .addValue("roleName", roleName)
+                        .addValue("description", description)
+                        .addValue("isSystem", isSystem));
     }
 
     private void insertPermissions() {
-        String[][] perms = {
-                { "Đổi mật khẩu", "auth", "EDIT" }, { "Xem hồ sơ cá nhân", "profile", "VIEW" },
-                { "Cập nhật hồ sơ cá nhân", "profile", "EDIT" }, { "Xem người dùng", "users", "VIEW" },
-                { "Quản lý người dùng", "users", "EDIT" }, { "Xem nhóm quyền", "roles", "VIEW" },
-                { "Quản lý nhóm quyền", "roles", "EDIT" }, { "Xem quyền", "permissions", "VIEW" },
-                { "Quản lý quyền", "permissions", "EDIT" }, { "Xem chức năng A", "screen_a", "VIEW" },
-                { "Sửa chức năng A", "screen_a", "EDIT" }, { "Xem chức năng B", "screen_b", "VIEW" },
-                { "Sửa chức năng B", "screen_b", "EDIT" }, { "Xem chức năng C", "screen_c", "VIEW" },
-                { "Sửa chức năng C", "screen_c", "EDIT" },
-                { "Xem liên hệ", "contacts", "VIEW" },
-                { "Quản lý & Phản hồi liên hệ", "contacts", "EDIT" }
+
+        String[][] permissions = {
+
+                // Authentication
+                { "auth", "Đổi mật khẩu", "EDIT" },
+
+                // Profile
+                { "profile", "Xem hồ sơ cá nhân", "VIEW" },
+                { "profile", "Cập nhật hồ sơ cá nhân", "EDIT" },
+
+                // Users
+                { "users", "Xem người dùng", "VIEW" },
+                { "users", "Quản lý người dùng", "EDIT" },
+
+                // Roles
+                { "roles", "Xem nhóm quyền", "VIEW" },
+                { "roles", "Quản lý nhóm quyền", "EDIT" },
+
+                // Permissions
+                { "permissions", "Xem quyền", "VIEW" },
+                { "permissions", "Quản lý quyền", "EDIT" },
+
+                // Screen A
+                { "screen_a", "Xem chức năng A", "VIEW" },
+                { "screen_a", "Sửa chức năng A", "EDIT" },
+
+                // Screen B
+                { "screen_b", "Xem chức năng B", "VIEW" },
+                { "screen_b", "Sửa chức năng B", "EDIT" },
+
+                // Screen C
+                { "screen_c", "Xem chức năng C", "VIEW" },
+                { "screen_c", "Sửa chức năng C", "EDIT" },
+
+                // Contacts
+                { "contacts", "Xem liên hệ", "VIEW" },
+                { "contacts", "Quản lý & Phản hồi liên hệ", "EDIT" }
         };
-        for (String[] p : perms)
-            insertPermission(p[0], p[1], p[2]);
+
+        for (String[] permission : permissions) {
+            insertPermission(
+                    permission[0],
+                    permission[1],
+                    permission[2]);
+        }
     }
 
-    private void insertPermission(String name, String resourceCode, String action) {
-        String pCode = resourceCode.trim().toLowerCase() + ":" + action.trim().toUpperCase();
-        jdbcTemplate.update(
+    private Long findActionIdByName(String actionName) {
+        List<Long> ids = jdbcTemplate.query(
                 """
-                            INSERT INTO permissions (name, resource_code, action, permission_code, created_at, created_by, updated_at, updated_by)
-                            SELECT :name, :res, :act, :pCode, NOW(6), 'system', NOW(6), 'system'
-                            WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE permission_code = :pCode)
+                        SELECT action_id
+                        FROM actions
+                        WHERE action_name = :actionName
+                        LIMIT 1
                         """,
-                new MapSqlParameterSource("name", name).addValue("res", resourceCode.trim().toLowerCase())
-                        .addValue("act", action.trim().toUpperCase()).addValue("pCode", pCode));
+                new MapSqlParameterSource()
+                        .addValue("actionName", actionName),
+                (rs, rowNum) -> rs.getLong("action_id"));
+
+        return ids.isEmpty() ? null : ids.get(0);
     }
 
-    private void assignPermissionsToRoles() {
-        if (jdbcTemplate.queryForObject("SELECT COUNT(1) FROM role_permission", new MapSqlParameterSource(),
-                Integer.class) > 0)
+    private Long findApiIdByLink(String apiLink) {
+        List<Long> ids = jdbcTemplate.query(
+                """
+                        SELECT api_id
+                        FROM apis
+                        WHERE api_link = :apiLink
+                        LIMIT 1
+                        """,
+                new MapSqlParameterSource()
+                        .addValue("apiLink", apiLink),
+                (rs, rowNum) -> rs.getLong("api_id"));
+
+        return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    private void insertPermission(
+            String apiLink,
+            String description,
+            String actionName) {
+        Long actionId = findActionIdByName(actionName);
+        Long apiId = findApiIdByLink(apiLink);
+
+        if (actionId == null || apiId == null) {
             return;
+        }
 
         jdbcTemplate.update(
                 """
-                            INSERT INTO role_permission (role_id, permission_id)
-                            SELECT r.id, p.id FROM roles r CROSS JOIN permissions p
-                            WHERE r.name = :role AND NOT EXISTS (SELECT 1 FROM role_permission rp WHERE rp.role_id = r.id AND rp.permission_id = p.id)
+                        INSERT INTO permissions (
+                            action_id,
+                            api_id,
+                            created_at,
+                            created_by
+                        )
+                        SELECT
+                            :actionId,
+                            :apiId,
+                            NOW(6),
+                            NULL
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM permissions
+                            WHERE action_id = :actionId
+                            AND api_id = :apiId
+                        )
                         """,
-                new MapSqlParameterSource("role", ROLE_SUPER_ADMIN));
+                new MapSqlParameterSource()
+                        .addValue("actionId", actionId)
+                        .addValue("apiId", apiId));
+    }
 
-        MapSqlParameterSource userParams = new MapSqlParameterSource("role", ROLE_NORMAL_USER)
-                .addValue("codes", List.of("auth:EDIT", "profile:VIEW", "profile:EDIT", "screen_a:VIEW",
-                        "screen_b:VIEW", "screen_c:VIEW"));
+    private void insertActions() {
+        insertAction("VIEW");
+        insertAction("EDIT");
+    }
 
-        jdbcTemplate.update(
-                "DELETE rp FROM role_permission rp INNER JOIN roles r ON r.id = rp.role_id WHERE r.name = :role",
-                userParams);
+    private void insertAction(String actionName) {
         jdbcTemplate.update(
                 """
-                            INSERT INTO role_permission (role_id, permission_id)
-                            SELECT r.id, p.id FROM roles r INNER JOIN permissions p ON p.permission_code IN (:codes)
-                            WHERE r.name = :role AND NOT EXISTS (SELECT 1 FROM role_permission rp WHERE rp.role_id = r.id AND rp.permission_id = p.id)
+                        INSERT INTO actions (action_name)
+                        SELECT :actionName
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM actions
+                            WHERE action_name = :actionName
+                        )
                         """,
-                userParams);
+                new MapSqlParameterSource()
+                        .addValue("actionName", actionName));
+    }
+
+    private void insertApis() {
+
+        insertApi(
+                "auth",
+                "Authentication API");
+
+        insertApi(
+                "profile",
+                "User profile API");
+
+        insertApi(
+                "users",
+                "User management API");
+
+        insertApi(
+                "roles",
+                "Role management API");
+
+        insertApi(
+                "permissions",
+                "Permission management API");
+
+        insertApi(
+                "screen_a",
+                "Screen A API");
+
+        insertApi(
+                "screen_b",
+                "Screen B API");
+
+        insertApi(
+                "screen_c",
+                "Screen C API");
+
+        insertApi(
+                "contacts",
+                "Contact management API");
+    }
+
+    private void insertApi(
+            String apiLink,
+            String description) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO apis (
+                            api_link,
+                            description
+                        )
+                        SELECT
+                            :apiLink,
+                            :description
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM apis
+                            WHERE api_link = :apiLink
+                        )
+                        """,
+                new MapSqlParameterSource()
+                        .addValue("apiLink", apiLink)
+                        .addValue("description", description));
+    }
+
+    private void assignPermissionsToRole(
+            String roleName,
+            List<String> permissionCodes) {
+        Long roleId = findRoleIdByName(roleName);
+
+        if (roleId == null) {
+            return;
+        }
+
+        for (String permissionCode : permissionCodes) {
+
+            String[] parts = permissionCode.split(":");
+
+            if (parts.length != 2) {
+                continue;
+            }
+
+            String apiLink = parts[0];
+            String actionName = parts[1];
+
+            Long apiId = findApiIdByLink(apiLink);
+            Long actionId = findActionIdByName(actionName);
+
+            if (apiId == null || actionId == null) {
+                continue;
+            }
+
+            jdbcTemplate.update(
+                    """
+                            INSERT INTO role_permission (
+                                role_id,
+                                permission_id
+                            )
+                            SELECT
+                                :roleId,
+                                p.permission_id
+                            FROM permissions p
+                            WHERE p.api_id = :apiId
+                            AND p.action_id = :actionId
+                            AND NOT EXISTS (
+                                SELECT 1
+                                FROM role_permission rp
+                                WHERE rp.role_id = :roleId
+                                AND rp.permission_id = p.permission_id
+                            )
+                            """,
+                    new MapSqlParameterSource()
+                            .addValue("roleId", roleId)
+                            .addValue("apiId", apiId)
+                            .addValue("actionId", actionId));
+        }
+    }
+
+    private void assignAllPermissionsToRole(String roleName) {
+
+        Long roleId = findRoleIdByName(roleName);
+
+        if (roleId == null) {
+            return;
+        }
+
+        jdbcTemplate.update(
+                """
+                        INSERT INTO role_permission (
+                            role_id,
+                            permission_id
+                        )
+                        SELECT
+                            :roleId,
+                            p.permission_id
+                        FROM permissions p
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM role_permission rp
+                            WHERE rp.role_id = :roleId
+                            AND rp.permission_id = p.permission_id
+                        )
+                        """,
+                new MapSqlParameterSource()
+                        .addValue("roleId", roleId));
     }
 
     private void insertDefaultAdminUser() {
+
         Long roleId = findRoleIdByName(ROLE_SUPER_ADMIN);
-        if (roleId == null || isBlank(defaultAdminEmail) || isBlank(defaultAdminPassword))
+
+        if (roleId == null
+                || isBlank(defaultAdminEmail)
+                || isBlank(defaultAdminPassword)) {
             return;
+        }
 
         String employeeCode = findNextEmployeeCode();
+
         jdbcTemplate.update(
                 """
-                            INSERT INTO users (employee_code, fullname, email, password, phone, age, gender, status, role_id, deleted, created_at, created_by, updated_at, updated_by)
-                            SELECT :employeeCode, 'Admin System', :email, :pwd, :phone, 20, 'OTHER', 'ACTIVE', :roleId, FALSE, NOW(6), 'system', NOW(6), 'system'
-                            WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = :email)
-                            AND NOT EXISTS (SELECT 1 FROM users WHERE employee_code = :employeeCode)
+                        INSERT INTO users (
+                            employee_code,
+                            full_name,
+                            email,
+                            password_hash,
+                            phone_number,
+                            gender,
+                            role_id,
+                            is_active,
+                            is_system,
+                            failed_login_attempts,
+                            lock_count,
+                            created_at,
+                            created_by
+                        )
+                        SELECT
+                            :employeeCode,
+                            'Admin System',
+                            :email,
+                            :passwordHash,
+                            :phoneNumber,
+                            'others',
+                            :roleId,
+                            TRUE,
+                            TRUE,
+                            0,
+                            0,
+                            NOW(6),
+                            NULL
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM users
+                            WHERE email = :email
+                        )
+                        AND NOT EXISTS (
+                            SELECT 1
+                            FROM users
+                            WHERE employee_code = :employeeCode
+                        )
                         """,
-                new MapSqlParameterSource("email", defaultAdminEmail.trim())
-                        .addValue("employeeCode", employeeCode)
-                        .addValue("pwd", passwordEncoder.encode(defaultAdminPassword))
-                        .addValue("phone", isBlank(defaultAdminPhone) ? null : defaultAdminPhone.trim())
-                        .addValue("roleId", roleId));
+                new MapSqlParameterSource()
+                        .addValue(
+                                "employeeCode",
+                                employeeCode)
+                        .addValue(
+                                "email",
+                                defaultAdminEmail.trim())
+                        .addValue(
+                                "passwordHash",
+                                passwordEncoder.encode(
+                                        defaultAdminPassword))
+                        .addValue(
+                                "phoneNumber",
+                                isBlank(defaultAdminPhone)
+                                        ? null
+                                        : defaultAdminPhone.trim())
+                        .addValue(
+                                "roleId",
+                                roleId));
+    }
+
+    private void assignPermissionsToRoles() {
+
+        // SUPER ADMIN → toàn quyền
+        assignAllPermissionsToRole(
+                ROLE_SUPER_ADMIN);
+
+        // NORMAL USER → chỉ những quyền cơ bản
+        assignPermissionsToRole(
+                ROLE_NORMAL_USER,
+                List.of(
+                        "auth:EDIT",
+                        "profile:VIEW",
+                        "profile:EDIT",
+                        "screen_a:VIEW",
+                        "screen_b:VIEW",
+                        "screen_c:VIEW"));
     }
 
     private boolean isBlank(String value) {
@@ -485,14 +814,31 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
 
     private Long findRoleIdByName(String roleName) {
-        List<Long> ids = jdbcTemplate.query("SELECT id FROM roles WHERE name = :name LIMIT 1",
-                new MapSqlParameterSource("name", roleName), (rs, rowNum) -> rs.getLong("id"));
-        return ids.isEmpty() ? null : ids.get(0);
+
+        List<Long> ids = jdbcTemplate.query(
+                """
+                        SELECT role_id
+                        FROM roles
+                        WHERE role_name = :roleName
+                        LIMIT 1
+                        """,
+                new MapSqlParameterSource()
+                        .addValue("roleName", roleName),
+                (rs, rowNum) -> rs.getLong("role_id"));
+
+        return ids.isEmpty()
+                ? null
+                : ids.get(0);
     }
 
     private String findNextEmployeeCode() {
+
         String maxCode = jdbcTemplate.queryForObject(
-                "SELECT MAX(employee_code) FROM users WHERE employee_code LIKE 'EMP%'",
+                """
+                        SELECT MAX(employee_code)
+                        FROM users
+                        WHERE employee_code REGEXP '^EMP[0-9]+$'
+                        """,
                 new MapSqlParameterSource(),
                 String.class);
 
@@ -501,8 +847,13 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
 
         try {
-            int currentNumber = Integer.parseInt(maxCode.substring(3));
-            return String.format("EMP%04d", currentNumber + 1);
+            int currentNumber = Integer.parseInt(
+                    maxCode.substring(3));
+
+            return String.format(
+                    "EMP%04d",
+                    currentNumber + 1);
+
         } catch (RuntimeException ignored) {
             return "EMP0001";
         }
