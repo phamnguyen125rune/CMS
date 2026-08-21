@@ -10,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import IVS.CMS.domain.Permission;
 import IVS.CMS.domain.Role;
 import IVS.CMS.services.UserService;
 
@@ -30,12 +29,12 @@ public class UserDetailsCustom implements UserDetailsService {
             throw new UsernameNotFoundException("Username/Email không tồn tại");
         }
 
-        boolean isAccountActive = !"LOCKED".equalsIgnoreCase(user.getStatus());
+        boolean isAccountActive = Boolean.TRUE.equals(user.getIsActive());
         Set<SimpleGrantedAuthority> authorities = buildAuthorities(user);
 
         return new User(
                 user.getEmail(),
-                user.getPassword(),
+                user.getPasswordHash(),
                 isAccountActive,
                 true,
                 true,
@@ -47,20 +46,11 @@ public class UserDetailsCustom implements UserDetailsService {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
         Role role = user.getRole();
 
-        if (role == null || role.getName() == null || !role.isActive()) {
+        if (role == null || role.getRoleName() == null || !Boolean.TRUE.equals(role.getIsActive())) {
             return authorities;
         }
 
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().trim().toUpperCase()));
-
-        if (role.getPermissions() != null) {
-            for (Permission permission : role.getPermissions()) {
-                permission.normalizePermissionCode();
-                if (permission.getPermissionCode() != null && !permission.getPermissionCode().isBlank()) {
-                    authorities.add(new SimpleGrantedAuthority(permission.getPermissionCode()));
-                }
-            }
-        }
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName().trim().toUpperCase()));
 
         return authorities;
     }

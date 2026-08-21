@@ -1,18 +1,18 @@
 package IVS.CMS.repositories.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
-import IVS.CMS.domain.User;
-import IVS.CMS.repositories.UserRepository;
-import IVS.CMS.repositories.rowMapper.UserRowMapper;
-import IVS.CMS.services.SecurityService;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+
+import IVS.CMS.domain.User;
+import IVS.CMS.repositories.UserRepository;
+import IVS.CMS.repositories.rowMapper.UserRowMapper;
 
 @Repository
 public class UserRepositoryImpl implements UserRepository {
@@ -27,43 +27,83 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public User save(User user) {
-        if (user.getId() == 0) {
-            user.handleBeforeCreate();
-
-            String sql = "INSERT INTO users (employee_code, fullname, email, password, avatar_url, refresh_token, phone, date_of_birth, age, address, gender, role_id, status, deleted, deleted_at, deleted_by, created_at, created_by, updated_at, updated_by) "
-                    + "VALUES (:employeeCode, :fullname, :email, :password, :avatarUrl, :refreshToken, :phone, :dateOfBirth, :age, :address, :gender, :roleId, :status, FALSE, NULL, NULL, :createdAt, :createdBy, :updatedAt, :updatedBy)";
-
+        if (user.getUserId() == null || user.getUserId() == 0) {
+            String sql = """
+                    INSERT INTO users (
+                        employee_code, full_name, email, password_hash, avatar_url, phone_number,
+                        date_of_birth, gender, address, role_id, is_active, is_system,
+                        failed_login_attempts, lock_count, locked_until,
+                        deleted_at, deleted_by, created_at, created_by, updated_at, updated_by
+                    ) VALUES (
+                        :employeeCode, :fullName, :email, :passwordHash, :avatarUrl, :phoneNumber,
+                        :dateOfBirth, :gender, :address, :roleId, :isActive, :isSystem,
+                        :failedLoginAttempts, :lockCount, :lockedUntil,
+                        :deletedAt, :deletedBy, :createdAt, :createdBy, :updatedAt, :updatedBy
+                    )
+                    """;
             KeyHolder keyHolder = new GeneratedKeyHolder();
-            MapSqlParameterSource params = mapperDb.toParams(user);
-            params.addValue("employeeCode", user.getEmployeeCode());
-            jdbcTemplate.update(sql, params, keyHolder, new String[] { "id" });
-
+            jdbcTemplate.update(sql, mapperDb.toParams(user), keyHolder, new String[] { "user_id" });
             if (keyHolder.getKey() != null) {
-                user.setId(keyHolder.getKey().longValue());
+                user.setUserId(keyHolder.getKey().longValue());
             }
         } else {
-            user.handleUpdate();
-
-            String sql = "UPDATE users SET fullname = :fullname, email = :email, password = :password, avatar_url = :avatarUrl, "
-                    + "refresh_token = :refreshToken, phone = :phone, age = :age, address = :address, gender = :gender, "
-                    + "date_of_birth = :dateOfBirth, status = :status, role_id = :roleId, "
-                    + "created_at = :createdAt, created_by = :createdBy, updated_at = :updatedAt, updated_by = :updatedBy "
-                    + "WHERE id = :id";
-
-            MapSqlParameterSource params = mapperDb.toParams(user);
-            params.addValue("id", user.getId());
-            jdbcTemplate.update(sql, params);
+            String sql = """
+                    UPDATE users
+                    SET full_name = :fullName,
+                        email = :email,
+                        password_hash = :passwordHash,
+                        avatar_url = :avatarUrl,
+                        phone_number = :phoneNumber,
+                        date_of_birth = :dateOfBirth,
+                        gender = :gender,
+                        address = :address,
+                        role_id = :roleId,
+                        is_active = :isActive,
+                        is_system = :isSystem,
+                        failed_login_attempts = :failedLoginAttempts,
+                        lock_count = :lockCount,
+                        locked_until = :lockedUntil,
+                        updated_at = :updatedAt,
+                        updated_by = :updatedBy
+                    WHERE user_id = :userId
+                    """;
+            jdbcTemplate.update(sql, mapperDb.toParams(user));
         }
         return user;
     }
 
     @Override
+    public Optional<User> findById(long userId) {
+        String sql = """
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE u.user_id = :userId AND u.deleted_at IS NULL
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
+        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+    }
+
+    @Override
+    public Optional<User> findByIdIncludeDeleted(long userId) {
+        String sql = """
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE u.user_id = :userId
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
+        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+    }
+
+    @Override
     public List<User> findAll(int limit, int offset) {
         String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
                 FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.deleted = FALSE
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE u.deleted_at IS NULL
+                ORDER BY u.created_at DESC
                 LIMIT :limit OFFSET :offset
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -73,140 +113,82 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findById(long id) {
-        String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
-                FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.id = :id AND u.deleted = FALSE
-                """;
-        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+    public long count() {
+        String sql = "SELECT COUNT(1) FROM users WHERE deleted_at IS NULL";
+        Long count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource(), Long.class);
+        return count != null ? count : 0L;
     }
 
     @Override
     public User findByEmail(String email) {
         String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
                 FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.email = :email AND u.deleted = FALSE
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE LOWER(u.email) = LOWER(:email) AND u.deleted_at IS NULL
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource("email", email);
+        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
+    }
+
+    @Override
+    public User findByEmployeeCode(String employeeCode) {
+        String sql = """
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE u.employee_code = :employeeCode AND u.deleted_at IS NULL
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource("employeeCode", employeeCode);
+        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
+    }
+
+    @Override
+    public User findByEmailOrEmployeeCode(String loginId) {
+        String sql = """
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE (LOWER(u.email) = LOWER(:loginId) OR u.employee_code = :loginId)
+                  AND u.deleted_at IS NULL
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource("loginId", loginId);
         return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        String sql = "SELECT COUNT(1) FROM users WHERE email = :email";
-        MapSqlParameterSource params = new MapSqlParameterSource("email", email);
+        String sql = "SELECT COUNT(1) FROM users WHERE LOWER(email) = LOWER(:email)";
+        Integer count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource("email", email), Integer.class);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean existsByEmailForUpdate(long userId, String email) {
+        String sql = "SELECT COUNT(1) FROM users WHERE LOWER(email) = LOWER(:email) AND user_id != :userId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("email", email)
+                .addValue("userId", userId);
         Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
         return count != null && count > 0;
     }
 
     @Override
-    public User findByRefreshTokenAndEmail(String refreshToken, String email) {
-        String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
-                FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.refresh_token = :refreshToken AND u.email = :email AND u.deleted = FALSE
-                """;
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        String sql = "SELECT COUNT(1) FROM users WHERE phone_number = :phoneNumber";
+        Integer count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource("phoneNumber", phoneNumber),
+                Integer.class);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean existsByPhoneNumberForUpdate(long userId, String phoneNumber) {
+        String sql = "SELECT COUNT(1) FROM users WHERE phone_number = :phoneNumber AND user_id != :userId";
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("refreshToken", refreshToken)
-                .addValue("email", email);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
-    }
-
-    @Override
-    public int softDelete(long id, long currentUserId, String deletedBy) {
-        String sql = """
-                UPDATE users AS u
-                SET deleted = TRUE,
-                    deleted_at = NOW(6),
-                    deleted_by = :deletedBy,
-                    updated_at = NOW(6),
-                    updated_by = :deletedBy
-                WHERE u.id = :id
-                  AND u.deleted = FALSE
-                  AND u.id <> :currentUserId
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM roles r
-                      WHERE r.id = u.role_id
-                        AND UPPER(TRIM(r.name)) = :protectedRole
-                  )
-                """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("currentUserId", currentUserId)
-                .addValue("deletedBy", deletedBy)
-                .addValue("protectedRole", "SUPER_ADMIN");
-
-        return jdbcTemplate.update(sql, params);
-    }
-
-    @Override
-    public int hardDelete(long id, long currentUserId) {
-        String sql = """
-                DELETE u
-                FROM users AS u
-                WHERE u.id = :id
-                  AND u.deleted = TRUE
-                  AND u.id <> :currentUserId
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM roles r
-                      WHERE r.id = u.role_id
-                        AND UPPER(TRIM(r.name)) = :protectedRole
-                  )
-                """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("currentUserId", currentUserId)
-                .addValue("protectedRole", "SUPER_ADMIN");
-
-        return jdbcTemplate.update(sql, params);
-    }
-
-    @Override
-    public void restore(long id) {
-        String sql = """
-                UPDATE users
-                SET deleted = FALSE,
-                    deleted_at = NULL,
-                    deleted_by = NULL,
-                    updated_at = NOW(6),
-                    updated_by = :updatedBy
-                WHERE id = :id AND deleted = TRUE
-                """;
-
-        String updatedBy = SecurityService.getCurrentUserLogin().orElse("system");
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("updatedBy", updatedBy);
-        jdbcTemplate.update(sql, params);
-    }
-
-    @Override
-    public Optional<User> findByIdIncludeDeleted(long id) {
-        String sql = """
-                SELECT u.*, r.id AS role_id, r.name AS role_name, r.description AS role_description, r.active AS role_active
-                FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.id = :id
-                """;
-        MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
-    }
-
-    @Override
-    public long count() {
-        String sql = "SELECT COUNT(1) FROM users WHERE deleted = FALSE";
-        Long count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource(), Long.class);
-        return count != null ? count : 0L;
+                .addValue("phoneNumber", phoneNumber)
+                .addValue("userId", userId);
+        Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null && count > 0;
     }
 
     @Override
@@ -218,111 +200,129 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public List<User> findByRoleId(long roleId) {
         String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
                 FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.role_id = :roleId
-                  AND u.deleted = FALSE
-                ORDER BY u.fullname ASC, u.id ASC
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE u.role_id = :roleId AND u.deleted_at IS NULL
+                ORDER BY u.full_name ASC, u.user_id ASC
                 """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource("roleId", roleId);
-
-        return jdbcTemplate.query(sql, params, mapperDb);
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("roleId", roleId), mapperDb);
     }
 
     @Override
     public long countByRoleId(long roleId) {
-        String sql = """
-                SELECT COUNT(1)
-                FROM users
-                WHERE role_id = :roleId
-                  AND deleted = FALSE
-                """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource("roleId", roleId);
-        Long count = jdbcTemplate.queryForObject(sql, params, Long.class);
+        String sql = "SELECT COUNT(1) FROM users WHERE role_id = :roleId AND deleted_at IS NULL";
+        Long count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource("roleId", roleId), Long.class);
         return count != null ? count : 0L;
     }
 
     @Override
     public List<User> findByRoleName(String roleName) {
         String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
                 FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE LOWER(r.name) = LOWER(:roleName)
-                  AND u.deleted = FALSE
-                ORDER BY u.fullname ASC, u.id ASC
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE LOWER(r.role_name) = LOWER(:roleName) AND u.deleted_at IS NULL
+                ORDER BY u.full_name ASC, u.user_id ASC
                 """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource("roleName", roleName);
-
-        return jdbcTemplate.query(sql, params, mapperDb);
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("roleName", roleName), mapperDb);
     }
 
     @Override
-    public void updateUserRole(long userId, long roleId) {
+    public int softDelete(long userId, long currentUserId, LocalDateTime deletedAt) {
         String sql = """
-                UPDATE users
-                SET role_id = :roleId,
-                    updated_at = NOW(6),
-                    updated_by = :updatedBy
-                WHERE id = :userId
-                  AND deleted = FALSE
+                UPDATE users AS u
+                SET deleted_at = :deletedAt,
+                    deleted_by = :currentUserId,
+                    updated_at = :deletedAt,
+                    updated_by = :currentUserId
+                WHERE u.user_id = :userId
+                  AND u.deleted_at IS NULL
+                  AND u.user_id <> :currentUserId
+                  AND u.is_system = FALSE
                 """;
-
-        String updatedBy = SecurityService.getCurrentUserLogin().orElse("system");
-
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("userId", userId)
-                .addValue("roleId", roleId)
-                .addValue("updatedBy", updatedBy);
+                .addValue("currentUserId", currentUserId)
+                .addValue("deletedAt", deletedAt);
+        return jdbcTemplate.update(sql, params);
+    }
 
+    @Override
+    public int hardDelete(long userId, long currentUserId) {
+        String sql = """
+                DELETE FROM users
+                WHERE user_id = :userId
+                  AND deleted_at IS NOT NULL
+                  AND user_id <> :currentUserId
+                  AND is_system = FALSE
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("currentUserId", currentUserId);
+        return jdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public void restore(long userId, long currentUserId, LocalDateTime updatedAt) {
+        String sql = """
+                UPDATE users
+                SET deleted_at = NULL,
+                    deleted_by = NULL,
+                    updated_at = :updatedAt,
+                    updated_by = :currentUserId
+                WHERE user_id = :userId AND deleted_at IS NOT NULL
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("currentUserId", currentUserId)
+                .addValue("updatedAt", updatedAt);
         jdbcTemplate.update(sql, params);
     }
 
-    // Thêm vào implements
     @Override
     public List<User> findDeletedUsers() {
-        String sql = "SELECT u.*, r.name AS role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.deleted = TRUE ORDER BY u.deleted_at DESC";
+        String sql = """
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE u.deleted_at IS NOT NULL
+                ORDER BY u.deleted_at DESC
+                """;
         return jdbcTemplate.query(sql, new MapSqlParameterSource(), mapperDb);
     }
 
     @Override
-    public void updateStatus(long id, String status) {
-        String sql = "UPDATE users SET status = :status, updated_at = NOW(6), updated_by = :updatedBy WHERE id = :id AND deleted = FALSE";
+    public void updateStatus(long userId, boolean isActive, Long updatedBy, LocalDateTime updatedAt) {
+        String sql = """
+                UPDATE users
+                SET is_active = :isActive,
+                    updated_at = :updatedAt,
+                    updated_by = :updatedBy
+                WHERE user_id = :userId AND deleted_at IS NULL
+                """;
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("status", status)
-                .addValue("updatedBy", SecurityService.getCurrentUserLogin().orElse("system"));
+                .addValue("userId", userId)
+                .addValue("isActive", isActive)
+                .addValue("updatedBy", updatedBy)
+                .addValue("updatedAt", updatedAt);
         jdbcTemplate.update(sql, params);
     }
 
     @Override
-    public User findByEmployeeCode(String employeeCode) {
+    public void updatePassword(long userId, String passwordHash, Long updatedBy, LocalDateTime updatedAt) {
         String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
-                FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.employee_code = :employeeCode AND u.deleted = FALSE
+                UPDATE users
+                SET password_hash = :passwordHash,
+                    updated_at = :updatedAt,
+                    updated_by = :updatedBy
+                WHERE user_id = :userId AND deleted_at IS NULL
                 """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource("employeeCode", employeeCode);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
-    }
-
-    @Override
-    public User findByEmailOrEmployeeCode(String loginId) {
-        String sql = """
-                SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
-                FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE (u.email = :loginId OR u.employee_code = :loginId)
-                  AND u.deleted = FALSE
-                """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource("loginId", loginId);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("passwordHash", passwordHash)
+                .addValue("updatedBy", updatedBy)
+                .addValue("updatedAt", updatedAt);
+        jdbcTemplate.update(sql, params);
     }
 }

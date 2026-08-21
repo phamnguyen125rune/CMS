@@ -1,5 +1,6 @@
 package IVS.CMS.repositories;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,7 +13,7 @@ public interface UserRepository {
 
     User save(User user);
 
-    Optional<User> findById(long id);
+    Optional<User> findById(long userId);
 
     List<User> findAll(int limit, int offset);
 
@@ -20,15 +21,19 @@ public interface UserRepository {
 
     boolean existsByEmail(String email);
 
-    User findByRefreshTokenAndEmail(String refreshToken, String email);
+    int softDelete(long userId, long currentUserId, LocalDateTime deletedAt);
 
-    int softDelete(long id, long currentUserId, String deletedBy);
+    int hardDelete(long userId, long currentUserId);
 
-    int hardDelete(long id, long currentUserId);
+    void restore(long userId, long currentUserId, LocalDateTime updatedAt);
 
-    void restore(long id);
+    boolean existsByEmailForUpdate(long userId, String email);
 
-    Optional<User> findByIdIncludeDeleted(long id);
+    boolean existsByPhoneNumber(String phoneNumber);
+
+    boolean existsByPhoneNumberForUpdate(long userId, String phoneNumber);
+
+    Optional<User> findByIdIncludeDeleted(long userId);
 
     long count();
 
@@ -40,13 +45,14 @@ public interface UserRepository {
 
     List<User> findByRoleName(String roleName);
 
-    void updateUserRole(long userId, long roleId);
-
     List<User> findDeletedUsers();
 
-    void updateStatus(long id, String status);
+    void updateStatus(long userId, boolean isActive, Long updatedBy, LocalDateTime updatedAt);
+
+    void updatePassword(long userId, String passwordHash, Long updatedBy, LocalDateTime updatedAt);
 
     User findByEmployeeCode(String employeeCode);
 
     User findByEmailOrEmployeeCode(String loginId);
+
 }

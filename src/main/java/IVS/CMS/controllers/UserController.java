@@ -64,8 +64,9 @@ public class UserController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('users:EDIT')")
-    public ReqUserUpdateDTO putUser(@PathVariable("id") Long id, @Valid @RequestBody ReqUserUpdateDTO req) {
-        return this.userService.UpdateUser(id, req);
+    public ResponseEntity<ResUserDTO> updateUser(@PathVariable("id") Long id,
+            @Valid @RequestBody ReqUserUpdateDTO req) {
+        return ResponseEntity.ok(this.userService.updateUser(id, req));
     }
 
     @GetMapping
@@ -105,8 +106,8 @@ public class UserController {
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAuthority('users:EDIT')")
-    public ResponseEntity<Void> toggleStatus(@PathVariable("id") long id, @RequestBody Map<String, String> body) {
-        this.userService.toggleUserStatus(id, body.get("status"));
+    public ResponseEntity<Void> toggleStatus(@PathVariable("id") long id, @RequestBody Map<String, Boolean> body) {
+        this.userService.toggleUserStatus(id, body.get("isActive"));
         return ResponseEntity.ok().build();
     }
 

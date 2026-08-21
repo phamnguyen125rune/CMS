@@ -9,16 +9,16 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.PostCategory;
-import IVS.CMS.repositories.CategoryRepository;
-import IVS.CMS.repositories.rowMapper.CategoryRowMapper;
+import IVS.CMS.repositories.PostCategoryRepository;
+import IVS.CMS.repositories.rowMapper.PostCategoryRowMapper;
 
 @Repository
-public class CategoryRepositoryImpl implements CategoryRepository {
+public class PostCategoryRepositoryImpl implements PostCategoryRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final CategoryRowMapper mapperDb;
+    private final PostCategoryRowMapper mapperDb;
 
-    public CategoryRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, CategoryRowMapper mapperDb) {
+    public PostCategoryRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, PostCategoryRowMapper mapperDb) {
         this.jdbcTemplate = jdbcTemplate;
         this.mapperDb = mapperDb;
     }

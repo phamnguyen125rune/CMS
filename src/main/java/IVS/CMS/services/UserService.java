@@ -1,7 +1,6 @@
 package IVS.CMS.services;
 
 import java.util.List;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import IVS.CMS.domain.User;
@@ -14,44 +13,39 @@ import IVS.CMS.domain.dto.response.ResUserDTO;
 import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 
 public interface UserService {
+    ResUserCreateDTO createUser(ReqUserCreateDTO user);
 
-    public ResUserCreateDTO createUser(ReqUserCreateDTO user);
+    User fetchUserById(long userId);
 
-    public User fetchUserById(long id);
+    ResUserDTO getUserById(long userId);
 
-    public ResUserDTO getUserById(long id);
+    ResultPaginationDTO findAll(int page, int pageSize);
 
-    public ResultPaginationDTO findAll(int page, int pageSize);
+    ResUserDTO updateUser(long userId, ReqUserUpdateDTO req);
 
-    public ReqUserUpdateDTO UpdateUser(long id, ReqUserUpdateDTO req);
+    void changePassword(ReqChangePasswordDTO req);
 
-    public void changePassword(ReqChangePasswordDTO req);
+    User handleGetUserByEmail(String email);
 
-    public User handleGetUserByEmail(String username);
+    User handleGetUserByEmailOrEmployeeCode(String loginId);
 
-    void updateUserToken(String token, String email);
+    ResUserCreateDTO register(ReqUserCreateDTO req);
 
-    public User getUserByRefreshTokenAndEmail(String refreshToken, String email);
+    void softDeleteUser(Long userId);
 
-    public ResUserCreateDTO register(ReqUserCreateDTO req);
+    void hardDeleteUser(Long userId);
 
-    void softDeleteUser(Long id);
-
-    void hardDeleteUser(Long id);
-
-    void restoreUser(Long id);
+    void restoreUser(Long userId);
 
     List<ResUserDTO> getDeletedUsers();
 
-    void toggleUserStatus(long id, String status);
+    void toggleUserStatus(long userId, Boolean isActive);
 
-    void resetUserPassword(long id);
+    void resetUserPassword(long userId);
 
     String uploadMyAvatar(MultipartFile file);
 
     ResUserDTO getMyProfile();
 
     ResUserDTO updateMyProfile(ReqUpdateProfileDTO req);
-
-    User handleGetUserByEmailOrEmployeeCode(String loginId);
 }
