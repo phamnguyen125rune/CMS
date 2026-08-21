@@ -2,19 +2,16 @@ package IVS.CMS.domain;
 
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Getter
 @Setter
 public class MediaLibrary {
-
     private Long mediaId;
 
-    @NotBlank(message = "Tên file mã hóa không được để trống")
+    @NotBlank(message = "Tên file không được để trống")
     private String fileName;
 
     @NotBlank(message = "Tên file gốc không được để trống")
@@ -29,10 +26,11 @@ public class MediaLibrary {
     @NotBlank(message = "Loại file không được để trống")
     private String fileType;
 
-    @NotNull(message = "Kích thước file không được để trống")
+    @NotNull(message = "Kích thước file không được trống")
     private Long fileSize;
 
-    private Long uploadedBy;
-
-    private LocalDateTime uploadedAt;
+    private Long createdBy;
+    private LocalDateTime createdAt;
+    private Long updatedBy;
+    private LocalDateTime updatedAt;
 }

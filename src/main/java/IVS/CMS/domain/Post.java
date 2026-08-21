@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import IVS.CMS.domain.constants.PostStatusEnum;
 import jakarta.validation.constraints.NotBlank;
@@ -30,4 +32,8 @@ public class Post {
 
     private Long createdBy;
     private Long updatedBy;
+
+    // private List<Tag> tags = new ArrayList<>();
+
+    // private List<PostMedia> postMedias = new ArrayList<>();
 }

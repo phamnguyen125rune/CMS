@@ -6,16 +6,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Permission {
-    private Long permissionId;
-    private Long actionId;
-    private Long apiId;
+public class RefreshToken {
+    private Long refreshTokenId;
+    private Long userId;
+    private String token;
+    private LocalDateTime expiredAt;
 
     private LocalDateTime createdAt;
     private Long createdBy;
     private LocalDateTime updatedAt;
     private Long updatedBy;
-
-    private Action action;
-    private Api api;
 }

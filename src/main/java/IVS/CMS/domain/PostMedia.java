@@ -6,10 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PostMedia {
-
-    private Long postMediaId;
     private Long postId;
     private Long mediaId;
-
     private Integer displayOrder;
 }
