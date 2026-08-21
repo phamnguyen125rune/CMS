@@ -22,5 +22,4 @@ public interface RoleRepository {
     boolean existsByName(String name);
 
     Optional<Role> findByName(String name);
-
 }
