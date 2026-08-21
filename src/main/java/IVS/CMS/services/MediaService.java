@@ -1,0 +1,22 @@
+package IVS.CMS.services;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
+import IVS.CMS.domain.dto.response.ResMediaDTO;
+
+public interface MediaService {
+    ResMediaDTO upload(MultipartFile file);
+
+    ResponseEntity<Resource> view(long id);
+
+    ResponseEntity<Resource> download(long id);
+
+    List<ResMediaDTO> getAllMedia();
+
+    List<ResMediaDTO> search(String keyword);
+
+    void delete(long id);
+}
