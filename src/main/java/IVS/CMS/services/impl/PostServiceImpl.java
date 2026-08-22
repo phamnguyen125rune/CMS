@@ -14,11 +14,11 @@ import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
 import IVS.CMS.domain.dto.response.ResPostDTO;
 import IVS.CMS.domain.dto.response.ResPostListDTO;
 import IVS.CMS.domain.dto.response.ResultPaginationDTO;
-import IVS.CMS.repositories.CategoryRepository;
+import IVS.CMS.repositories.PostCategoryRepository;
 import IVS.CMS.repositories.PostRepository;
 import IVS.CMS.repositories.UserRepository;
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.PostService;
-import IVS.CMS.services.SecurityService;
 import IVS.CMS.services.error.BadRequestException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 import IVS.CMS.services.mapper.PostMapper;
@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
-    private final CategoryRepository categoryRepository;
+    private final PostCategoryRepository categoryRepository;
     private final PostMapper postMapper;
     private final UserRepository userRepository;
 
@@ -92,11 +92,11 @@ public class PostServiceImpl implements PostService {
 
         if (post.getCreatedBy() != null) {
             this.userRepository.findById(post.getCreatedBy())
-                    .ifPresent(u -> res.getCreatedBy().setFullname(u.getFullname()));
+                    .ifPresent(u -> res.getCreatedBy().setFullname(u.getFullName()));
         }
         if (post.getUpdatedBy() != null) {
             this.userRepository.findById(post.getUpdatedBy())
-                    .ifPresent(u -> res.getUpdatedBy().setFullname(u.getFullname()));
+                    .ifPresent(u -> res.getUpdatedBy().setFullname(u.getFullName()));
         }
         return res;
     }

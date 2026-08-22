@@ -13,17 +13,14 @@ import org.springframework.stereotype.Repository;
 import IVS.CMS.domain.User;
 import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.repositories.rowMapper.UserRowMapper;
+import lombok.RequiredArgsConstructor;
 
 @Repository
+@RequiredArgsConstructor
 public class UserRepositoryImpl implements UserRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final UserRowMapper mapperDb;
-
-    public UserRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, UserRowMapper mapperDb) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.mapperDb = mapperDb;
-    }
 
     @Override
     public User save(User user) {
@@ -80,8 +77,7 @@ public class UserRepositoryImpl implements UserRepository {
                 LEFT JOIN roles r ON u.role_id = r.role_id
                 WHERE u.user_id = :userId AND u.deleted_at IS NULL
                 """;
-        MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("userId", userId), mapperDb).stream().findFirst();
     }
 
     @Override
@@ -92,8 +88,7 @@ public class UserRepositoryImpl implements UserRepository {
                 LEFT JOIN roles r ON u.role_id = r.role_id
                 WHERE u.user_id = :userId
                 """;
-        MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("userId", userId), mapperDb).stream().findFirst();
     }
 
     @Override
@@ -127,8 +122,8 @@ public class UserRepositoryImpl implements UserRepository {
                 LEFT JOIN roles r ON u.role_id = r.role_id
                 WHERE LOWER(u.email) = LOWER(:email) AND u.deleted_at IS NULL
                 """;
-        MapSqlParameterSource params = new MapSqlParameterSource("email", email);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("email", email), mapperDb).stream().findFirst()
+                .orElse(null);
     }
 
     @Override
@@ -139,8 +134,8 @@ public class UserRepositoryImpl implements UserRepository {
                 LEFT JOIN roles r ON u.role_id = r.role_id
                 WHERE u.employee_code = :employeeCode AND u.deleted_at IS NULL
                 """;
-        MapSqlParameterSource params = new MapSqlParameterSource("employeeCode", employeeCode);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("employeeCode", employeeCode), mapperDb).stream()
+                .findFirst().orElse(null);
     }
 
     @Override
@@ -152,8 +147,8 @@ public class UserRepositoryImpl implements UserRepository {
                 WHERE (LOWER(u.email) = LOWER(:loginId) OR u.employee_code = :loginId)
                   AND u.deleted_at IS NULL
                 """;
-        MapSqlParameterSource params = new MapSqlParameterSource("loginId", loginId);
-        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst().orElse(null);
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("loginId", loginId), mapperDb).stream().findFirst()
+                .orElse(null);
     }
 
     @Override

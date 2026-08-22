@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import IVS.CMS.domain.PostCategory;
 
-public interface CategoryRepository {
+public interface PostCategoryRepository {
     PostCategory save(PostCategory category);
 
     Optional<PostCategory> findById(long id);

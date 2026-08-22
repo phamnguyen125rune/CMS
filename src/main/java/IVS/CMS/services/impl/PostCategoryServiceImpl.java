@@ -6,18 +6,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.PostCategory;
-import IVS.CMS.repositories.CategoryRepository;
+import IVS.CMS.repositories.PostCategoryRepository;
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.CategoryService;
-import IVS.CMS.services.SecurityService;
 import IVS.CMS.services.error.BadRequestException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 
 @Service
-public class CategoryServiceImpl implements CategoryService {
+public class PostCategoryServiceImpl implements CategoryService {
 
-    private final CategoryRepository categoryRepository;
+    private final PostCategoryRepository categoryRepository;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+    public PostCategoryServiceImpl(PostCategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
     }
 
@@ -59,8 +59,8 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         currentCategory.setCategoryName(newName);
-        currentCategory.setLastUpdatedAt(LocalDateTime.now());
-        currentCategory.setLastUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
+        currentCategory.setUpdatedAt(LocalDateTime.now());
+        currentCategory.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         return this.categoryRepository.save(currentCategory);
     }

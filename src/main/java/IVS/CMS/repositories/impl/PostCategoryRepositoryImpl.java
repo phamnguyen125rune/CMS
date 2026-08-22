@@ -1,7 +1,10 @@
+// Đường dẫn: IVS/CMS/repositories/impl/CategoryRepositoryImpl.java
+
 package IVS.CMS.repositories.impl;
 
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -10,15 +13,15 @@ import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.PostCategory;
 import IVS.CMS.repositories.PostCategoryRepository;
-import IVS.CMS.repositories.rowMapper.PostCategoryRowMapper;
+import IVS.CMS.repositories.rowMapper.CategoryRowMapper;
 
 @Repository
 public class PostCategoryRepositoryImpl implements PostCategoryRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final PostCategoryRowMapper mapperDb;
+    private final CategoryRowMapper mapperDb;
 
-    public PostCategoryRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, PostCategoryRowMapper mapperDb) {
+    public PostCategoryRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, CategoryRowMapper mapperDb) {
         this.jdbcTemplate = jdbcTemplate;
         this.mapperDb = mapperDb;
     }
@@ -27,21 +30,21 @@ public class PostCategoryRepositoryImpl implements PostCategoryRepository {
     public PostCategory save(PostCategory category) {
         if (category.getCategoryId() == null || category.getCategoryId() == 0) {
             String sql = """
-                    INSERT INTO categories (category_name, created_at, created_by, last_updated_at, last_updated_by)
-                    VALUES (:categoryName, :createdAt, :createdBy, :lastUpdatedAt, :lastUpdatedBy)
+                    INSERT INTO post_categories (category_name, slug, created_at, created_by, updated_at, updated_by)
+                    VALUES (:categoryName, :slug, :createdAt, :createdBy, :updatedAt, :updatedBy)
                     """;
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(sql, mapperDb.toParams(category), keyHolder, new String[] { "category_id" });
-
             if (keyHolder.getKey() != null) {
                 category.setCategoryId(keyHolder.getKey().longValue());
             }
         } else {
             String sql = """
-                    UPDATE categories
+                    UPDATE post_categories
                     SET category_name = :categoryName,
-                        last_updated_at = :lastUpdatedAt,
-                        last_updated_by = :lastUpdatedBy
+                        slug = :slug,
+                        updated_at = :updatedAt,
+                        updated_by = :updatedBy
                     WHERE category_id = :id
                     """;
             jdbcTemplate.update(sql, mapperDb.toParams(category));
@@ -52,8 +55,8 @@ public class PostCategoryRepositoryImpl implements PostCategoryRepository {
     @Override
     public Optional<PostCategory> findById(long id) {
         String sql = """
-                SELECT category_id, category_name, created_at, created_by, last_updated_at, last_updated_by
-                FROM categories
+                SELECT category_id, category_name, slug, created_at, created_by, updated_at, updated_by
+                FROM post_categories
                 WHERE category_id = :id
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource("id", id);
@@ -63,8 +66,8 @@ public class PostCategoryRepositoryImpl implements PostCategoryRepository {
     @Override
     public List<PostCategory> findAll() {
         String sql = """
-                SELECT category_id, category_name, created_at, created_by, last_updated_at, last_updated_by
-                FROM categories
+                SELECT category_id, category_name, slug, created_at, created_by, updated_at, updated_by
+                FROM post_categories
                 ORDER BY category_name ASC
                 """;
         return jdbcTemplate.query(sql, mapperDb);
@@ -72,13 +75,13 @@ public class PostCategoryRepositoryImpl implements PostCategoryRepository {
 
     @Override
     public void delete(long id) {
-        String sql = "DELETE FROM categories WHERE category_id = :id";
+        String sql = "DELETE FROM post_categories WHERE category_id = :id";
         jdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
     }
 
     @Override
     public boolean existsByName(String categoryName) {
-        String sql = "SELECT COUNT(1) FROM categories WHERE category_name = :categoryName";
+        String sql = "SELECT COUNT(1) FROM post_categories WHERE category_name = :categoryName";
         MapSqlParameterSource params = new MapSqlParameterSource("categoryName", categoryName);
         Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
         return count != null && count > 0;
@@ -86,7 +89,7 @@ public class PostCategoryRepositoryImpl implements PostCategoryRepository {
 
     @Override
     public boolean existsByNameForUpdate(long id, String categoryName) {
-        String sql = "SELECT COUNT(1) FROM categories WHERE category_name = :categoryName AND category_id != :id";
+        String sql = "SELECT COUNT(1) FROM post_categories WHERE category_name = :categoryName AND category_id != :id";
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("categoryName", categoryName)
                 .addValue("id", id);

@@ -29,12 +29,12 @@ public class CategoryRowMapper implements RowMapper<PostCategory> {
 
         Timestamp updatedAt = rs.getTimestamp("last_updated_at");
         if (updatedAt != null) {
-            category.setLastUpdatedAt(updatedAt.toLocalDateTime());
+            category.setUpdatedAt(updatedAt.toLocalDateTime());
         }
 
         Object updatedByObj = rs.getObject("last_updated_by");
         if (updatedByObj != null) {
-            category.setLastUpdatedBy(((Number) updatedByObj).longValue());
+            category.setUpdatedBy(((Number) updatedByObj).longValue());
         }
 
         return category;
@@ -46,7 +46,7 @@ public class CategoryRowMapper implements RowMapper<PostCategory> {
                 .addValue("categoryName", category.getCategoryName())
                 .addValue("createdAt", category.getCreatedAt())
                 .addValue("createdBy", category.getCreatedBy())
-                .addValue("lastUpdatedAt", category.getLastUpdatedAt())
-                .addValue("lastUpdatedBy", category.getLastUpdatedBy());
+                .addValue("lastUpdatedAt", category.getUpdatedAt())
+                .addValue("lastUpdatedBy", category.getUpdatedBy());
     }
 }

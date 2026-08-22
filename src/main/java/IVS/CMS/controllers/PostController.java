@@ -31,14 +31,12 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('posts:EDIT')")
     public ResponseEntity<ResPostDTO> createPost(@Valid @RequestBody ReqPostCreateDTO req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(this.postService.createPost(req));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('posts:EDIT')")
     public ResponseEntity<ResPostDTO> updatePost(
             @PathVariable("id") long id,
             @Valid @RequestBody ReqPostUpdateDTO req) {
@@ -46,13 +44,11 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('posts:VIEW')")
     public ResponseEntity<ResPostDTO> getPostById(@PathVariable("id") long id) {
         return ResponseEntity.ok(this.postService.getPostById(id));
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('posts:VIEW')")
     public ResponseEntity<ResultPaginationDTO> getAllPosts(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int pageSize) {
@@ -60,14 +56,12 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('posts:EDIT')")
     public ResponseEntity<Void> deletePost(@PathVariable("id") long id) {
         this.postService.deletePost(id);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('posts:EDIT')")
     public ResponseEntity<Void> changeStatus(
             @PathVariable("id") long id,
             @RequestBody Map<String, String> body) {
