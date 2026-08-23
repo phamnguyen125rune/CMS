@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.PostCategory;
 import IVS.CMS.domain.Post;
+import IVS.CMS.domain.User;
 import IVS.CMS.domain.constants.PostStatusEnum;
 import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
 import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
@@ -31,8 +32,8 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final PostCategoryRepository categoryRepository;
-    private final PostMapper postMapper;
     private final UserRepository userRepository;
+    private final PostMapper postMapper;
 
     @Override
     @Transactional
@@ -40,16 +41,20 @@ public class PostServiceImpl implements PostService {
         if (this.postRepository.existsBySlug(req.getSlug())) {
             throw new BadRequestException("Đường dẫn (slug) '" + req.getSlug() + "' đã tồn tại");
         }
+
         PostCategory category = this.categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại"));
 
         Post post = this.postMapper.reqCreateToPost(req);
+
         post.setStatus(PostStatusEnum.DRAFT);
         post.setCreatedAt(LocalDateTime.now());
         post.setCreatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         Post savedPost = this.postRepository.save(post);
-        return this.postMapper.postToResPostDTO(savedPost, category);
+
+        String authorName = getAuthorName(savedPost.getCreatedBy());
+        return this.postMapper.postToResPostDTO(savedPost, category, authorName, null);
     }
 
     @Override
@@ -66,39 +71,63 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại"));
 
         Post tempPost = this.postMapper.reqUpdateToPost(req);
+
         currentPost.setTitle(tempPost.getTitle());
         currentPost.setSlug(tempPost.getSlug());
         currentPost.setSummary(tempPost.getSummary());
         currentPost.setContent(tempPost.getContent());
         currentPost.setCategoryId(tempPost.getCategoryId());
 
+        currentPost.setMetaTitle(tempPost.getMetaTitle());
+        currentPost.setMetaDescription(tempPost.getMetaDescription());
+        currentPost.setCanonicalUrl(tempPost.getCanonicalUrl());
+        if (tempPost.getIsIndexable() != null)
+            currentPost.setIsIndexable(tempPost.getIsIndexable());
+        if (tempPost.getIsFollowable() != null)
+            currentPost.setIsFollowable(tempPost.getIsFollowable());
+        currentPost.setOgTitle(tempPost.getOgTitle());
+        currentPost.setOgDescription(tempPost.getOgDescription());
+        currentPost.setOgImageId(tempPost.getOgImageId());
+        currentPost.setFeaturedMediaId(tempPost.getFeaturedMediaId());
+
         if (tempPost.getStatus() != null) {
             currentPost.setStatus(tempPost.getStatus());
+            if (tempPost.getStatus() == PostStatusEnum.PUBLISHED) {
+                if (tempPost.getPublishedAt() != null) {
+                    currentPost.setPublishedAt(tempPost.getPublishedAt());
+                } else if (currentPost.getPublishedAt() == null) {
+                    currentPost.setPublishedAt(LocalDateTime.now());
+                }
+            } else {
+                currentPost.setPublishedAt(tempPost.getPublishedAt());
+            }
         }
 
         currentPost.setUpdatedAt(LocalDateTime.now());
         currentPost.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         Post updatedPost = this.postRepository.save(currentPost);
-        return this.postMapper.postToResPostDTO(updatedPost, category);
+
+        String authorName = getAuthorName(updatedPost.getCreatedBy());
+        return this.postMapper.postToResPostDTO(updatedPost, category, authorName, null);
     }
 
     @Override
     public ResPostDTO getPostById(long id) {
         Post post = this.postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
-        PostCategory category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
-        ResPostDTO res = this.postMapper.postToResPostDTO(post, category);
 
-        if (post.getCreatedBy() != null) {
-            this.userRepository.findById(post.getCreatedBy())
-                    .ifPresent(u -> res.getCreatedBy().setFullname(u.getFullName()));
+        PostCategory category = null;
+        if (post.getCategoryId() != null && post.getCategoryId() > 0) {
+            category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
         }
-        if (post.getUpdatedBy() != null) {
-            this.userRepository.findById(post.getUpdatedBy())
-                    .ifPresent(u -> res.getUpdatedBy().setFullname(u.getFullName()));
-        }
-        return res;
+
+        String authorName = getAuthorName(post.getCreatedBy());
+
+        // Cần truyền URL thực tế của Media thông qua query nếu cần (tạm để null)
+        String ogImageUrl = null;
+
+        return this.postMapper.postToResPostDTO(post, category, authorName, ogImageUrl);
     }
 
     @Override
@@ -145,8 +174,13 @@ public class PostServiceImpl implements PostService {
             Long updatedBy = SecurityService.getCurrentUserId().orElse(null);
             this.postRepository.updateStatus(post.getPostId(), newStatus.name(), updatedBy);
         } catch (IllegalArgumentException e) {
-            throw new BadRequestException(
-                    "Trạng thái bài viết không hợp lệ. Chấp nhận: DRAFT, PENDING, PUBLISHED,...");
+            throw new BadRequestException("Trạng thái bài viết không hợp lệ.");
         }
+    }
+
+    private String getAuthorName(Long userId) {
+        if (userId == null)
+            return "System";
+        return this.userRepository.findById(userId).map(User::getFullName).orElse("System");
     }
 }

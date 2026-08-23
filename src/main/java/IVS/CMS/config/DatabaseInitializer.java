@@ -199,13 +199,33 @@ public class DatabaseInitializer {
                 slug VARCHAR(255) NOT NULL UNIQUE,
                 summary TEXT(65535),
                 content LONGTEXT,
+				
+				-- Nhóm Metadata
+				meta_title VARCHAR(255),
+				meta_description VARCHAR(320),
+				canonical_url VARCHAR(255),
+				is_indexable BOOLEAN NOT NULL DEFAULT TRUE, 
+				is_followable BOOLEAN NOT NULL DEFAULT TRUE, 
+	
+				-- Nhóm OpenGraph (Mạng xã hội)
+				og_title VARCHAR(255),
+				og_description VARCHAR(320),
+				og_image_id INTEGER UNSIGNED,
+				featured_media_id INTEGER UNSIGNED,
+				
                 status ENUM('pending', 'draft', 'rejected', 'deleted', 'approved', 'published', 'unpublished') NOT NULL,
                 category_id INTEGER UNSIGNED,
-                created_at DATETIME(6),
-                created_by INTEGER UNSIGNED,
+				
+				published_at DATETIME,
+                created_at DATETIME(6) NOT NULL,
+                created_by INTEGER UNSIGNED NOT NULL,
                 updated_at DATETIME(6),
                 updated_by INTEGER UNSIGNED,
-                CONSTRAINT fk_post_category FOREIGN KEY (category_id) REFERENCES post_categories(category_id) ON DELETE RESTRICT
+				
+				
+                CONSTRAINT fk_post_category FOREIGN KEY (category_id) REFERENCES post_categories(category_id) ON DELETE RESTRICT,
+                CONSTRAINT fk_post_og_image FOREIGN KEY (og_image_id) REFERENCES media_library(media_id) ON DELETE SET NULL,
+                CONSTRAINT fk_post_featured_media FOREIGN KEY (featured_media_id) REFERENCES media_library(media_id) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
             -- ============================================================
