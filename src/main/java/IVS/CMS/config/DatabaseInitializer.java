@@ -158,6 +158,243 @@ public class DatabaseInitializer implements CommandLineRunner {
                             INDEX idx_cms_records_module_status (module_key, status),
                             INDEX idx_cms_records_deleted_updated (deleted, updated_at)
                         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS actions (
+                            action_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            action_name VARCHAR(30) NOT NULL
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS apis (
+                            api_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            api_link VARCHAR(255) NOT NULL,
+                            api_description VARCHAR(255)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS refresh_tokens (
+                            refresh_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            user_id BIGINT NOT NULL,
+                            token TEXT NOT NULL,
+                            expired_at DATETIME NOT NULL,
+                            created_at DATETIME(6),
+                            created_by VARCHAR(255),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255),
+                            CONSTRAINT fk_refresh_token_user
+                                FOREIGN KEY (user_id)
+                                REFERENCES users(user_id)
+                                ON DELETE CASCADE
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS audit_logs (
+                            log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            user_id BIGINT,
+                            entity_type VARCHAR(255) NOT NULL,
+                            entity_id BIGINT NOT NULL,
+                            action VARCHAR(255) NOT NULL,
+                            old_value TEXT,
+                            new_value TEXT,
+                            created_at DATETIME(6),
+                            status_code INTEGER NOT NULL,
+                            INDEX idx_audit_logs_user_created (user_id, created_at),
+                            CONSTRAINT fk_audit_log_user
+                                FOREIGN KEY (user_id)
+                                REFERENCES users(user_id)
+                                ON DELETE SET NULL
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS media_library (
+                            media_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            file_name VARCHAR(255) NOT NULL,
+                            upload_file_name VARCHAR(255),
+                            file_path TEXT NOT NULL,
+                            mime_type VARCHAR(100) NOT NULL,
+                            file_type VARCHAR(50) NOT NULL,
+                            file_size BIGINT NOT NULL,
+                            created_by VARCHAR(255),
+                            created_at DATETIME(6),
+                            updated_by VARCHAR(255),
+                            updated_at DATETIME(6)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS post_categories (
+                            category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            category_name VARCHAR(100) NOT NULL,
+                            slug VARCHAR(255) NOT NULL UNIQUE,
+                            created_at DATETIME(6),
+                            created_by VARCHAR(255),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS posts (
+                            post_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            title VARCHAR(255) NOT NULL,
+                            slug VARCHAR(255) NOT NULL UNIQUE,
+                            summary TEXT,
+                            content LONGTEXT,
+                            meta_title VARCHAR(255),
+                            meta_description VARCHAR(320),
+                            canonical_url VARCHAR(255),
+                            is_indexable BOOLEAN NOT NULL DEFAULT TRUE,
+                            is_followable BOOLEAN NOT NULL DEFAULT TRUE,
+                            og_title VARCHAR(255),
+                            og_description VARCHAR(320),
+                            og_image_id BIGINT,
+                            featured_media_id BIGINT,
+                            status VARCHAR(30) NOT NULL DEFAULT 'draft',
+                            category_id BIGINT,
+                            published_at DATETIME,
+                            created_at DATETIME(6) NOT NULL,
+                            created_by VARCHAR(255) NOT NULL,
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255),
+                            CONSTRAINT fk_post_category
+                                FOREIGN KEY (category_id)
+                                REFERENCES post_categories(category_id)
+                                ON DELETE RESTRICT,
+                            CONSTRAINT fk_post_og_image
+                                FOREIGN KEY (og_image_id)
+                                REFERENCES media_library(media_id)
+                                ON DELETE SET NULL,
+                            CONSTRAINT fk_post_featured_media
+                                FOREIGN KEY (featured_media_id)
+                                REFERENCES media_library(media_id)
+                                ON DELETE SET NULL
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS post_reviews (
+                            review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            post_id BIGINT NOT NULL,
+                            reviewer_id BIGINT,
+                            action VARCHAR(30) NOT NULL,
+                            comment TEXT,
+                            created_at DATETIME(6),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255),
+                            CONSTRAINT fk_review_post
+                                FOREIGN KEY (post_id)
+                                REFERENCES posts(post_id)
+                                ON DELETE CASCADE,
+                            CONSTRAINT fk_review_reviewer
+                                FOREIGN KEY (reviewer_id)
+                                REFERENCES users(user_id)
+                                ON DELETE SET NULL
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS tags (
+                            tag_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            tag_name VARCHAR(100) NOT NULL,
+                            slug VARCHAR(255) NOT NULL UNIQUE,
+                            created_at DATETIME(6),
+                            created_by VARCHAR(255),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS post_tag (
+                            tag_id BIGINT NOT NULL,
+                            post_id BIGINT NOT NULL,
+                            PRIMARY KEY (tag_id, post_id),
+                            CONSTRAINT fk_post_tag_tag
+                                FOREIGN KEY (tag_id)
+                                REFERENCES tags(tag_id)
+                                ON DELETE CASCADE,
+                            CONSTRAINT fk_post_tag_post
+                                FOREIGN KEY (post_id)
+                                REFERENCES posts(post_id)
+                                ON DELETE CASCADE
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS post_media (
+                            post_id BIGINT NOT NULL,
+                            media_id BIGINT NOT NULL,
+                            display_order TINYINT NOT NULL,
+                            PRIMARY KEY (post_id, media_id),
+                            CONSTRAINT fk_post_media_post
+                                FOREIGN KEY (post_id)
+                                REFERENCES posts(post_id)
+                                ON DELETE CASCADE,
+                            CONSTRAINT fk_post_media_media
+                                FOREIGN KEY (media_id)
+                                REFERENCES media_library(media_id)
+                                ON DELETE CASCADE
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS form_categories (
+                            form_category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            category_name VARCHAR(255) NOT NULL,
+                            created_at DATETIME(6),
+                            created_by VARCHAR(255),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS form_details (
+                            form_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            form_code VARCHAR(50) NOT NULL UNIQUE,
+                            full_name VARCHAR(100) NOT NULL,
+                            email VARCHAR(255) NOT NULL,
+                            phone_number VARCHAR(20) NOT NULL,
+                            company VARCHAR(255),
+                            form_category_id BIGINT NOT NULL,
+                            message TEXT NOT NULL,
+                            status VARCHAR(30) NOT NULL DEFAULT 'NEW',
+                            reply_message TEXT,
+                            created_at DATETIME(6),
+                            CONSTRAINT fk_form_category
+                                FOREIGN KEY (form_category_id)
+                                REFERENCES form_categories(form_category_id)
+                                ON DELETE RESTRICT
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS general_info (
+                            general_info_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            logo VARCHAR(255) NOT NULL,
+                            company_name VARCHAR(255) NOT NULL,
+                            website_name VARCHAR(100),
+                            website_description TEXT,
+                            email VARCHAR(255),
+                            facebook_link VARCHAR(255),
+                            twitter_link VARCHAR(255),
+                            instagram_link VARCHAR(255),
+                            linkedin_link VARCHAR(255),
+                            youtube_link VARCHAR(255),
+                            zalo_link VARCHAR(255),
+                            company_phone_number VARCHAR(50),
+                            created_at DATETIME(6),
+                            created_by VARCHAR(255),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        """,
+                """
+                        CREATE TABLE IF NOT EXISTS menu (
+                            menu_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                            title VARCHAR(255) NOT NULL,
+                            url VARCHAR(500) NOT NULL,
+                            menu_type INTEGER NOT NULL,
+                            display_order INTEGER NOT NULL,
+                            level INTEGER NOT NULL,
+                            visible BOOLEAN NOT NULL DEFAULT TRUE,
+                            created_at DATETIME(6),
+                            created_by VARCHAR(255),
+                            updated_at DATETIME(6),
+                            updated_by VARCHAR(255)
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         """
                                 
                     )
