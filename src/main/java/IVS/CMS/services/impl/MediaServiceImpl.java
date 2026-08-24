@@ -234,9 +234,9 @@ public class MediaServiceImpl implements MediaService {
 
         ResMediaDTO response = new ResMediaDTO();
 
-        response.setId(media.getId());
+        response.setMediaId(media.getMediaId());
         response.setFileName(media.getFileName());
-        response.setFilePath("/api/v1/media/" + media.getId() + "/view");
+        response.setFilePath("/api/v1/media/" + media.getMediaId() + "/view");
         response.setMimeType(media.getMimeType());
         response.setFileSize(media.getFileSize());
         response.setUploadedBy(media.getUploadedBy());

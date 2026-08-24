@@ -30,7 +30,7 @@ public class MediaRepositoryImpl implements MediaRepository {
     @Override
     public Media save(Media media) {
 
-        if (media.getId() == 0) {
+        if (media.getMediaId() == 0) {
 
             String sql = """
                     INSERT INTO media (
@@ -61,10 +61,10 @@ public class MediaRepositoryImpl implements MediaRepository {
                     sql,
                     mapperDb.toParams(media),
                     keyHolder,
-                    new String[] { "id" });
+                    new String[] { "media_id" });
 
             if (keyHolder.getKey() != null) {
-                media.setId(keyHolder.getKey().longValue());
+                media.setMediaId(keyHolder.getKey().longValue());
             }
 
         } else {
@@ -79,11 +79,11 @@ public class MediaRepositoryImpl implements MediaRepository {
                         file_size = :fileSize,
                         uploaded_by = :uploadedBy,
                         uploaded_at = :uploadedAt
-                    WHERE id = :id
+                    WHERE media_id = :media_id
                     """;
 
             MapSqlParameterSource params = mapperDb.toParams(media);
-            params.addValue("id", media.getId());
+            params.addValue("media_id", media.getMediaId());
 
             jdbcTemplate.update(sql, params);
         }
@@ -94,9 +94,9 @@ public class MediaRepositoryImpl implements MediaRepository {
     @Override
     public Optional<Media> findById(long id) {
 
-        String sql = "SELECT * FROM media WHERE id = :id";
+        String sql = "SELECT * FROM media WHERE media_id = :media_id";
 
-        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
+        MapSqlParameterSource params = new MapSqlParameterSource("media_id", id);
 
         return jdbcTemplate
                 .query(sql, params, mapperDb)
@@ -165,9 +165,9 @@ public class MediaRepositoryImpl implements MediaRepository {
     @Override
     public void delete(Media media) {
 
-        String sql = "DELETE FROM media WHERE id = :id";
+        String sql = "DELETE FROM media WHERE media_id = :media_id";
 
-        MapSqlParameterSource params = new MapSqlParameterSource("id", media.getId());
+        MapSqlParameterSource params = new MapSqlParameterSource("media_id", media.getMediaId());
 
         jdbcTemplate.update(sql, params);
     }

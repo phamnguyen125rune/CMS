@@ -40,22 +40,22 @@ public class MediaController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/{id}/view")
+    @GetMapping("/{mediaId}/view")
     public ResponseEntity<Resource> viewMedia(
-            @PathVariable long id) {
-        return mediaService.view(id);
+            @PathVariable long mediaId) {
+        return mediaService.view(mediaId);
     }
 
 
-    @GetMapping("/{id}/download")
+    @GetMapping("/{mediaId}/download")
     public ResponseEntity<Resource> downloadMedia(
-            @PathVariable long id) {
-        return mediaService.download(id);
+            @PathVariable long mediaId) {
+        return mediaService.download(mediaId);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMedia(@PathVariable long id) {
-        mediaService.delete(id);
+    @DeleteMapping("/{mediaId}")
+    public ResponseEntity<Void> deleteMedia(@PathVariable long mediaId) {
+        mediaService.delete(mediaId);
         return ResponseEntity.noContent().build();
     }
 }

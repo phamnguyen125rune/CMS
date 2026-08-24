@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ResMediaDTO {
-    private long id;
+    private long mediaId;
     private String fileName;
     private String filePath;
     private String mimeType;

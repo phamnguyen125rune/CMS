@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Media {
-    private long id;
+    private long mediaId;
     @NotBlank(message = "File name cannot be blank")
     private String fileName;
     private String uploadFile;

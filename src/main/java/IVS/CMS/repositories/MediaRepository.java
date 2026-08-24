@@ -9,7 +9,7 @@ import IVS.CMS.domain.Media;
 public interface MediaRepository  {
     Media save(Media Media);
 
-    Optional<Media> findById(long id);
+    Optional<Media> findById(long mediaId);
 
     List<Media> findAll();
 

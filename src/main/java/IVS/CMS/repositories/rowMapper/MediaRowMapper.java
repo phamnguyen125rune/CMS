@@ -17,7 +17,7 @@ public class MediaRowMapper implements RowMapper<Media> {
     public Media mapRow(ResultSet rs,  int rowNum) throws SQLException {
         Media media = new Media();
 
-        media.setId(rs.getLong("id"));
+        media.setMediaId(rs.getLong("media_id"));
         media.setFileName(rs.getString("file_name"));
         media.setUploadFile(rs.getString("upload_file"));
         media.setFilePath(rs.getString("file_path"));
@@ -35,7 +35,7 @@ public class MediaRowMapper implements RowMapper<Media> {
 
     public MapSqlParameterSource toParams(Media media) {
         return new MapSqlParameterSource()
-                .addValue("id", media.getId())
+                .addValue("mediaId", media.getMediaId())
                 .addValue("fileName", media.getFileName())
                 .addValue("uploadFile", media.getUploadFile())
                 .addValue("filePath", media.getFilePath())

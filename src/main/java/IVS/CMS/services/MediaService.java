@@ -10,13 +10,13 @@ import IVS.CMS.domain.dto.response.ResMediaDTO;
 public interface MediaService {
     ResMediaDTO upload(MultipartFile file);
 
-    ResponseEntity<Resource> view(long id);
+    ResponseEntity<Resource> view(long mediaId);
 
-    ResponseEntity<Resource> download(long id);
+    ResponseEntity<Resource> download(long mediaId);
 
     List<ResMediaDTO> getAllMedia();
 
     List<ResMediaDTO> search(String keyword);
 
-    void delete(long id);
+    void delete(long mediaId);
 }
