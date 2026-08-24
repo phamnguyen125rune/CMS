@@ -20,14 +20,14 @@ public class UserRowMapper implements RowMapper<User> {
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
         User user = new User();
 
-        user.setId(rs.getLong("id"));
+        user.setId(rs.getLong("user_id"));
         user.setEmployeeCode(rs.getString("employee_code"));
-        user.setFullname(rs.getString("fullname"));
+        user.setFullname(rs.getString("full_name"));
         user.setEmail(rs.getString("email"));
-        user.setPassword(rs.getString("password"));
+        user.setPassword(rs.getString("password_hash"));
         user.setAvatarUrl(rs.getString("avatar_url"));
         user.setRefreshToken(rs.getString("refresh_token"));
-        user.setPhone(rs.getString("phone"));
+        user.setPhone(rs.getString("phone_number"));
 
         if (rs.getDate("date_of_birth") != null) {
             user.setDateOfBirth(rs.getDate("date_of_birth").toLocalDate());
@@ -36,6 +36,12 @@ public class UserRowMapper implements RowMapper<User> {
         user.setAge(rs.getInt("age"));
         user.setAddress(rs.getString("address"));
         user.setStatus(rs.getString("status"));
+        if (hasColumn(rs, "is_active")) {
+            user.setIsActive(rs.getBoolean("is_active"));
+        }
+        if (hasColumn(rs, "is_system")) {
+            user.setIsSystem(rs.getBoolean("is_system"));
+        }
         if (hasColumn(rs, "failed_login_attempts")) {
             user.setFailedLoginAttempts(rs.getInt("failed_login_attempts"));
         }
@@ -45,17 +51,16 @@ public class UserRowMapper implements RowMapper<User> {
         if (hasColumn(rs, "locked_until") && rs.getTimestamp("locked_until") != null) {
             user.setLockedUntil(rs.getTimestamp("locked_until").toInstant());
         }
-        user.setDeleted(rs.getBoolean("deleted"));
-
         if (rs.getTimestamp("deleted_at") != null) {
             user.setDeletedAt(rs.getTimestamp("deleted_at").toInstant());
         }
+        user.setDeleted(user.getDeletedAt() != null);
 
         user.setDeletedBy(rs.getString("deleted_by"));
 
         String genderStr = rs.getString("gender");
         if (genderStr != null && !genderStr.trim().isEmpty()) {
-            user.setGender(GenderEnum.valueOf(genderStr));
+            user.setGender(normalizeGender(genderStr));
         }
 
         Object roleIdObj = rs.getObject("role_id");
@@ -107,26 +112,35 @@ public class UserRowMapper implements RowMapper<User> {
         return false;
     }
 
+    private GenderEnum normalizeGender(String gender) {
+        String normalized = gender.trim().toUpperCase();
+        if ("OTHERS".equals(normalized)) {
+            normalized = "OTHER";
+        }
+        return GenderEnum.valueOf(normalized);
+    }
+
     public MapSqlParameterSource toParams(User user) {
         return new MapSqlParameterSource()
-                .addValue("id", user.getId())
+                .addValue("userId", user.getId())
                 .addValue("employeeCode", user.getEmployeeCode())
-                .addValue("fullname", user.getFullname())
+                .addValue("fullName", user.getFullname())
                 .addValue("email", user.getEmail())
-                .addValue("password", user.getPassword())
+                .addValue("passwordHash", user.getPassword())
                 .addValue("avatarUrl", user.getAvatarUrl())
                 .addValue("refreshToken", user.getRefreshToken())
-                .addValue("phone", user.getPhone())
+                .addValue("phoneNumber", user.getPhone())
                 .addValue("dateOfBirth", user.getDateOfBirth())
                 .addValue("age", user.getAge())
                 .addValue("address", user.getAddress())
                 .addValue("gender", user.getGender() != null ? user.getGender().name() : null)
                 .addValue("roleId", user.getRole() != null ? user.getRole().getId() : null)
+                .addValue("isActive", user.getIsActive() == null ? true : user.getIsActive())
+                .addValue("isSystem", user.getIsSystem() == null ? false : user.getIsSystem())
                 .addValue("status", user.getStatus())
                 .addValue("failedLoginAttempts", user.getFailedLoginAttempts())
                 .addValue("lockCount", user.getLockCount())
                 .addValue("lockedUntil", user.getLockedUntil() != null ? Timestamp.from(user.getLockedUntil()) : null)
-                .addValue("deleted", user.getDeleted())
                 .addValue("deletedAt", user.getDeletedAt() != null ? Timestamp.from(user.getDeletedAt()) : null)
                 .addValue("deletedBy", user.getDeletedBy())
                 .addValue("createdAt", user.getCreatedAt() != null ? Timestamp.from(user.getCreatedAt()) : null)

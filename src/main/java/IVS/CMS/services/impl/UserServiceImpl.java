@@ -54,18 +54,22 @@ public class UserServiceImpl implements UserService {
 
     public synchronized ResUserCreateDTO createUser(ReqUserCreateDTO req) {
         User user = userMapper.reqCreateToUser(req);
+        user.setEmail(normalizeEmail(user.getEmail()));
+        user.setFullname(resolveStaffFullname(user.getFullname(), user.getEmail()));
 
         if (this.userRepository.existsByEmail(user.getEmail())) {
-            throw new BadRequestException("Email " + req.getEmail() + " đã tồn tại!");
+            throw new BadRequestException("Email " + user.getEmail() + " đã tồn tại!");
         }
 
         validateCreatableRole(user);
         user.setStatus(STATUS_ACTIVE);
+        user.setIsActive(true);
+        user.setIsSystem(false);
         user.setFailedLoginAttempts(0);
         user.setLockCount(0);
         user.setLockedUntil(null);
         user.setEmployeeCode(generateEmployeeCode());
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(passwordEncoder.encode(DEFAULT_RESET_PASSWORD));
 
         user = this.userRepository.save(user);
 
@@ -200,11 +204,16 @@ public class UserServiceImpl implements UserService {
         User user = this.userMapper.reqCreateToUser(req);
         applyDefaultRegisteredRole(user);
         user.setStatus(STATUS_ACTIVE);
+        user.setIsActive(true);
+        user.setIsSystem(false);
         user.setFailedLoginAttempts(0);
         user.setLockCount(0);
         user.setLockedUntil(null);
         user.setEmployeeCode(generateEmployeeCode());
 
+        if (isBlank(req.getPassword())) {
+            throw new BadRequestException("Mật khẩu đăng ký không được để trống");
+        }
         user.setPassword(this.passwordEncoder.encode(user.getPassword()));
 
         User user2 = this.userRepository.save(user);
@@ -538,6 +547,31 @@ public class UserServiceImpl implements UserService {
 
     private boolean isSuperAdminRole(Role role) {
         return role != null && role.getName() != null && ROLE_SUPER_ADMIN.equalsIgnoreCase(role.getName().trim());
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private String resolveStaffFullname(String fullname, String email) {
+        if (!isBlank(fullname)) {
+            return fullname.trim();
+        }
+
+        if (isBlank(email) || !email.contains("@")) {
+            return "Nhân sự mới";
+        }
+
+        String localPart = email.substring(0, email.indexOf('@'))
+                .replace('.', ' ')
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .trim();
+        return localPart.isEmpty() ? "Nhân sự mới" : localPart;
     }
 
     private long resolveLockMinutes(int lockCount) {

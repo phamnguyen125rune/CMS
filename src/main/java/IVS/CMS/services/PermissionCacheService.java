@@ -139,6 +139,9 @@ public class PermissionCacheService {
         if (user == null || Boolean.TRUE.equals(user.getDeleted())) {
             return false;
         }
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            return false;
+        }
         return user.getStatus() == null || !"LOCKED".equalsIgnoreCase(user.getStatus());
     }
 

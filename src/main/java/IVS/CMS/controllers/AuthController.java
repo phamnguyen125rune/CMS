@@ -184,7 +184,8 @@ public class AuthController {
     }
 
     private boolean isLockedUser(User user) {
-        return user != null && "LOCKED".equalsIgnoreCase(user.getStatus());
+        return user != null
+                && (!Boolean.TRUE.equals(user.getIsActive()) || "LOCKED".equalsIgnoreCase(user.getStatus()));
     }
 
     private void ensureLoginAllowed(User user) {

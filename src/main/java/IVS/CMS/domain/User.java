@@ -29,6 +29,8 @@ public class User {
 
     private String employeeCode;
     private LocalDate dateOfBirth;
+    private Boolean isActive;
+    private Boolean isSystem;
     private String status;
     private int failedLoginAttempts;
     private int lockCount;
@@ -48,6 +50,12 @@ public class User {
     public void handleBeforeCreate() {
         this.createdAt = Instant.now();
         this.createdBy = SecurityService.getCurrentUserLogin().orElse("");
+        if (this.isActive == null) {
+            this.isActive = true;
+        }
+        if (this.isSystem == null) {
+            this.isSystem = false;
+        }
     }
 
     public void handleUpdate() {

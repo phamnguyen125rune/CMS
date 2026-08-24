@@ -30,7 +30,8 @@ public class UserDetailsCustom implements UserDetailsService {
             throw new UsernameNotFoundException("Username/Email không tồn tại");
         }
 
-        boolean isAccountActive = !"LOCKED".equalsIgnoreCase(user.getStatus());
+        boolean isAccountActive = Boolean.TRUE.equals(user.getIsActive())
+                && !"LOCKED".equalsIgnoreCase(user.getStatus());
         Set<SimpleGrantedAuthority> authorities = buildAuthorities(user);
 
         return new User(
