@@ -1,6 +1,7 @@
 package IVS.CMS.services.dto.response;
 
 import java.time.LocalDateTime;
+
 import IVS.CMS.domain.constants.PostStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

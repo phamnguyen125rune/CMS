@@ -11,5 +11,4 @@ public class ReqLoginDTO {
     private String loginId;
     @NotBlank(message = "password không được để trống")
     private String password;
-
 }
