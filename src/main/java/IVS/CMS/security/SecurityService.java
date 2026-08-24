@@ -22,7 +22,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Service;
 
-import IVS.CMS.domain.dto.response.ResLoginDTO;
+import IVS.CMS.services.dto.response.ResLoginDTO;
 import com.nimbusds.jose.util.Base64;
 
 @Service

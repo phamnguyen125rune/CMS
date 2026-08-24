@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.request;
+package IVS.CMS.services.dto.request;
 
 import java.util.List;
 

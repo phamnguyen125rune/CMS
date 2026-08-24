@@ -3,7 +3,7 @@ package IVS.CMS.repositories;
 import java.util.List;
 import java.util.Optional;
 import IVS.CMS.domain.Post;
-import IVS.CMS.domain.dto.response.ResPostListDTO;
+import IVS.CMS.services.dto.response.ResPostListDTO;
 
 public interface PostRepository {
     Post save(Post post);

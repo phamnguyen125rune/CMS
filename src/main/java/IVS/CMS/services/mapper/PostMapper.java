@@ -3,10 +3,10 @@ package IVS.CMS.services.mapper;
 import org.springframework.stereotype.Component;
 import IVS.CMS.domain.PostCategory;
 import IVS.CMS.domain.Post;
-import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
-import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
-import IVS.CMS.domain.dto.response.ResPostDTO;
-import IVS.CMS.domain.dto.response.ResPostListDTO;
+import IVS.CMS.services.dto.request.ReqPostCreateDTO;
+import IVS.CMS.services.dto.request.ReqPostUpdateDTO;
+import IVS.CMS.services.dto.response.ResPostDTO;
+import IVS.CMS.services.dto.response.ResPostListDTO;
 
 @Component
 public class PostMapper {

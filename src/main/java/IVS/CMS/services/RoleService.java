@@ -3,8 +3,8 @@ package IVS.CMS.services;
 import java.util.List;
 
 import IVS.CMS.domain.Role;
-import IVS.CMS.domain.dto.request.ReqRoleDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.request.ReqRoleDTO;
+import IVS.CMS.services.dto.response.ResUserDTO;
 
 public interface RoleService {
     Role create(ReqRoleDTO role);

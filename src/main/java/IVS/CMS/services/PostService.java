@@ -1,9 +1,9 @@
 package IVS.CMS.services;
 
-import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
-import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
-import IVS.CMS.domain.dto.response.ResPostDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
+import IVS.CMS.services.dto.request.ReqPostCreateDTO;
+import IVS.CMS.services.dto.request.ReqPostUpdateDTO;
+import IVS.CMS.services.dto.response.ResPostDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 
 public interface PostService {
     ResPostDTO createPost(ReqPostCreateDTO req);

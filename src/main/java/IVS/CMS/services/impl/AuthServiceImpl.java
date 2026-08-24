@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.RefreshToken;
 import IVS.CMS.domain.User;
-import IVS.CMS.domain.dto.request.ReqLoginDTO;
-import IVS.CMS.domain.dto.response.ResLoginDTO;
+import IVS.CMS.services.dto.request.ReqLoginDTO;
+import IVS.CMS.services.dto.response.ResLoginDTO;
 import IVS.CMS.repositories.RefreshTokenRepository;
 import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.AuthService;

@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.response;
+package IVS.CMS.services.dto.response;
 
 public class RestResponse<T> {
     private int statusCode;

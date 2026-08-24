@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
-import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
-import IVS.CMS.domain.dto.response.ResPostDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
+import IVS.CMS.services.dto.request.ReqPostCreateDTO;
+import IVS.CMS.services.dto.request.ReqPostUpdateDTO;
+import IVS.CMS.services.dto.response.ResPostDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import IVS.CMS.services.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

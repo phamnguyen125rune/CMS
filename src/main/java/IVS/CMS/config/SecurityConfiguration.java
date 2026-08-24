@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
 
 import IVS.CMS.security.CustomAuthenticationEntryPoint;
 
@@ -23,7 +24,8 @@ public class SecurityConfiguration {
             "/api/v1/auth/refresh",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/api/v1/contacts",
+            "/swagger-ui.html"  
     };
 
     @Bean
@@ -45,6 +47,10 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(HttpMethod.GET, "/api/v1/form-categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/form-details").permitAll()
+                        // Bổ sung: Cho phép khách vãng lai POST để gửi form mới (Không cho phép GET/DELETE)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/form-details").permitAll()
                         .requestMatchers(publicEndpoints).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

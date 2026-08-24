@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.response;
+package IVS.CMS.services.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

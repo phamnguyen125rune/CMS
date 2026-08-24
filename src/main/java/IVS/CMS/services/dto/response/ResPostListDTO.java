@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.response;
+package IVS.CMS.services.dto.response;
 
 import java.time.LocalDateTime;
 import IVS.CMS.domain.constants.PostStatusEnum;

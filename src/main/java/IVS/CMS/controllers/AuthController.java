@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import IVS.CMS.domain.dto.request.ReqLoginDTO;
-import IVS.CMS.domain.dto.response.ResLoginDTO;
+import IVS.CMS.services.dto.request.ReqLoginDTO;
+import IVS.CMS.services.dto.response.ResLoginDTO;
 import IVS.CMS.services.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

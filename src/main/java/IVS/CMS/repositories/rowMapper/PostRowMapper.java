@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import IVS.CMS.domain.Post;
 import IVS.CMS.domain.constants.PostStatusEnum;
-import IVS.CMS.domain.dto.response.ResPostListDTO;
+import IVS.CMS.services.dto.response.ResPostListDTO;
 
 @Component
 public class PostRowMapper implements RowMapper<Post> {
