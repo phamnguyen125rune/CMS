@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Post API</title>
+
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .row>div {
+            flex: 1;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 8px 18px;
+            cursor: pointer;
+        }
+
+        .message {
+            margin-top: 15px;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .ck-editor__editable_inline {
+            min-height: 400px;
+        }
+    </style>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "ckeditor5":
+                "https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.js"
+        }
+    }
+    </script>
+</head>
+
+<body>
+
+    <h2>Test Create Post</h2>
+
+    <label>Title *</label>
+    <input type="text" id="title" placeholder="Nhập tiêu đề">
+
+    <div class="row">
+        <div>
+            <label>Slug *</label>
+            <input type="text" id="slug" placeholder="nhap-slug">
+        </div>
+
+        <div>
+            <label>Category ID *</label>
+            <input type="number" id="categoryId" value="1">
+        </div>
+    </div>
+
+    <label>Summary</label>
+    <textarea id="summary" rows="3" placeholder="Nhập tóm tắt"></textarea>
+
+    <label>Content *</label>
+    <div id="editor"></div>
+
+    <button id="btnSubmit" onclick="createPost()">
+        Create Post
+    </button>
+
+    <div id="message" class="message"></div>
+
+    <script type="module">
+
+        import {
+            ClassicEditor,
+            Essentials,
+            Paragraph,
+            Heading,
+            Bold,
+            Italic,
+            Underline,
+            Strikethrough,
+            Subscript,
+            Superscript,
+            Code,
+            RemoveFormat,
+            FontFamily,
+            FontSize,
+            FontColor,
+            FontBackgroundColor,
+            Highlight,
+            Alignment,
+            BlockQuote,
+            CodeBlock,
+            HorizontalLine,
+            List,
+            ListProperties,
+            TodoList,
+            Link,
+            AutoLink,
+            Image,
+            ImageInsert,
+            ImageCaption,
+            ImageResize,
+            ImageStyle,
+            ImageToolbar,
+            ImageBlock,
+            ImageInline,
+            MediaEmbed,
+            Table,
+            TableToolbar,
+            TableProperties,
+            TableCellProperties,
+            TableColumnResize,
+            TableCaption,
+            SpecialCharacters,
+            SpecialCharactersEssentials,
+            FindAndReplace,
+            SelectAll,
+            Undo,
+            PasteFromOffice
+        } from "ckeditor5";
+
+        const API_BASE = "http://localhost:8080/api/v1";
+
+        const TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjbXNAZ21haWwuY29tIiwiZXhwIjoxNzk1NTg4NTg3LCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzg2OTQ4NTg3LCJ1c2VyIjp7ImF2YXRhclVybCI6bnVsbCwicm9sZUlkIjoxLCJyb2xlTmFtZSI6IlNVUEVSX0FETUlOIiwiaWQiOjEsImZ1bGxuYW1lIjoiQWRtaW4gU3lzdGVtIiwiZW1haWwiOiJjbXNAZ21haWwuY29tIiwiZW1wbG95ZWVDb2RlIjoiRU1QMDAwMSJ9fQ.JBnDQCT0lT6P8syuvN4NuHkxn-H3hBl-xKMk4GHJtURIka0AUPbhzGNeV7Lf9-jb-xh_4ghA5IIITIlAe7XZbQ";
+
+        let editor;
+
+        ClassicEditor.create(document.querySelector("#editor"), {
+
+            plugins: [
+                Essentials,
+                Paragraph,
+                Heading,
+                Bold,
+                Italic,
+                Underline,
+                Strikethrough,
+                Subscript,
+                Superscript,
+                Code,
+                RemoveFormat,
+                FontFamily,
+                FontSize,
+                FontColor,
+                FontBackgroundColor,
+                Highlight,
+                Alignment,
+                BlockQuote,
+                CodeBlock,
+                HorizontalLine,
+                List,
+                ListProperties,
+                TodoList,
+                Link,
+                AutoLink,
+                Image,
+                ImageInsert,
+                ImageCaption,
+                ImageResize,
+                ImageStyle,
+                ImageToolbar,
+                ImageBlock,
+                ImageInline,
+                MediaEmbed,
+                Table,
+                TableToolbar,
+                TableProperties,
+                TableCellProperties,
+                TableColumnResize,
+                TableCaption,
+                SpecialCharacters,
+                SpecialCharactersEssentials,
+                FindAndReplace,
+                SelectAll,
+                Undo,
+                PasteFromOffice
+            ],
+
+            toolbar: {
+                items: [
+                    "undo", "redo", "|",
+                    "heading", "|",
+                    "fontFamily", "fontSize", "|",
+                    "bold", "italic", "underline",
+                    "strikethrough", "subscript",
+                    "superscript", "code", "removeFormat", "|",
+                    "fontColor", "fontBackgroundColor",
+                    "highlight", "|",
+                    "link", "|",
+                    "bulletedList", "numberedList",
+                    "todoList", "|",
+                    "alignment", "|",
+                    "blockQuote", "codeBlock",
+                    "horizontalLine", "|",
+                    "insertImage", "mediaEmbed",
+                    "insertTable", "|",
+                    "specialCharacters", "|",
+                    "findAndReplace", "selectAll"
+                ],
+                shouldNotGroupWhenFull: true
+            },
+
+            heading: {
+                options: [
+                    {
+                        model: "paragraph",
+                        title: "Paragraph",
+                        class: "ck-heading_paragraph"
+                    },
+                    {
+                        model: "heading1",
+                        view: "h1",
+                        title: "Heading 1",
+                        class: "ck-heading_heading1"
+                    },
+                    {
+                        model: "heading2",
+                        view: "h2",
+                        title: "Heading 2",
+                        class: "ck-heading_heading2"
+                    },
+                    {
+                        model: "heading3",
+                        view: "h3",
+                        title: "Heading 3",
+                        class: "ck-heading_heading3"
+                    }
+                ]
+            },
+
+            fontSize: {
+                options: [
+                    10, 12, 14, "default",
+                    18, 20, 22, 24, 28, 36
+                ]
+            },
+
+            image: {
+                insert: {
+                    type: "auto"
+                },
+                toolbar: [
+                    "imageTextAlternative",
+                    "toggleImageCaption", "|",
+                    "imageStyle:inline",
+                    "imageStyle:block",
+                    "imageStyle:side"
+                ]
+            },
+
+            table: {
+                contentToolbar: [
+                    "tableColumn",
+                    "tableRow",
+                    "mergeTableCells", "|",
+                    "tableProperties",
+                    "tableCellProperties"
+                ]
+            },
+
+            list: {
+                properties: {
+                    styles: true,
+                    startIndex: true,
+                    reversed: true
+                }
+            },
+
+            link: {
+                decorators: {
+                    openInNewTab: {
+                        mode: "manual",
+                        label: "Mở tab mới",
+                        attributes: {
+                            target: "_blank",
+                            rel: "noopener noreferrer"
+                        }
+                    }
+                }
+            }
+
+        }).then(instance => {
+            editor = instance;
+        }).catch(error => {
+            console.error("CKEditor error:", error);
+        });
+
+
+        window.createPost = async function () {
+
+            const title =
+                document.getElementById("title").value.trim();
+
+            const slug =
+                document.getElementById("slug").value.trim();
+
+            const summary =
+                document.getElementById("summary").value.trim();
+
+            const categoryId =
+                document.getElementById("categoryId").value.trim();
+
+            const content =
+                editor ? editor.getData() : "";
+
+            const button =
+                document.getElementById("btnSubmit");
+
+            const message =
+                document.getElementById("message");
+
+
+            if (!title || !slug || !categoryId || !content) {
+                message.className = "message error";
+                message.textContent =
+                    "Vui lòng nhập đầy đủ Title, Slug, Category ID và Content.";
+                return;
+            }
+
+
+            const payload = {
+                title,
+                slug,
+                summary,
+                categoryId: parseInt(categoryId),
+                content
+            };
+
+
+            console.log("Request:", payload);
+
+            button.disabled = true;
+            message.textContent = "Đang tạo Post...";
+
+
+            try {
+
+                const response = await fetch(
+                    `${API_BASE}/posts`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${TOKEN}`
+                        },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                const data = await response.json();
+
+                console.log("Response:", data);
+
+
+                if (response.ok) {
+
+                    message.className = "message success";
+
+                    message.textContent =
+                        `Tạo bài viết thành công! Post ID: ${data.postId}`;
+
+                    document.getElementById("title").value = "";
+                    document.getElementById("slug").value = "";
+                    document.getElementById("summary").value = "";
+
+                    editor.setData("");
+
+                } else {
+
+                    message.className = "message error";
+
+                    message.textContent =
+                        data.message ||
+                        data.error ||
+                        "Tạo bài viết thất bại.";
+                }
+
+            } catch (error) {
+
+                console.error(error);
+
+                message.className = "message error";
+                message.textContent =
+                    "Lỗi kết nối tới server.";
+
+            } finally {
+
+                button.disabled = false;
+            }
+        };
+
+    </script>
+
+</body>
+
+</html>

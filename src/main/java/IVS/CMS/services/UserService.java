@@ -1,57 +1,31 @@
 package IVS.CMS.services;
 
-import java.util.List;
-
-import org.springframework.web.multipart.MultipartFile;
-
 import IVS.CMS.domain.User;
-import IVS.CMS.domain.dto.request.ReqChangePasswordDTO;
-import IVS.CMS.domain.dto.request.ReqUpdateProfileDTO;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
-import IVS.CMS.domain.dto.request.ReqUserUpdateDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
+import IVS.CMS.services.dto.request.ReqChangePasswordDTO;
+import IVS.CMS.services.dto.request.ReqUserCreateDTO;
+import IVS.CMS.services.dto.request.ReqUserUpdateDTO;
+import IVS.CMS.services.dto.response.ResUserCreateDTO;
+import IVS.CMS.services.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 
 public interface UserService {
+    ResUserCreateDTO createUser(ReqUserCreateDTO user);
 
-    public ResUserCreateDTO createUser(ReqUserCreateDTO user);
+    User fetchUserById(long userId);
 
-    public User fetchUserById(long id);
+    ResUserDTO getUserById(long userId);
 
-    public ResUserDTO getUserById(long id);
+    ResultPaginationDTO findAll(int page, int pageSize);
 
-    public ResultPaginationDTO findAll(int page, int pageSize);
-
-    public ReqUserUpdateDTO UpdateUser(long id, ReqUserUpdateDTO req);
-
-    public void changePassword(ReqChangePasswordDTO req);
-
-    public User handleGetUserByEmail(String username);
-
-    void updateUserToken(String token, String email);
-
-    public User getUserByRefreshTokenAndEmail(String refreshToken, String email);
-
-    public ResUserCreateDTO register(ReqUserCreateDTO req);
-
-    void softDeleteUser(Long id);
-
-    void hardDeleteUser(Long id);
-
-    void restoreUser(Long id);
-
-    List<ResUserDTO> getDeletedUsers();
-
-    void toggleUserStatus(long id, String status);
-
-    void resetUserPassword(long id);
-
-    String uploadMyAvatar(MultipartFile file);
-
-    ResUserDTO getMyProfile();
-
-    ResUserDTO updateMyProfile(ReqUpdateProfileDTO req);
+    ResUserDTO updateUser(long userId, ReqUserUpdateDTO req);
 
     User handleGetUserByEmailOrEmployeeCode(String loginId);
+
+    ResUserCreateDTO register(ReqUserCreateDTO req);
+
+    void deleteUser(long userId);
+
+    void updateStatus(long userId, Boolean isActive);
+
+    void changePassword(ReqChangePasswordDTO req);
 }
