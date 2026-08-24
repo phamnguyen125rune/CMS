@@ -24,27 +24,51 @@ public class DatabaseInitializer {
     private final PasswordEncoder passwordEncoder;
 
     @PostConstruct
-    public void initialize() {
+    @SuppressWarnings("unused")
+    private void initialize() {
         log.info("Starting database initialization and data seeding...");
+
         try (Connection connection = dataSource.getConnection()) {
-            ByteArrayResource resource = new ByteArrayResource(SCHEMA_SQL.getBytes());
+
+            ByteArrayResource resource =
+                    new ByteArrayResource(SCHEMA_SQL.getBytes());
+
             ScriptUtils.executeSqlScript(connection, resource);
 
-            ByteArrayResource seedResource = new ByteArrayResource(SEED_SQL.getBytes());
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM roles",
+                    Integer.class
+            );
 
-            ScriptUtils.executeSqlScript(connection, seedResource);
+            if (count == null || count == 0) {
 
-            jdbcTemplate.execute(
-                    "INSERT IGNORE INTO roles (role_id, role_name, is_active, is_system) VALUES (1, 'SUPER_ADMIN', 1, 1)");
+                ByteArrayResource seedResource =
+                        new ByteArrayResource(SEED_SQL.getBytes());
 
-            String insertUserSql = "INSERT IGNORE INTO users (employee_code, full_name, email, password_hash, role_id, is_active, is_system, gender) "
-                    +
-                    "VALUES ('EMP0000', 'Admin System', 'cms@gmail.com', ?, 1, 1, 1, 'others')";
-            jdbcTemplate.update(insertUserSql, passwordEncoder.encode("123456"));
+                ScriptUtils.executeSqlScript(connection, seedResource);
+
+                String insertUserSql =
+                        "INSERT INTO users " +
+                        "(employee_code, full_name, email, password_hash, role_id, is_active, is_system, gender) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+                jdbcTemplate.update(
+                        insertUserSql,
+                        "EMP0000",
+                        "Admin System",
+                        "cms@gmail.com",
+                        passwordEncoder.encode("123456"),
+                        1,
+                        true,
+                        true,
+                        "others"
+                );
+            }
 
             log.info("Database initialization completed successfully.");
+
         } catch (Exception e) {
-            log.error("Error initializing database: {}", e.getMessage());
+            log.error("Error initializing database", e);
         }
     }
 

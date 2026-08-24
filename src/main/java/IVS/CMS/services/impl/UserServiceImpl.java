@@ -207,7 +207,7 @@ public class UserServiceImpl implements UserService {
         try {
             int currentNum = Integer.parseInt(maxCode.substring(3));
             return String.format("EMP%04d", currentNum + 1);
-        } catch (Exception e) {
+        } catch (ExceptionInInitializerError e) {
             return "EMP0001";
         }
     }

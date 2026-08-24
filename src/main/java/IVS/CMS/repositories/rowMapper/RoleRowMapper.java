@@ -14,33 +14,54 @@ public class RoleRowMapper implements RowMapper<Role> {
 
     @Override
     public Role mapRow(ResultSet rs, int rowNum) throws SQLException {
+
         Role role = new Role();
-        role.setRoleId(rs.getLong("role_id"));
-        role.setRoleName(rs.getString("role_name"));
-        role.setRoleDescription(rs.getString("role_description"));
-        role.setIsActive(rs.getBoolean("is_active"));
-        role.setIsSystem(rs.getBoolean("is_system"));
 
+        role.setRoleId(
+                rs.getLong("role_id")
+        );
+
+        role.setRoleName(
+                rs.getString("role_name")
+        );
+
+        role.setRoleDescription(
+                rs.getString("role_description")
+        );
+
+        role.setIsActive(
+                rs.getBoolean("is_active")
+        );
+
+        role.setIsSystem(
+                rs.getBoolean("is_system")
+        );
+
+        // created_at
         Timestamp createdAt = rs.getTimestamp("created_at");
-        if (createdAt != null)
+        if (createdAt != null) {
             role.setCreatedAt(createdAt.toLocalDateTime());
+        }
 
-        Object createdByObj = rs.getObject("created_by");
-        if (createdByObj != null)
-            role.setCreatedBy(null);
+        // created_by
+        Long createdBy = rs.getObject("created_by", Long.class);
+        role.setCreatedBy(createdBy);
 
+        // updated_at
         Timestamp updatedAt = rs.getTimestamp("updated_at");
-        if (updatedAt != null)
+        if (updatedAt != null) {
             role.setUpdatedAt(updatedAt.toLocalDateTime());
+        }
 
-        Object updatedByObj = rs.getObject("updated_by");
-        if (updatedByObj != null)
-            role.setUpdatedBy(null);
+        // updated_by
+        Long updatedBy = rs.getObject("updated_by", Long.class);
+        role.setUpdatedBy(updatedBy);
 
         return role;
     }
 
     public MapSqlParameterSource toParams(Role role) {
+
         return new MapSqlParameterSource()
                 .addValue("roleId", role.getRoleId())
                 .addValue("roleName", role.getRoleName())
