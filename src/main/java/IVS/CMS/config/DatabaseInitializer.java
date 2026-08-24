@@ -206,7 +206,7 @@ public class DatabaseInitializer {
 				canonical_url VARCHAR(255),
 				is_indexable BOOLEAN NOT NULL DEFAULT TRUE, 
 				is_followable BOOLEAN NOT NULL DEFAULT TRUE, 
-	
+       
 				-- Nhóm OpenGraph (Mạng xã hội)
 				og_title VARCHAR(255),
 				og_description VARCHAR(320),
