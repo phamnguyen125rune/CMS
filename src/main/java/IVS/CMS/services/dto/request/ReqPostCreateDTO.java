@@ -1,6 +1,5 @@
-package IVS.CMS.domain.dto.request;
+package IVS.CMS.services.dto.request;
 
-import IVS.CMS.domain.constants.PostStatusEnum;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -8,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ReqPostUpdateDTO {
+public class ReqPostCreateDTO {
 
     @NotBlank(message = "Tiêu đề không được để trống")
     private String title;
@@ -24,5 +23,4 @@ public class ReqPostUpdateDTO {
     @NotNull(message = "Danh mục bài viết không được để trống")
     private Long categoryId;
 
-    private PostStatusEnum status;
 }

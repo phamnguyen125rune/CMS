@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.request;
+package IVS.CMS.services.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -11,5 +11,4 @@ public class ReqLoginDTO {
     private String loginId;
     @NotBlank(message = "password không được để trống")
     private String password;
-
 }

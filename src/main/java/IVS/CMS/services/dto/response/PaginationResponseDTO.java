@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.response;
+package IVS.CMS.services.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

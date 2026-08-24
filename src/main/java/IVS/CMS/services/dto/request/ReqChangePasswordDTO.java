@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.request;
+package IVS.CMS.services.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

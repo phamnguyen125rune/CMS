@@ -10,9 +10,9 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.Post;
-import IVS.CMS.domain.dto.response.ResPostListDTO;
 import IVS.CMS.repositories.PostRepository;
 import IVS.CMS.repositories.rowMapper.PostRowMapper;
+import IVS.CMS.services.dto.response.ResPostListDTO;
 
 @Repository
 public class PostRepositoryImpl implements PostRepository {

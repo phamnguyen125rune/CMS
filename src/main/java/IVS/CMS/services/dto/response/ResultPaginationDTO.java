@@ -1,4 +1,4 @@
-package IVS.CMS.domain.dto.response;
+package IVS.CMS.services.dto.response;
 
 public class ResultPaginationDTO {
     private Meta meta;

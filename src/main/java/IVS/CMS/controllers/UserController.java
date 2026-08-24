@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import IVS.CMS.domain.dto.request.ReqChangePasswordDTO;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
-import IVS.CMS.domain.dto.request.ReqUserUpdateDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 import IVS.CMS.services.UserService;
+import IVS.CMS.services.dto.request.ReqChangePasswordDTO;
+import IVS.CMS.services.dto.request.ReqUserCreateDTO;
+import IVS.CMS.services.dto.request.ReqUserUpdateDTO;
+import IVS.CMS.services.dto.response.ResUserCreateDTO;
+import IVS.CMS.services.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
