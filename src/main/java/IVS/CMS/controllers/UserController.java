@@ -78,8 +78,8 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('users:EDIT')")
-    public ResponseEntity<Void> softDeleteUser(@PathVariable("id") Long id) {
-        this.userService.softDeleteUser(id);
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
+        this.userService.hardDeleteUser(id);
         return ResponseEntity.ok().build();
     }
 

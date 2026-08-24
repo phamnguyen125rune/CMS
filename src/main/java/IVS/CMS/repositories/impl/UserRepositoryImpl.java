@@ -12,15 +12,14 @@ import org.springframework.stereotype.Repository;
 import IVS.CMS.domain.User;
 import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.repositories.rowMapper.UserRowMapper;
-import IVS.CMS.services.SecurityService;
 
 @Repository
 public class UserRepositoryImpl implements UserRepository {
 
     private static final String USER_SELECT = """
-            SELECT u.*, r.name AS role_name, r.description AS role_description, r.active AS role_active
+            SELECT u.*, r.role_name AS role_name, r.role_description AS role_description, r.is_active AS role_active
             FROM users u
-            LEFT JOIN roles r ON u.role_id = r.id
+            LEFT JOIN roles r ON u.role_id = r.role_id
             """;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -38,14 +37,14 @@ public class UserRepositoryImpl implements UserRepository {
 
             String sql = """
                     INSERT INTO users (
-                        employee_code, full_name, email, password_hash, avatar_url, refresh_token,
-                        phone_number, date_of_birth, age, address, gender, role_id,
-                        is_active, is_system, status, failed_login_attempts, lock_count, locked_until,
+                        employee_code, full_name, email, password_hash, avatar_url,
+                        phone_number, date_of_birth, address, gender, role_id,
+                        is_active, is_system, failed_login_attempts, lock_count, locked_until,
                         deleted_at, deleted_by, created_at, created_by, updated_at, updated_by
                     ) VALUES (
-                        :employeeCode, :fullName, :email, :passwordHash, :avatarUrl, :refreshToken,
-                        :phoneNumber, :dateOfBirth, :age, :address, :gender, :roleId,
-                        :isActive, :isSystem, :status, :failedLoginAttempts, :lockCount, :lockedUntil,
+                        :employeeCode, :fullName, :email, :passwordHash, :avatarUrl,
+                        :phoneNumber, :dateOfBirth, :address, :gender, :roleId,
+                        :isActive, :isSystem, :failedLoginAttempts, :lockCount, :lockedUntil,
                         :deletedAt, :deletedBy, :createdAt, :createdBy, :updatedAt, :updatedBy
                     )
                     """;
@@ -65,16 +64,13 @@ public class UserRepositoryImpl implements UserRepository {
                         email = :email,
                         password_hash = :passwordHash,
                         avatar_url = :avatarUrl,
-                        refresh_token = :refreshToken,
                         phone_number = :phoneNumber,
-                        age = :age,
                         address = :address,
                         gender = :gender,
                         date_of_birth = :dateOfBirth,
                         role_id = :roleId,
                         is_active = :isActive,
                         is_system = :isSystem,
-                        status = :status,
                         failed_login_attempts = :failedLoginAttempts,
                         lock_count = :lockCount,
                         locked_until = :lockedUntil,
@@ -89,6 +85,7 @@ public class UserRepositoryImpl implements UserRepository {
 
             jdbcTemplate.update(sql, mapperDb.toParams(user));
         }
+        replaceRefreshTokenIfPresent(user);
         return user;
     }
 
@@ -120,6 +117,13 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByEmailIncludeDeleted(String email) {
+        String sql = USER_SELECT + "WHERE LOWER(u.email) = LOWER(:email)";
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("email", email), mapperDb).stream()
+                .findFirst();
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         String sql = "SELECT COUNT(1) FROM users WHERE LOWER(email) = LOWER(:email)";
         Integer count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource("email", email), Integer.class);
@@ -129,8 +133,10 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User findByRefreshTokenAndEmail(String refreshToken, String email) {
         String sql = USER_SELECT + """
-                WHERE u.refresh_token = :refreshToken
+                INNER JOIN refresh_tokens rt ON rt.user_id = u.user_id
+                WHERE rt.token = :refreshToken
                   AND LOWER(u.email) = LOWER(:email)
+                  AND rt.expired_at > NOW()
                   AND u.deleted_at IS NULL
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -144,9 +150,9 @@ public class UserRepositoryImpl implements UserRepository {
         String sql = """
                 UPDATE users AS u
                 SET deleted_at = NOW(6),
-                    deleted_by = :deletedBy,
+                    deleted_by = NULL,
                     updated_at = NOW(6),
-                    updated_by = :deletedBy
+                    updated_by = NULL
                 WHERE u.user_id = :id
                   AND u.deleted_at IS NULL
                   AND u.user_id <> :currentUserId
@@ -154,8 +160,8 @@ public class UserRepositoryImpl implements UserRepository {
                   AND NOT EXISTS (
                       SELECT 1
                       FROM roles r
-                      WHERE r.id = u.role_id
-                        AND UPPER(TRIM(r.name)) = :protectedRole
+                      WHERE r.role_id = u.role_id
+                        AND UPPER(TRIM(r.role_name)) = :protectedRole
                   )
                 """;
 
@@ -174,14 +180,13 @@ public class UserRepositoryImpl implements UserRepository {
                 DELETE u
                 FROM users AS u
                 WHERE u.user_id = :id
-                  AND u.deleted_at IS NOT NULL
                   AND u.user_id <> :currentUserId
                   AND u.is_system = FALSE
                   AND NOT EXISTS (
                       SELECT 1
                       FROM roles r
-                      WHERE r.id = u.role_id
-                        AND UPPER(TRIM(r.name)) = :protectedRole
+                      WHERE r.role_id = u.role_id
+                        AND UPPER(TRIM(r.role_name)) = :protectedRole
                   )
                 """;
 
@@ -200,14 +205,12 @@ public class UserRepositoryImpl implements UserRepository {
                 SET deleted_at = NULL,
                     deleted_by = NULL,
                     updated_at = NOW(6),
-                    updated_by = :updatedBy
+                    updated_by = NULL
                 WHERE user_id = :id AND deleted_at IS NOT NULL
                 """;
 
-        String updatedBy = SecurityService.getCurrentUserLogin().orElse("system");
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("updatedBy", updatedBy);
+                .addValue("id", id);
         jdbcTemplate.update(sql, params);
     }
 
@@ -256,7 +259,7 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public List<User> findByRoleName(String roleName) {
         String sql = USER_SELECT + """
-                WHERE LOWER(r.name) = LOWER(:roleName)
+                WHERE LOWER(r.role_name) = LOWER(:roleName)
                   AND u.deleted_at IS NULL
                 ORDER BY u.full_name ASC, u.user_id ASC
                 """;
@@ -269,16 +272,14 @@ public class UserRepositoryImpl implements UserRepository {
                 UPDATE users
                 SET role_id = :roleId,
                     updated_at = NOW(6),
-                    updated_by = :updatedBy
+                    updated_by = NULL
                 WHERE user_id = :userId
                   AND deleted_at IS NULL
                 """;
 
-        String updatedBy = SecurityService.getCurrentUserLogin().orElse("system");
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("userId", userId)
-                .addValue("roleId", roleId)
-                .addValue("updatedBy", updatedBy);
+                .addValue("roleId", roleId);
 
         jdbcTemplate.update(sql, params);
     }
@@ -293,17 +294,14 @@ public class UserRepositoryImpl implements UserRepository {
     public void updateStatus(long id, String status) {
         String sql = """
                 UPDATE users
-                SET status = :status,
-                    is_active = :isActive,
+                SET is_active = :isActive,
                     updated_at = NOW(6),
-                    updated_by = :updatedBy
+                    updated_by = NULL
                 WHERE user_id = :id AND deleted_at IS NULL
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("id", id)
-                .addValue("status", status)
-                .addValue("isActive", !"LOCKED".equalsIgnoreCase(status))
-                .addValue("updatedBy", SecurityService.getCurrentUserLogin().orElse("system"));
+                .addValue("isActive", !"LOCKED".equalsIgnoreCase(status));
         jdbcTemplate.update(sql, params);
     }
 
@@ -315,7 +313,7 @@ public class UserRepositoryImpl implements UserRepository {
                     lock_count = :lockCount,
                     locked_until = :lockedUntil,
                     updated_at = NOW(6),
-                    updated_by = 'system'
+                    updated_by = NULL
                 WHERE user_id = :id AND deleted_at IS NULL
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -333,7 +331,7 @@ public class UserRepositoryImpl implements UserRepository {
                 SET failed_login_attempts = 0,
                     locked_until = NULL,
                     updated_at = NOW(6),
-                    updated_by = 'system'
+                    updated_by = NULL
                 WHERE user_id = :id AND deleted_at IS NULL
                 """;
         jdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
@@ -347,7 +345,7 @@ public class UserRepositoryImpl implements UserRepository {
                     lock_count = 0,
                     locked_until = NULL,
                     updated_at = NOW(6),
-                    updated_by = 'system'
+                    updated_by = NULL
                 WHERE user_id = :id AND deleted_at IS NULL
                 """;
         jdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
@@ -373,5 +371,34 @@ public class UserRepositoryImpl implements UserRepository {
         return jdbcTemplate.query(sql, new MapSqlParameterSource("loginId", loginId), mapperDb).stream()
                 .findFirst()
                 .orElse(null);
+    }
+
+    private void replaceRefreshTokenIfPresent(User user) {
+        if (user == null || user.getId() <= 0 || user.getRefreshToken() == null || user.getRefreshToken().isBlank()) {
+            return;
+        }
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", user.getId())
+                .addValue("token", user.getRefreshToken());
+        jdbcTemplate.update("DELETE FROM refresh_tokens WHERE user_id = :userId", params);
+        jdbcTemplate.update(
+                """
+                        INSERT INTO refresh_tokens (
+                            user_id,
+                            token,
+                            expired_at,
+                            created_at,
+                            updated_at
+                        )
+                        VALUES (
+                            :userId,
+                            :token,
+                            DATE_ADD(NOW(), INTERVAL 30 DAY),
+                            NOW(6),
+                            NOW(6)
+                        )
+                        """,
+                params);
     }
 }

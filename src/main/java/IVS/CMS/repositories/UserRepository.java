@@ -18,6 +18,8 @@ public interface UserRepository {
 
     User findByEmail(String email);
 
+    Optional<User> findByEmailIncludeDeleted(String email);
+
     boolean existsByEmail(String email);
 
     User findByRefreshTokenAndEmail(String refreshToken, String email);

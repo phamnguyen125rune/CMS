@@ -16,10 +16,10 @@ public class RoleRowMapper implements RowMapper<Role> {
     public Role mapRow(ResultSet rs, int rowNum) throws SQLException {
         Role role = new Role();
 
-        role.setId(rs.getLong("id"));
-        role.setName(rs.getString("name"));
-        role.setDescription(rs.getString("description"));
-        role.setActive(rs.getBoolean("active"));
+        role.setId(rs.getLong("role_id"));
+        role.setName(rs.getString("role_name"));
+        role.setDescription(rs.getString("role_description"));
+        role.setActive(rs.getBoolean("is_active"));
 
         Timestamp createdAt = rs.getTimestamp("created_at");
         if (createdAt != null)
@@ -35,14 +35,24 @@ public class RoleRowMapper implements RowMapper<Role> {
 
     public MapSqlParameterSource toParams(Role role) {
         return new MapSqlParameterSource()
-                .addValue("id", role.getId())
-                .addValue("name", role.getName())
-                .addValue("description", role.getDescription())
-                .addValue("active", role.isActive())
+                .addValue("roleId", role.getId())
+                .addValue("roleName", role.getName())
+                .addValue("roleDescription", role.getDescription())
+                .addValue("isActive", role.isActive())
                 .addValue("createdAt", role.getCreatedAt() != null ? Timestamp.from(role.getCreatedAt()) : null)
-                .addValue("createdBy", role.getCreatedBy())
+                .addValue("createdBy", parseUnsignedId(role.getCreatedBy()))
                 .addValue("updatedAt", role.getUpdatedAt() != null ? Timestamp.from(role.getUpdatedAt()) : null)
-                .addValue("updatedBy", role.getUpdatedBy());
+                .addValue("updatedBy", parseUnsignedId(role.getUpdatedBy()));
     }
 
+    private Long parseUnsignedId(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
 }

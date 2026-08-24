@@ -84,7 +84,10 @@ public class PermissionCacheService {
     }
 
     public List<String> getPermissionCodes(User user) {
-        return buildPermissionCodes(user).stream().sorted().collect(Collectors.toList());
+        return buildAuthorities(user).stream()
+                .filter(authority -> !authority.startsWith("ROLE_"))
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     private Set<String> loadAuthoritiesFromDatabase(long userId) {
@@ -110,8 +113,14 @@ public class PermissionCacheService {
         Set<String> authorities = new HashSet<>();
         Role role = user.getRole();
         if (role != null && role.getName() != null && role.isActive()) {
-            authorities.add("ROLE_" + role.getName().trim().toUpperCase());
+            String roleName = role.getName().trim().toUpperCase();
+            authorities.add("ROLE_" + roleName);
             authorities.addAll(buildPermissionCodes(user));
+            if ("SUPER_ADMIN".equals(roleName) || "ADMIN".equals(roleName)) {
+                authorities.addAll(defaultAdminAuthorities());
+            } else if ("USER".equals(roleName) || "NORMAL_USER".equals(roleName)) {
+                authorities.addAll(defaultUserAuthorities());
+            }
         }
         return Collections.unmodifiableSet(authorities);
     }
@@ -147,6 +156,29 @@ public class PermissionCacheService {
 
     private Duration cacheTtl() {
         return Duration.ofSeconds(ttlSeconds);
+    }
+
+    private Set<String> defaultAdminAuthorities() {
+        return Set.of(
+                "auth:EDIT",
+                "profile:VIEW",
+                "profile:EDIT",
+                "users:VIEW",
+                "users:EDIT",
+                "roles:VIEW",
+                "roles:EDIT",
+                "permissions:VIEW",
+                "permissions:EDIT",
+                "contacts:VIEW",
+                "contacts:EDIT");
+    }
+
+    private Set<String> defaultUserAuthorities() {
+        return Set.of(
+                "auth:EDIT",
+                "profile:VIEW",
+                "profile:EDIT",
+                "users:VIEW");
     }
 
     private static final class CacheEntry {

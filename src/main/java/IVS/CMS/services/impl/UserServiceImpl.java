@@ -2,6 +2,7 @@ package IVS.CMS.services.impl;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -57,19 +58,22 @@ public class UserServiceImpl implements UserService {
         user.setEmail(normalizeEmail(user.getEmail()));
         user.setFullname(resolveStaffFullname(user.getFullname(), user.getEmail()));
 
-        if (this.userRepository.existsByEmail(user.getEmail())) {
-            throw new BadRequestException("Email " + user.getEmail() + " đã tồn tại!");
+        Optional<User> existingUser = this.userRepository.findByEmailIncludeDeleted(user.getEmail());
+        if (existingUser.isPresent()) {
+            User existing = existingUser.get();
+            if (!Boolean.TRUE.equals(existing.getDeleted())) {
+                throw new BadRequestException("Email " + user.getEmail() + " đã tồn tại!");
+            }
+
+            restoreDeletedStaffUser(existing, user);
+            existing = this.userRepository.save(existing);
+            this.permissionCacheService.evictUser(existing.getId());
+            return this.userMapper.userToResCreateDTO(existing);
         }
 
         validateCreatableRole(user);
-        user.setStatus(STATUS_ACTIVE);
-        user.setIsActive(true);
-        user.setIsSystem(false);
-        user.setFailedLoginAttempts(0);
-        user.setLockCount(0);
-        user.setLockedUntil(null);
+        applyStaffAccountDefaults(user);
         user.setEmployeeCode(generateEmployeeCode());
-        user.setPassword(passwordEncoder.encode(DEFAULT_RESET_PASSWORD));
 
         user = this.userRepository.save(user);
 
@@ -257,10 +261,6 @@ public class UserServiceImpl implements UserService {
                 targetUser,
                 "Không thể xóa vĩnh viễn tài khoản đang đăng nhập",
                 "Không thể xóa vĩnh viễn tài khoản SUPER_ADMIN");
-
-        if (!Boolean.TRUE.equals(targetUser.getDeleted())) {
-            throw new BadRequestException("Chỉ có thể xóa vĩnh viễn người dùng trong thùng rác");
-        }
 
         int affectedRows = this.userRepository.hardDelete(targetUser.getId(), currentUser.getId());
         if (affectedRows != 1) {
@@ -480,6 +480,35 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setRole(role);
+    }
+
+    private void restoreDeletedStaffUser(User existing, User requested) {
+        existing.setFullname(resolveStaffFullname(requested.getFullname(), requested.getEmail()));
+        existing.setEmail(normalizeEmail(requested.getEmail()));
+        existing.setAvatarUrl(requested.getAvatarUrl());
+        existing.setPhone(requested.getPhone());
+        existing.setAge(requested.getAge());
+        existing.setAddress(requested.getAddress());
+        existing.setGender(requested.getGender());
+        existing.setDateOfBirth(requested.getDateOfBirth());
+        existing.setRole(requested.getRole());
+
+        validateCreatableRole(existing);
+        applyStaffAccountDefaults(existing);
+        existing.setDeleted(false);
+        existing.setDeletedAt(null);
+        existing.setDeletedBy(null);
+        existing.setRefreshToken(null);
+    }
+
+    private void applyStaffAccountDefaults(User user) {
+        user.setStatus(STATUS_ACTIVE);
+        user.setIsActive(true);
+        user.setIsSystem(false);
+        user.setFailedLoginAttempts(0);
+        user.setLockCount(0);
+        user.setLockedUntil(null);
+        user.setPassword(passwordEncoder.encode(DEFAULT_RESET_PASSWORD));
     }
 
     private void applyDefaultRegisteredRole(User user) {

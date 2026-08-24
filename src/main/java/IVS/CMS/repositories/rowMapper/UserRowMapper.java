@@ -26,18 +26,27 @@ public class UserRowMapper implements RowMapper<User> {
         user.setEmail(rs.getString("email"));
         user.setPassword(rs.getString("password_hash"));
         user.setAvatarUrl(rs.getString("avatar_url"));
-        user.setRefreshToken(rs.getString("refresh_token"));
+        if (hasColumn(rs, "refresh_token")) {
+            user.setRefreshToken(rs.getString("refresh_token"));
+        }
         user.setPhone(rs.getString("phone_number"));
 
         if (rs.getDate("date_of_birth") != null) {
             user.setDateOfBirth(rs.getDate("date_of_birth").toLocalDate());
         }
 
-        user.setAge(rs.getInt("age"));
+        if (hasColumn(rs, "age")) {
+            user.setAge(rs.getInt("age"));
+        }
         user.setAddress(rs.getString("address"));
-        user.setStatus(rs.getString("status"));
+        if (hasColumn(rs, "status")) {
+            user.setStatus(rs.getString("status"));
+        }
         if (hasColumn(rs, "is_active")) {
             user.setIsActive(rs.getBoolean("is_active"));
+        }
+        if (user.getStatus() == null) {
+            user.setStatus(Boolean.FALSE.equals(user.getIsActive()) ? "LOCKED" : "ACTIVE");
         }
         if (hasColumn(rs, "is_system")) {
             user.setIsSystem(rs.getBoolean("is_system"));
@@ -133,7 +142,7 @@ public class UserRowMapper implements RowMapper<User> {
                 .addValue("dateOfBirth", user.getDateOfBirth())
                 .addValue("age", user.getAge())
                 .addValue("address", user.getAddress())
-                .addValue("gender", user.getGender() != null ? user.getGender().name() : null)
+                .addValue("gender", toDatabaseGender(user.getGender()))
                 .addValue("roleId", user.getRole() != null ? user.getRole().getId() : null)
                 .addValue("isActive", user.getIsActive() == null ? true : user.getIsActive())
                 .addValue("isSystem", user.getIsSystem() == null ? false : user.getIsSystem())
@@ -144,8 +153,30 @@ public class UserRowMapper implements RowMapper<User> {
                 .addValue("deletedAt", user.getDeletedAt() != null ? Timestamp.from(user.getDeletedAt()) : null)
                 .addValue("deletedBy", user.getDeletedBy())
                 .addValue("createdAt", user.getCreatedAt() != null ? Timestamp.from(user.getCreatedAt()) : null)
-                .addValue("createdBy", user.getCreatedBy())
+                .addValue("createdBy", parseUnsignedId(user.getCreatedBy()))
                 .addValue("updatedAt", user.getUpdatedAt() != null ? Timestamp.from(user.getUpdatedAt()) : null)
-                .addValue("updatedBy", user.getUpdatedBy());
+                .addValue("updatedBy", parseUnsignedId(user.getUpdatedBy()));
+    }
+
+    private Long parseUnsignedId(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private String toDatabaseGender(GenderEnum gender) {
+        if (gender == null) {
+            return "others";
+        }
+        return switch (gender) {
+            case MALE -> "male";
+            case FEMALE -> "female";
+            case OTHER -> "others";
+        };
     }
 }

@@ -32,22 +32,46 @@ public class RoleRepositoryImpl implements RoleRepository {
     public Role save(Role role) {
         if (role.getId() == 0) {
             role.handleBeforeCreate();
-            String sql = "INSERT INTO roles (name, description, active, created_at, created_by, updated_at, updated_by) "
-                    + "VALUES (:name, :description, :active, :createdAt, :createdBy, :updatedAt, :updatedBy)";
+            String sql = """
+                    INSERT INTO roles (
+                        role_name,
+                        role_description,
+                        is_active,
+                        created_at,
+                        created_by,
+                        updated_at,
+                        updated_by
+                    )
+                    VALUES (
+                        :roleName,
+                        :roleDescription,
+                        :isActive,
+                        :createdAt,
+                        :createdBy,
+                        :updatedAt,
+                        :updatedBy
+                    )
+                    """;
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(sql, mapperDb.toParams(role), keyHolder, new String[] { "id" });
+            jdbcTemplate.update(sql, mapperDb.toParams(role), keyHolder, new String[] { "role_id" });
 
             if (keyHolder.getKey() != null) {
                 role.setId(keyHolder.getKey().longValue());
             }
         } else {
             role.handleUpdate();
-            String sql = "UPDATE roles SET name = :name, description = :description, active = :active, "
-                    + "updated_at = :updatedAt, updated_by = :updatedBy WHERE id = :id";
+            String sql = """
+                    UPDATE roles
+                    SET role_name = :roleName,
+                        role_description = :roleDescription,
+                        is_active = :isActive,
+                        updated_at = :updatedAt,
+                        updated_by = :updatedBy
+                    WHERE role_id = :roleId
+                    """;
 
             MapSqlParameterSource params = mapperDb.toParams(role);
-            params.addValue("id", role.getId());
             jdbcTemplate.update(sql, params);
         }
         return role;
@@ -55,7 +79,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
     @Override
     public Optional<Role> findById(long id) {
-        String sql = "SELECT * FROM roles WHERE id = :id";
+        String sql = "SELECT * FROM roles WHERE role_id = :id";
         MapSqlParameterSource params = new MapSqlParameterSource("id", id);
         Optional<Role> roleOpt = jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
 
@@ -80,7 +104,7 @@ public class RoleRepositoryImpl implements RoleRepository {
         String deleteMappingSql = "DELETE FROM role_permission WHERE role_id = :roleId";
         jdbcTemplate.update(deleteMappingSql, new MapSqlParameterSource("roleId", role.getId()));
 
-        String sql = "DELETE FROM roles WHERE id = :id";
+        String sql = "DELETE FROM roles WHERE role_id = :id";
         jdbcTemplate.update(sql, new MapSqlParameterSource("id", role.getId()));
     }
 
@@ -106,7 +130,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
     @Override
     public boolean existsByName(String name) {
-        String sql = "SELECT COUNT(1) FROM roles WHERE name = :name";
+        String sql = "SELECT COUNT(1) FROM roles WHERE role_name = :name";
         MapSqlParameterSource params = new MapSqlParameterSource("name", name);
         Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
         return count != null && count > 0;
@@ -114,7 +138,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
     @Override
     public Optional<Role> findByName(String name) {
-        String sql = "SELECT * FROM roles WHERE LOWER(name) = LOWER(:name)";
+        String sql = "SELECT * FROM roles WHERE LOWER(role_name) = LOWER(:name)";
         MapSqlParameterSource params = new MapSqlParameterSource("name", name);
         Optional<Role> roleOpt = jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
 
