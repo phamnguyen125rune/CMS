@@ -1,5 +1,8 @@
 package IVS.CMS.services.mapper;
 
+import java.time.LocalDate;
+import java.time.Period;
+
 import org.springframework.stereotype.Component;
 
 import IVS.CMS.domain.Role;
@@ -44,7 +47,7 @@ public class UserMapper {
         res.setEmail(user.getEmail());
         res.setAvatarUrl(user.getAvatarUrl());
         res.setPhone(user.getPhone());
-        res.setAge(user.getAge());
+        res.setAge(resolveAge(user));
         res.setAddress(user.getAddress());
         res.setGender(user.getGender());
         res.setEmployeeCode(user.getEmployeeCode());
@@ -52,6 +55,8 @@ public class UserMapper {
         res.setStatus(user.getStatus());
         res.setCreatedAt(user.getCreatedAt());
         res.setCreatedBy(user.getCreatedBy());
+        res.setUpdatedAt(user.getUpdatedAt());
+        res.setUpdatedBy(user.getUpdatedBy());
 
         if (user.getRole() != null) {
             res.setRole(new ResUserCreateDTO.RoleUser(user.getRole().getId(), user.getRole().getName()));
@@ -70,7 +75,7 @@ public class UserMapper {
         res.setEmail(user.getEmail());
         res.setAvatarUrl(user.getAvatarUrl());
         res.setPhone(user.getPhone());
-        res.setAge(user.getAge());
+        res.setAge(resolveAge(user));
         res.setAddress(user.getAddress());
         res.setGender(user.getGender());
         res.setEmployeeCode(user.getEmployeeCode());
@@ -78,6 +83,10 @@ public class UserMapper {
         res.setStatus(user.getStatus());
         res.setCreatedAt(user.getCreatedAt());
         res.setCreatedBy(user.getCreatedBy());
+        res.setUpdatedAt(user.getUpdatedAt());
+        res.setUpdatedBy(user.getUpdatedBy());
+        res.setDeletedAt(user.getDeletedAt());
+        res.setDeletedBy(user.getDeletedBy());
 
         if (user.getRole() != null) {
             res.setRole(new ResUserDTO.RoleUser(user.getRole().getId(), user.getRole().getName()));
@@ -116,7 +125,7 @@ public class UserMapper {
         req.setEmail(user.getEmail());
         req.setAvatarUrl(user.getAvatarUrl());
         req.setPhone(user.getPhone());
-        req.setAge(user.getAge());
+        req.setAge(resolveAge(user));
         req.setAddress(user.getAddress());
         req.setGender(user.getGender());
         req.setDateOfBirth(user.getDateOfBirth());
@@ -138,5 +147,18 @@ public class UserMapper {
         user.setDateOfBirth(dto.getDateOfBirth());
 
         return user;
+    }
+
+    private int resolveAge(User user) {
+        if (user.getDateOfBirth() == null) {
+            return user.getAge();
+        }
+
+        LocalDate today = LocalDate.now();
+        if (user.getDateOfBirth().isAfter(today)) {
+            return 0;
+        }
+
+        return Period.between(user.getDateOfBirth(), today).getYears();
     }
 }

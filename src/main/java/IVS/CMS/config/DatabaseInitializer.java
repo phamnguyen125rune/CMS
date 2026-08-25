@@ -54,7 +54,7 @@ public class DatabaseInitializer {
                         is_system,
                         gender
                     )
-                    VALUES ('EMP0000', 'Admin System', 'cms@gmail.com', ?, 1, 1, 1, 'others')
+                    VALUES ('EMP0000', 'Admin System', 'cms@gmail.com', ?, 2, 1, 1, 'others')
                     """;
             jdbcTemplate.update(insertUserSql, passwordEncoder.encode("123456"));
 
@@ -70,9 +70,15 @@ public class DatabaseInitializer {
                         is_system,
                         gender
                     )
-                    VALUES ('ADMIN001', 'Admin Demo', 'admin@cms.local', ?, '/images/default-avatar.png', 1, 1, 1, 'others')
+                    VALUES ('ADMIN001', 'Admin Demo', 'admin@cms.local', ?, '/images/default-avatar.png', 2, 1, 1, 'others')
                     """;
             jdbcTemplate.update(insertFixedAdminSql, passwordEncoder.encode("Admin@123456"));
+
+            jdbcTemplate.update("""
+                    UPDATE users
+                    SET role_id = 2
+                    WHERE email IN ('cms@gmail.com', 'admin@cms.local')
+                    """);
 
             log.info("Database initialization completed successfully.");
         } catch (Exception e) {

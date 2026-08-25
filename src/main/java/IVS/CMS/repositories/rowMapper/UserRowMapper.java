@@ -65,7 +65,7 @@ public class UserRowMapper implements RowMapper<User> {
         }
         user.setDeleted(user.getDeletedAt() != null);
 
-        user.setDeletedBy(rs.getString("deleted_by"));
+        user.setDeletedBy(readAuditUser(rs, "deleted_by_name", "deleted_by"));
 
         String genderStr = rs.getString("gender");
         if (genderStr != null && !genderStr.trim().isEmpty()) {
@@ -97,16 +97,27 @@ public class UserRowMapper implements RowMapper<User> {
             user.setCreatedAt(createdAt.toInstant());
         }
 
-        user.setCreatedBy(rs.getString("created_by"));
+        user.setCreatedBy(readAuditUser(rs, "created_by_name", "created_by"));
 
         Timestamp updatedAt = rs.getTimestamp("updated_at");
         if (updatedAt != null) {
             user.setUpdatedAt(updatedAt.toInstant());
         }
 
-        user.setUpdatedBy(rs.getString("updated_by"));
+        user.setUpdatedBy(readAuditUser(rs, "updated_by_name", "updated_by"));
 
         return user;
+    }
+
+    private String readAuditUser(ResultSet rs, String nameColumn, String idColumn) throws SQLException {
+        if (hasColumn(rs, nameColumn)) {
+            String displayName = rs.getString(nameColumn);
+            if (displayName != null && !displayName.isBlank()) {
+                return displayName;
+            }
+        }
+
+        return rs.getString(idColumn);
     }
 
     private boolean hasColumn(ResultSet rs, String columnName) throws SQLException {

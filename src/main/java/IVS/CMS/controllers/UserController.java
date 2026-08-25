@@ -68,6 +68,16 @@ public class UserController {
         return this.userService.UpdateUser(id, req);
     }
 
+    @PostMapping("/{id}/avatar")
+    @PreAuthorize("hasAuthority('users:EDIT')")
+    public ResponseEntity<Map<String, String>> uploadUserAvatar(
+            @PathVariable("id") Long id,
+            @RequestParam("file") MultipartFile file) {
+        String avatarUrl = this.userService.uploadUserAvatar(id, file);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("avatarUrl", avatarUrl));
+    }
+
     @GetMapping
     @PreAuthorize("hasAuthority('users:VIEW')")
     public ResponseEntity<ResultPaginationDTO> getAll(
@@ -79,7 +89,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('users:EDIT')")
     public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
-        this.userService.hardDeleteUser(id);
+        this.userService.softDeleteUser(id);
         return ResponseEntity.ok().build();
     }
 

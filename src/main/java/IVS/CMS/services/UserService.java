@@ -57,9 +57,13 @@ public interface UserService {
 
     String uploadMyAvatar(MultipartFile file);
 
+    String uploadUserAvatar(long id, MultipartFile file);
+
     ResUserDTO getMyProfile();
 
     ResUserDTO updateMyProfile(ReqUpdateProfileDTO req);
 
     User handleGetUserByEmailOrEmployeeCode(String loginId);
+
+    User handleGetUserByEmailOrEmployeeCodeIncludeDeleted(String loginId);
 }

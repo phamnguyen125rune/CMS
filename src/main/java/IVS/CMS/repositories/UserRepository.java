@@ -57,4 +57,6 @@ public interface UserRepository {
     User findByEmployeeCode(String employeeCode);
 
     User findByEmailOrEmployeeCode(String loginId);
+
+    User findByEmailOrEmployeeCodeIncludeDeleted(String loginId);
 }

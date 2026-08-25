@@ -1,6 +1,8 @@
 package IVS.CMS.services.impl;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -22,6 +24,7 @@ import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.services.PermissionCacheService;
 import IVS.CMS.services.SecurityService;
+import IVS.CMS.services.SessionEventService;
 import IVS.CMS.services.UserService;
 import IVS.CMS.services.error.BadRequestException;
 import IVS.CMS.services.error.ForbiddenException;
@@ -49,6 +52,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final FileUploadService fileUploadService;
     private final PermissionCacheService permissionCacheService;
+    private final SessionEventService sessionEventService;
 
     @Override
     @Transactional
@@ -57,6 +61,7 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.reqCreateToUser(req);
         user.setEmail(normalizeEmail(user.getEmail()));
         user.setFullname(resolveStaffFullname(user.getFullname(), user.getEmail()));
+        user.setAge(calculateAge(user.getDateOfBirth()));
 
         Optional<User> existingUser = this.userRepository.findByEmailIncludeDeleted(user.getEmail());
         if (existingUser.isPresent()) {
@@ -134,7 +139,7 @@ public class UserServiceImpl implements UserService {
 
         userCurrent.setFullname(req.getFullname());
         userCurrent.setEmail(req.getEmail());
-        userCurrent.setAge(req.getAge());
+        userCurrent.setAge(calculateAge(req.getDateOfBirth()));
         userCurrent.setGender(req.getGender());
         userCurrent.setPhone(req.getPhone());
         userCurrent.setAddress(req.getAddress());
@@ -207,6 +212,7 @@ public class UserServiceImpl implements UserService {
         }
         User user = this.userMapper.reqCreateToUser(req);
         applyDefaultRegisteredRole(user);
+        user.setAge(calculateAge(user.getDateOfBirth()));
         user.setStatus(STATUS_ACTIVE);
         user.setIsActive(true);
         user.setIsSystem(false);
@@ -247,6 +253,7 @@ public class UserServiceImpl implements UserService {
         }
 
         this.permissionCacheService.evictUser(targetUser.getId());
+        this.sessionEventService.notifyAccountLocked(targetUser.getId());
     }
 
     @Override
@@ -372,6 +379,9 @@ public class UserServiceImpl implements UserService {
 
         this.userRepository.updateStatus(id, normalizedStatus);
         this.permissionCacheService.evictUser(id);
+        if (STATUS_LOCKED.equals(normalizedStatus)) {
+            this.sessionEventService.notifyAccountLocked(id);
+        }
     }
 
     @Override
@@ -416,15 +426,37 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public String uploadUserAvatar(long id, MultipartFile file) {
+        User user = this.userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            this.fileUploadService.deleteAvatar(user.getAvatarUrl());
+        }
+
+        String avatarUrl = this.fileUploadService.uploadAvatar(file);
+        user.setAvatarUrl(avatarUrl);
+        this.userRepository.save(user);
+        this.permissionCacheService.evictUser(user.getId());
+
+        return avatarUrl;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public ResUserDTO getMyProfile() {
         String email = SecurityService.getCurrentUserLogin()
                 .orElseThrow(() -> new BadRequestException("Bạn chưa đăng nhập"));
 
-        User user = this.userRepository.findByEmail(email);
+        User user = this.userRepository.findByEmailIncludeDeleted(email).orElse(null);
 
         if (user == null) {
             throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
+        }
+        if (!isUsableAccount(user)) {
+            this.permissionCacheService.evictUser(user.getId());
+            throw new ForbiddenException("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
         }
 
         return this.userMapper.userToResUserDTO(user);
@@ -444,7 +476,7 @@ public class UserServiceImpl implements UserService {
 
         user.setFullname(req.getFullname());
         user.setPhone(req.getPhone());
-        user.setAge(req.getAge());
+        user.setAge(calculateAge(req.getDateOfBirth()));
         user.setAddress(req.getAddress());
         user.setGender(req.getGender());
         user.setDateOfBirth(req.getDateOfBirth());
@@ -457,6 +489,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public User handleGetUserByEmailOrEmployeeCode(String loginId) {
         User user = this.userRepository.findByEmailOrEmployeeCode(loginId);
+
+        if (user != null && user.getRole() != null && user.getRole().getId() > 0) {
+            Role fullRole = this.roleRepository.findById(user.getRole().getId()).orElse(null);
+            user.setRole(fullRole);
+        }
+
+        return user;
+    }
+
+    @Override
+    public User handleGetUserByEmailOrEmployeeCodeIncludeDeleted(String loginId) {
+        User user = this.userRepository.findByEmailOrEmployeeCodeIncludeDeleted(loginId);
 
         if (user != null && user.getRole() != null && user.getRole().getId() > 0) {
             Role fullRole = this.roleRepository.findById(user.getRole().getId()).orElse(null);
@@ -487,7 +531,7 @@ public class UserServiceImpl implements UserService {
         existing.setEmail(normalizeEmail(requested.getEmail()));
         existing.setAvatarUrl(requested.getAvatarUrl());
         existing.setPhone(requested.getPhone());
-        existing.setAge(requested.getAge());
+        existing.setAge(calculateAge(requested.getDateOfBirth()));
         existing.setAddress(requested.getAddress());
         existing.setGender(requested.getGender());
         existing.setDateOfBirth(requested.getDateOfBirth());
@@ -578,6 +622,13 @@ public class UserServiceImpl implements UserService {
         return role != null && role.getName() != null && ROLE_SUPER_ADMIN.equalsIgnoreCase(role.getName().trim());
     }
 
+    private boolean isUsableAccount(User user) {
+        return user != null
+                && !Boolean.TRUE.equals(user.getDeleted())
+                && Boolean.TRUE.equals(user.getIsActive())
+                && !STATUS_LOCKED.equalsIgnoreCase(user.getStatus());
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
@@ -601,6 +652,14 @@ public class UserServiceImpl implements UserService {
                 .replace('-', ' ')
                 .trim();
         return localPart.isEmpty() ? "Nhân sự mới" : localPart;
+    }
+
+    private int calculateAge(LocalDate dateOfBirth) {
+        if (dateOfBirth == null || dateOfBirth.isAfter(LocalDate.now())) {
+            return 0;
+        }
+
+        return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 
     private long resolveLockMinutes(int lockCount) {

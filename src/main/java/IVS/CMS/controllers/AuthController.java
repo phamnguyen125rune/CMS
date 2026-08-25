@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import IVS.CMS.domain.User;
 import IVS.CMS.domain.dto.request.ReqChangePasswordDTO;
@@ -37,6 +39,7 @@ import IVS.CMS.domain.dto.response.ResOtpVerifyDTO;
 import IVS.CMS.services.AuthOtpService;
 import IVS.CMS.services.PermissionCacheService;
 import IVS.CMS.services.SecurityService;
+import IVS.CMS.services.SessionEventService;
 import IVS.CMS.services.UserService;
 import IVS.CMS.services.error.BadRequestException;
 
@@ -53,18 +56,21 @@ public class AuthController {
     private final UserService userService;
     private final PermissionCacheService permissionCacheService;
     private final AuthOtpService authOtpService;
+    private final SessionEventService sessionEventService;
 
     public AuthController(
             AuthenticationManagerBuilder authenticationManagerBuilder,
             SecurityService securityService,
             UserService userService,
             PermissionCacheService permissionCacheService,
-            AuthOtpService authOtpService) {
+            AuthOtpService authOtpService,
+            SessionEventService sessionEventService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityService = securityService;
         this.userService = userService;
         this.permissionCacheService = permissionCacheService;
         this.authOtpService = authOtpService;
+        this.sessionEventService = sessionEventService;
     }
 
     private UserLogin buildUserLoginDTO(User currentUserDB) {
@@ -88,7 +94,7 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO) {
-        User loginUser = this.userService.handleGetUserByEmailOrEmployeeCode(loginDTO.getLoginId());
+        User loginUser = this.userService.handleGetUserByEmailOrEmployeeCodeIncludeDeleted(loginDTO.getLoginId());
         ensureLoginAllowed(loginUser);
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -183,9 +189,17 @@ public class AuthController {
                 .body(res);
     }
 
+    @GetMapping(value = "/auth/session-events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public SseEmitter sessionEvents() {
+        return this.sessionEventService.subscribeCurrentUser();
+    }
+
     private boolean isLockedUser(User user) {
         return user != null
-                && (!Boolean.TRUE.equals(user.getIsActive()) || "LOCKED".equalsIgnoreCase(user.getStatus()));
+                && (Boolean.TRUE.equals(user.getDeleted())
+                        || !Boolean.TRUE.equals(user.getIsActive())
+                        || "LOCKED".equalsIgnoreCase(user.getStatus()));
     }
 
     private void ensureLoginAllowed(User user) {
@@ -194,7 +208,7 @@ public class AuthController {
         }
 
         if (isLockedUser(user)) {
-            throw new BadRequestException("Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên hoặc bấm Quên mật khẩu để lấy lại mật khẩu.");
+            throw new BadRequestException("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
         }
 
         Instant lockedUntil = user.getLockedUntil();

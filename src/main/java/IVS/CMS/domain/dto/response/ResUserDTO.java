@@ -29,6 +29,8 @@ public class ResUserDTO {
     private String createdBy;
     private Instant updatedAt;
     private String updatedBy;
+    private Instant deletedAt;
+    private String deletedBy;
 
     @Getter
     @Setter
