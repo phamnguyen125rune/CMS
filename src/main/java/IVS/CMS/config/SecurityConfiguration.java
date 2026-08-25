@@ -52,6 +52,7 @@ public class SecurityConfiguration {
                         // Bổ sung: Cho phép khách vãng lai POST để gửi form mới (Không cho phép GET/DELETE)
                         .requestMatchers(HttpMethod.POST, "/api/v1/form-details").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/general-info").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/general-info").permitAll()
                         .requestMatchers(publicEndpoints).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
