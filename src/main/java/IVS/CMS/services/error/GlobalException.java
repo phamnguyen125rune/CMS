@@ -95,4 +95,16 @@ public class GlobalException {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
     }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<RestResponse<Object>> handleConflictException(
+            ConflictException ex) {
+
+        RestResponse<Object> res = new RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("Xung đột dữ liệu");
+        res.setMessage(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
 }

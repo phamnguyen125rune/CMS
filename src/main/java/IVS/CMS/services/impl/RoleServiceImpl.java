@@ -10,8 +10,9 @@ import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.RoleService;
 import IVS.CMS.services.dto.request.role.ReqRoleDTO;
-import IVS.CMS.services.dto.response.role.ResListRoleDTO;
-import IVS.CMS.services.error.BadRequestException;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
+import IVS.CMS.services.error.ConflictException;
+import IVS.CMS.services.error.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 
@@ -25,7 +26,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Role createRole(ReqRoleDTO req) {
         if (roleRepository.findByRoleName(req.getRoleName()) != null) {
-            throw new BadRequestException("Role name already exists");
+            throw new ConflictException("Role name already exists");
         }
         Role role = new Role();
         role.setRoleName(req.getRoleName());
@@ -38,7 +39,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<ResListRoleDTO> getAllRoles() {
+    public List<ResRoleDTO> getAllRoles() {
         return roleRepository.findAll();
     }
 
@@ -46,7 +47,7 @@ public class RoleServiceImpl implements RoleService {
     public Role updateRole(Long id, ReqRoleDTO req) {
         Role role = roleRepository.findById(id);
         if (role == null) {
-            throw new BadRequestException("Role not found");
+            throw new ResourceNotFoundException("Role not found");
         }
         role.setRoleName(req.getRoleName());
         role.setRoleDescription(req.getRoleDescription());
@@ -60,7 +61,7 @@ public class RoleServiceImpl implements RoleService {
     public Role updateRoleByRoleName(ReqRoleDTO req) {
         Role role = roleRepository.findByRoleName(req.getRoleName());
         if (role == null) {
-            throw new BadRequestException("Role not found");
+            throw new ResourceNotFoundException("Role not found");
         }
         role.setRoleName(req.getRoleName());
         role.setRoleDescription(req.getRoleDescription());
@@ -74,23 +75,26 @@ public class RoleServiceImpl implements RoleService {
     public Role updateActiveRole(Long id){
         Role role = roleRepository.findById(id);
         if (role == null) {
-            throw new BadRequestException("Role not found");
+            throw new ResourceNotFoundException("Role not found with id " + id);
         }
         if (roleRepository.checkIsSystemRole(id)) {
-            throw new BadRequestException("Can't update status of system role");
+            throw new ConflictException("Can't update status of system role");
         }
-        return roleRepository.changeRoleStatus(id);
+        role.setUpdatedAt(LocalDateTime.now());
+        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
+
+        return roleRepository.changeRoleStatus(role);
     }
 
     @Override
     public void deleteRole(Long id){
         Role role = roleRepository.findById(id);
         if (role == null) {
-            throw new BadRequestException("Role not found");
+            throw new ResourceNotFoundException("Role not found with id " + id);
         }
 
         if (roleRepository.checkIsSystemRole(id)) {
-            throw new BadRequestException("Can't delete system role");
+            throw new ConflictException("Can't delete system role");
         }
         roleRepository.delete(role);
     }

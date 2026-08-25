@@ -1,69 +1,98 @@
-// package IVS.CMS.services.impl;
+package IVS.CMS.services.impl;
 
-// import java.time.LocalDateTime;
-// import java.util.List;
+import java.util.ArrayList;
+import java.util.List;
 
-// import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-// import IVS.CMS.domain.Permission;
-// import IVS.CMS.repositories.PermissionRepository;
-// import IVS.CMS.services.PermissionCacheService;
-// import IVS.CMS.services.PermissionService;
-// import IVS.CMS.services.SecurityService;
-// import IVS.CMS.services.error.ResourceNotFoundException;
+import IVS.CMS.domain.Api;
+import IVS.CMS.domain.Permission;
+import IVS.CMS.domain.Role;
+import IVS.CMS.repositories.PermissionRepository;
+import IVS.CMS.repositories.RoleRepository;
+import IVS.CMS.services.PermissionService;
+import IVS.CMS.services.dto.request.role.PermissionDTO;
+import IVS.CMS.services.dto.request.role.PermissionLinkDTO;
+import IVS.CMS.services.dto.request.role.ReqPermissionApiLinkDTO;
+import IVS.CMS.services.dto.request.role.ReqPermissionIdDTO;
+import IVS.CMS.services.dto.response.role.ResActionDTO;
+import IVS.CMS.services.error.ConflictException;
+import IVS.CMS.services.error.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
 
-// @Service
-// public class PermissionServiceImpl implements PermissionService {
+@Service
+@RequiredArgsConstructor
+public class PermissionServiceImpl implements PermissionService {
+    private final PermissionRepository permissionRepository;
 
-//     private final PermissionRepository permissionRepository;
-//     private final PermissionCacheService permissionCacheService;
+    private final RoleRepository roleRepository;
 
-//     public PermissionServiceImpl(PermissionRepository permissionRepository,
-//             PermissionCacheService permissionCacheService) {
-//         this.permissionRepository = permissionRepository;
-//         this.permissionCacheService = permissionCacheService;
-//     }
+    @Override
+    public List<ResActionDTO> getAllActions(){
+        return permissionRepository.findAllAction();
+    }
 
-//     @Override
-//     public Permission create(Permission permission) {
-//         permission.setCreatedAt(LocalDateTime.now());
-//         permission.setCreatedBy(SecurityService.getCurrentUserId().orElse(null));
+    @Override
+    public List<Api> getAllApis(){
+        return permissionRepository.findAllApi();
+    }
 
-//         Permission savedPermission = this.permissionRepository.save(permission);
-//         this.permissionCacheService.evictAll();
-//         return savedPermission;
-//     }
+    @Override
+    @Transactional
+    public String assignPermissionToRoleById(long roleId, ReqPermissionIdDTO req) {
+        Role role = roleRepository.findById(roleId);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        if (roleRepository.checkIsSystemRole(roleId)) {
+            throw new ConflictException("Can't update permission of system role");
+        }
+        List<Long> permissionIds = new ArrayList<>();
+        for (PermissionDTO item : req.getPermissions()) {
+            Permission permission = permissionRepository.findById(item.getApiId(),item.getActionId());
+            if (permission == null) {
+                throw new ResourceNotFoundException(
+                        "Permission doesn't exist"
+                );
+            }
+            permissionIds.add(permission.getPermissionId());
+        }
+        int rows = permissionRepository.updateRolePermission(role,permissionIds);
 
-//     @Override
-//     public Permission update(long id, Permission permission) {
-//         Permission currentPermission = this.fetchById(id);
+        return PermissionMessage(rows);
+    }
 
-//         currentPermission.setActionId(permission.getActionId());
-//         currentPermission.setApiId(permission.getApiId());
 
-//         currentPermission.setUpdatedAt(LocalDateTime.now());
-//         currentPermission.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
+    @Override
+    @Transactional
+    public String assignPermissionToRoleByApiLink(long roleId, ReqPermissionApiLinkDTO req) {
+        Role role = roleRepository.findById(roleId);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        if (roleRepository.checkIsSystemRole(roleId)) {
+            throw new ConflictException("Can't update permission of system role");
+        }
+        List<Long> permissionIds = new ArrayList<>();
+        for (PermissionLinkDTO item : req.getPermissions()) {
+            Permission permission = permissionRepository.findByLinkApi(item.getApiLink(), item.getActionName());
+            if (permission == null) {
+                throw new ResourceNotFoundException(
+                        "Permission doesn't exist"
+                );
+            }
+            permissionIds.add(permission.getPermissionId());
+        }
+        int rows = permissionRepository.updateRolePermission(role,permissionIds);
 
-//         Permission savedPermission = this.permissionRepository.save(currentPermission);
-//         this.permissionCacheService.evictAll();
-//         return savedPermission;
-//     }
+        return PermissionMessage(rows);
+    }
 
-//     @Override
-//     public Permission fetchById(long id) {
-//         return this.permissionRepository.findById(id)
-//                 .orElseThrow(() -> new ResourceNotFoundException("Permission với id " + id + " không tồn tại"));
-//     }
-
-//     @Override
-//     public List<Permission> fetchAll() {
-//         return this.permissionRepository.findAll();
-//     }
-
-//     @Override
-//     public void delete(long id) {
-//         Permission currentPermission = this.fetchById(id);
-//         this.permissionRepository.delete(currentPermission);
-//         this.permissionCacheService.evictAll();
-//     }
-// }
+    private String PermissionMessage(int rows){
+        if (rows > 0) {
+            return "Gán permission cho role thành công!!!";
+        }
+        return "Thất bại gán permission cho role!!!";
+    }
+}

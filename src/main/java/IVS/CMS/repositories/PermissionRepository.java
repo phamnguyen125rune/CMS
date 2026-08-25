@@ -5,17 +5,24 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
+import IVS.CMS.domain.Api;
 import IVS.CMS.domain.Permission;
+import IVS.CMS.domain.Role;
+import IVS.CMS.services.dto.response.role.ResActionDTO;
 
 @Repository
 public interface PermissionRepository {
-    Permission save(Permission permission);
+    int updateRolePermission(Role role, List<Long> permissionIds);
 
     Optional<Permission> findById(long id);
 
-    List<Permission> findAll();
+    List<ResActionDTO> findAllAction();
 
-    void delete(Permission permission);
+    List<Api> findAllApi();
+
+    Permission findById(long apiId, long actionId);
+
+    Permission findByLinkApi(String apiLink, String actionName);
 
     List<Permission> findByRoleId(long roleId);
 }

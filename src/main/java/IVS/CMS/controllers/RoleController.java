@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import IVS.CMS.domain.Role;
 import IVS.CMS.services.RoleService;
 import IVS.CMS.services.dto.request.role.ReqRoleDTO;
-import IVS.CMS.services.dto.response.role.ResListRoleDTO;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +29,7 @@ public class RoleController {
     private final RoleService roleService;
 
     @GetMapping
-    public ResponseEntity<List<ResListRoleDTO>> getAllRoles() {
+    public ResponseEntity<List<ResRoleDTO>> getAllRoles() {
         return ResponseEntity.ok(this.roleService.getAllRoles());
     }
     
@@ -40,13 +40,13 @@ public class RoleController {
     }
 
     @PutMapping
-        public ResponseEntity<Role> updateRoleByRoleName(@Valid @RequestBody ReqRoleDTO role) {
-        return ResponseEntity.ok(this.roleService.updateRoleByRoleName(role));
+        public ResponseEntity<Role> updateRoleByRoleName(@Valid @RequestBody ReqRoleDTO req) {
+        return ResponseEntity.ok(this.roleService.updateRoleByRoleName(req));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Role> updateRole(@PathVariable("id") long id, @Valid @RequestBody ReqRoleDTO role) {
-        return ResponseEntity.ok(this.roleService.updateRole(id, role));
+    public ResponseEntity<Role> updateRole(@PathVariable("id") long id, @Valid @RequestBody ReqRoleDTO req) {
+        return ResponseEntity.ok(this.roleService.updateRole(id, req));
     }
 
     @PatchMapping("/{id}")
@@ -60,53 +60,3 @@ public class RoleController {
         return ResponseEntity.noContent().build();
     }
 }
-
-//     @PutMapping("/{id}")
-//     public ResponseEntity<Role> updateRole(@PathVariable("id") long id, @Valid @RequestBody ReqRoleDTO role) {
-//         return ResponseEntity.ok(this.roleService.update(id, role));
-//     }
-
-//     @GetMapping("/{id}")
-//     public ResponseEntity<Role> getRoleById(@PathVariable("id") long id) {
-//         return ResponseEntity.ok(this.roleService.fetchById(id));
-//     }
-
-//     @GetMapping
-//     public ResponseEntity<List<Role>> getAllRoles() {
-//         return ResponseEntity.ok(this.roleService.fetchAll());
-//     }
-
-//     @DeleteMapping("/{id}")
-//     public ResponseEntity<Void> deleteRole(@PathVariable("id") long id) {
-//         this.roleService.delete(id);
-//         return ResponseEntity.ok().build();
-//     }
-
-//     @GetMapping("/{id}/users")
-//     @PreAuthorize("hasAuthority('roles:VIEW')")
-//     public ResponseEntity<List<ResUserDTO>> getUsersByRole(@PathVariable("id") long id) {
-//         return ResponseEntity.ok(this.roleService.fetchUsersByRoleId(id));
-//     }
-
-//     @GetMapping("/available-users")
-//     @PreAuthorize("hasAuthority('roles:VIEW')")
-//     public ResponseEntity<List<ResUserDTO>> getAvailableUserRoleUsers() {
-//         return ResponseEntity.ok(this.roleService.fetchAvailableUserRoleUsers());
-//     }
-
-//     @PostMapping("/{roleId}/users/{userId}")
-//     @PreAuthorize("hasAuthority('roles:EDIT')")
-//     public ResponseEntity<ResUserDTO> addUserToRole(
-//             @PathVariable("roleId") long roleId,
-//             @PathVariable("userId") long userId) {
-//         return ResponseEntity.ok(this.roleService.addUserToRole(roleId, userId));
-//     }
-
-//     @DeleteMapping("/{roleId}/users/{userId}")
-//     @PreAuthorize("hasAuthority('roles:EDIT')")
-//     public ResponseEntity<ResUserDTO> removeUserFromRole(
-//             @PathVariable("roleId") long roleId,
-//             @PathVariable("userId") long userId) {
-//         return ResponseEntity.ok(this.roleService.removeUserFromRole(roleId, userId));
-//     }
-// }

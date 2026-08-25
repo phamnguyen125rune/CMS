@@ -5,12 +5,12 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.Role;
-import IVS.CMS.services.dto.response.role.ResListRoleDTO;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
 @Repository
 public interface RoleRepository {
 
-    List<ResListRoleDTO> findAll();
+    List<ResRoleDTO> findAll();
 
     Role save(Role role);
 
@@ -20,7 +20,7 @@ public interface RoleRepository {
 
     Role findById(Long id);
 
-    Role changeRoleStatus(Long id);
+    Role changeRoleStatus(Role role);
 
     Role findByRoleName(String roleName);
 

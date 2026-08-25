@@ -1,6 +1,7 @@
 package IVS.CMS.repositories.impl;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -11,7 +12,8 @@ import org.springframework.stereotype.Repository;
 import IVS.CMS.domain.Role;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.repositories.rowMapper.RoleRowMapper;
-import IVS.CMS.services.dto.response.role.ResListRoleDTO;
+import IVS.CMS.services.dto.response.role.PermissionLinkDTO;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
 @Repository
 public class RoleRepositoryImpl implements RoleRepository {
@@ -72,15 +74,66 @@ public class RoleRepositoryImpl implements RoleRepository {
     }
 
     @Override
-    public List<ResListRoleDTO> findAll() {
-        String sql = "SELECT * FROM roles ORDER BY role_id ASC";
-        List<Role> roles = jdbcTemplate.query(sql, mapperDb);
-        return roles.stream().map(role -> {
-            ResListRoleDTO dto = new ResListRoleDTO();
-            dto.setRoleName(role.getRoleName());
-            dto.setRoleDescription(role.getRoleDescription());
-            return dto;
-        }).toList();
+    public List<ResRoleDTO> findAll() {
+
+        String roleSql = """
+            SELECT *
+            FROM roles
+            ORDER BY role_id ASC
+            """;
+
+        String permissionSql = """
+            SELECT
+                rp.role_id,
+                a.api_link,
+                ac.action_name
+            FROM role_permission rp
+            JOIN permissions p
+                ON rp.permission_id = p.permission_id
+            JOIN apis a
+                ON p.api_id = a.api_id
+            JOIN actions ac
+                ON p.action_id = ac.action_id
+            ORDER BY rp.role_id ASC, p.permission_id ASC
+            """;
+
+        List<Role> roles = jdbcTemplate.query(roleSql, mapperDb);
+
+        List<Map<String, Object>> permissionRows =
+            jdbcTemplate.queryForList(
+                    permissionSql,
+                    new MapSqlParameterSource()
+        );
+
+        return roles.stream()
+                .map(role -> {
+
+                    ResRoleDTO dto = new ResRoleDTO();
+                    dto.setRoleId(role.getRoleId());
+                    dto.setRoleName(role.getRoleName());
+                    dto.setRoleDescription(role.getRoleDescription());
+                    dto.setIsActive(role.getIsActive());
+                    dto.setIsSystem(role.getIsSystem());
+
+                    List<PermissionLinkDTO> permissions =
+                            permissionRows.stream()
+                                    .filter(row ->
+                                            ((Number) row.get("role_id"))
+                                                    .longValue() == role.getRoleId()
+                                    )
+                                    .map(row ->
+                                            new PermissionLinkDTO(
+                                                    (String) row.get("api_link"),
+                                                    (String) row.get("action_name")
+                                            )
+                                    )
+                                    .toList();
+
+                    dto.setPermissions(permissions);
+
+                    return dto;
+                })
+                .toList();
     }
 
     @Override
@@ -142,7 +195,7 @@ public class RoleRepositoryImpl implements RoleRepository {
     }
 
     @Override
-    public Role changeRoleStatus(Long id) {
+    public Role changeRoleStatus(Role role) {
 
         String sql = """
                 UPDATE roles
@@ -153,14 +206,14 @@ public class RoleRepositoryImpl implements RoleRepository {
 
         int rowsAffected = jdbcTemplate.update(
                 sql,
-                new MapSqlParameterSource("id", id)
+                new MapSqlParameterSource("id", role.getRoleId())
         );
 
         if (rowsAffected == 0) {
             return null;
         }
 
-        return findById(id);
+        return role;
     }
 
     @Override

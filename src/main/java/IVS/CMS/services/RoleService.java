@@ -4,11 +4,11 @@ import java.util.List;
 
 import IVS.CMS.domain.Role;
 import IVS.CMS.services.dto.request.role.ReqRoleDTO;
-import IVS.CMS.services.dto.response.role.ResListRoleDTO;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
 public interface RoleService {
     
-    List<ResListRoleDTO> getAllRoles();
+    List<ResRoleDTO> getAllRoles();
 
     Role createRole(ReqRoleDTO req);
 
