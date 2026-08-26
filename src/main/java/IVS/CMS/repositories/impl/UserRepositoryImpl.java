@@ -145,7 +145,7 @@ public class UserRepositoryImpl implements UserRepository {
                 FROM users u
                 LEFT JOIN roles r ON u.role_id = r.role_id
                 WHERE (LOWER(u.email) = LOWER(:loginId) OR u.employee_code = :loginId)
-                  AND u.deleted_at IS NULL
+                AND u.deleted_at IS NULL
                 """;
         return jdbcTemplate.query(sql, new MapSqlParameterSource("loginId", loginId), mapperDb).stream().findFirst()
                 .orElse(null);
@@ -232,9 +232,9 @@ public class UserRepositoryImpl implements UserRepository {
                     updated_at = :deletedAt,
                     updated_by = :currentUserId
                 WHERE u.user_id = :userId
-                  AND u.deleted_at IS NULL
-                  AND u.user_id <> :currentUserId
-                  AND u.is_system = FALSE
+                    AND u.deleted_at IS NULL
+                    AND u.user_id <> :currentUserId
+                    AND u.is_system = FALSE
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("userId", userId)

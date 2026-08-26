@@ -1,7 +1,8 @@
 package IVS.CMS.services;
 
-import IVS.CMS.domain.dto.request.ReqLoginDTO;
-import IVS.CMS.domain.dto.response.ResLoginDTO;
+
+import IVS.CMS.services.dto.request.ReqLoginDTO;
+import IVS.CMS.services.dto.response.ResLoginDTO;
 import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthService {

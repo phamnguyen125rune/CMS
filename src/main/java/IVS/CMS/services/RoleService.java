@@ -3,25 +3,20 @@ package IVS.CMS.services;
 import java.util.List;
 
 import IVS.CMS.domain.Role;
-import IVS.CMS.domain.dto.request.ReqRoleDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.request.role.ReqRoleDTO;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
 public interface RoleService {
-    Role create(ReqRoleDTO role);
+    
+    List<ResRoleDTO> getAllRoles();
 
-    Role update(long id, ReqRoleDTO role);
+    Role createRole(ReqRoleDTO req);
 
-    Role fetchById(long id);
+    Role updateRole(Long id, ReqRoleDTO req);
 
-    List<Role> fetchAll();
+    Role updateRoleByRoleName(ReqRoleDTO req);
 
-    void delete(long id);
-
-    List<ResUserDTO> fetchUsersByRoleId(long roleId);
-
-    List<ResUserDTO> fetchAvailableUserRoleUsers();
-
-    ResUserDTO addUserToRole(long roleId, long userId);
-
-    ResUserDTO removeUserFromRole(long roleId, long userId);
+    Role updateActiveRole(Long id);
+    
+    void deleteRole(Long id);
 }

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import IVS.CMS.domain.dto.response.ResMediaDTO;
+import IVS.CMS.services.dto.response.ResMediaDTO;
 import IVS.CMS.services.MediaService;
 
 @RestController
@@ -45,7 +45,6 @@ public class MediaController {
             @PathVariable long mediaId) {
         return mediaService.view(mediaId);
     }
-
 
     @GetMapping("/{mediaId}/download")
     public ResponseEntity<Resource> downloadMedia(

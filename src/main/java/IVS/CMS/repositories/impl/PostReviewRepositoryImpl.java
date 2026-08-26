@@ -11,7 +11,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.PostReview;
-import IVS.CMS.domain.dto.response.ResPostReviewDTO;
+import IVS.CMS.services.dto.response.ResPostReviewDTO;
 import IVS.CMS.repositories.PostReviewRepository;
 import IVS.CMS.repositories.rowMapper.PostReviewRowMapper;
 

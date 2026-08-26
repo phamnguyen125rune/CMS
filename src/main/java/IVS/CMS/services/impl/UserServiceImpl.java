@@ -9,16 +9,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.User;
-import IVS.CMS.domain.dto.request.ReqChangePasswordDTO;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
-import IVS.CMS.domain.dto.request.ReqUserUpdateDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 import IVS.CMS.repositories.RefreshTokenRepository;
 import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.UserService;
+import IVS.CMS.services.dto.request.ReqChangePasswordDTO;
+import IVS.CMS.services.dto.request.ReqUserCreateDTO;
+import IVS.CMS.services.dto.request.ReqUserUpdateDTO;
+import IVS.CMS.services.dto.response.ResUserCreateDTO;
+import IVS.CMS.services.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import IVS.CMS.services.error.BadRequestException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 import IVS.CMS.services.mapper.UserMapper;
@@ -207,7 +207,7 @@ public class UserServiceImpl implements UserService {
         try {
             int currentNum = Integer.parseInt(maxCode.substring(3));
             return String.format("EMP%04d", currentNum + 1);
-        } catch (Exception e) {
+        } catch (ExceptionInInitializerError e) {
             return "EMP0001";
         }
     }

@@ -12,44 +12,60 @@ import IVS.CMS.domain.Role;
 @Component
 public class RoleRowMapper implements RowMapper<Role> {
 
-    @Override
-    public Role mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Role role = new Role();
-        role.setRoleId(rs.getLong("role_id"));
-        role.setRoleName(rs.getString("role_name"));
-        role.setRoleDescription(rs.getString("role_description"));
-        role.setIsActive(rs.getBoolean("is_active"));
-        role.setIsSystem(rs.getBoolean("is_system"));
+        @Override
+        public Role mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-        Timestamp createdAt = rs.getTimestamp("created_at");
-        if (createdAt != null)
-            role.setCreatedAt(createdAt.toLocalDateTime());
+                Role role = new Role();
 
-        Object createdByObj = rs.getObject("created_by");
-        if (createdByObj != null)
-            role.setCreatedBy(null);
+                role.setRoleId(
+                                rs.getLong("role_id"));
 
-        Timestamp updatedAt = rs.getTimestamp("updated_at");
-        if (updatedAt != null)
-            role.setUpdatedAt(updatedAt.toLocalDateTime());
+                role.setRoleName(
+                                rs.getString("role_name"));
 
-        Object updatedByObj = rs.getObject("updated_by");
-        if (updatedByObj != null)
-            role.setUpdatedBy(null);
+                role.setRoleDescription(
+                                rs.getString("role_description"));
 
-        return role;
-    }
+                role.setIsActive(
+                                rs.getBoolean("is_active"));
 
-    public MapSqlParameterSource toParams(Role role) {
-        return new MapSqlParameterSource()
-                .addValue("roleId", role.getRoleId())
-                .addValue("roleName", role.getRoleName())
-                .addValue("roleDescription", role.getRoleDescription())
-                .addValue("isActive", role.getIsActive())
-                .addValue("isSystem", role.getIsSystem())
-                .addValue("createdAt", role.getCreatedAt())
-                .addValue("createdBy", role.getCreatedBy())
-                .addValue("updatedAt", role.getUpdatedAt())
-                .addValue("updatedBy", role.getUpdatedBy());
-    }
+                role.setIsSystem(
+                                rs.getBoolean("is_system"));
+
+                // created_at
+                Timestamp createdAt = rs.getTimestamp("created_at");
+                if (createdAt != null) {
+                        role.setCreatedAt(createdAt.toLocalDateTime());
+                }
+
+                // created_by
+                Long createdBy = rs.getObject("created_by", Long.class);
+                role.setCreatedBy(createdBy);
+
+                // updated_at
+                Timestamp updatedAt = rs.getTimestamp("updated_at");
+                if (updatedAt != null) {
+                        role.setUpdatedAt(updatedAt.toLocalDateTime());
+                }
+
+                // updated_by
+                Long updatedBy = rs.getObject("updated_by", Long.class);
+                role.setUpdatedBy(updatedBy);
+
+                return role;
+        }
+
+        public MapSqlParameterSource toParams(Role role) {
+
+                return new MapSqlParameterSource()
+                                .addValue("roleId", role.getRoleId())
+                                .addValue("roleName", role.getRoleName())
+                                .addValue("roleDescription", role.getRoleDescription())
+                                .addValue("isActive", role.getIsActive())
+                                .addValue("isSystem", role.getIsSystem())
+                                .addValue("createdAt", role.getCreatedAt())
+                                .addValue("createdBy", role.getCreatedBy())
+                                .addValue("updatedAt", role.getUpdatedAt())
+                                .addValue("updatedBy", role.getUpdatedBy());
+        }
 }
