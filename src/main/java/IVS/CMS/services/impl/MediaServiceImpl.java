@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,221 +27,232 @@ import IVS.CMS.services.MediaService;
 @Service
 public class MediaServiceImpl implements MediaService {
 
-    private final MediaRepository mediaRepository;
+        private final MediaRepository mediaRepository;
 
-    private final Path uploadPath = Paths.get("uploads");
+        @Value("${media.upload-dir}")
+        private String mediaUploadDir;
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
+        private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-    public MediaServiceImpl(
-            MediaRepository mediaRepository) {
-
-        this.mediaRepository = mediaRepository;
-    }
-
-    @Override
-    public List<ResMediaDTO> getAllMedia() {
-
-        return mediaRepository.findAll()
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<ResMediaDTO> search(String keyword) {
-
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllMedia();
+        public MediaServiceImpl(MediaRepository mediaRepository) {
+                this.mediaRepository = mediaRepository;
         }
 
-        return mediaRepository
-                .search(keyword)
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
+        private Path getUploadPath() {
 
-    @Override
-    public ResMediaDTO upload(MultipartFile file) {
-
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File không được để trống");
+                return Paths.get(mediaUploadDir)
+                                .toAbsolutePath()
+                                .normalize();
         }
 
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("File không được vượt quá 10MB");
+        @Override
+        public List<ResMediaDTO> getAllMedia() {
+
+                return mediaRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
         }
 
-        try {
+        @Override
+        public List<ResMediaDTO> searchAndFilter(String keyword, String fileType) {
 
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            String originalFileName = file.getOriginalFilename();
-
-            if (originalFileName == null || originalFileName.isBlank()) {
-
-                throw new IllegalArgumentException("Tên file không hợp lệ");
-            }
-
-            String extension = "";
-            String fileType = "";
-
-            int dotIndex = originalFileName.lastIndexOf(".");
-
-            if (dotIndex >= 0 && dotIndex < originalFileName.length() - 1) {
-
-                extension = originalFileName.substring(dotIndex).toLowerCase();
-
-                fileType = originalFileName.substring(dotIndex + 1).toLowerCase();
-            }
-
-            String newFileName = UUID.randomUUID() + extension;
-
-            Path filePath = uploadPath.resolve(newFileName);
-
-            Files.copy(
-                    file.getInputStream(),
-                    filePath,
-                    StandardCopyOption.REPLACE_EXISTING);
-
-            String contentType = file.getContentType();
-
-            if (contentType == null || contentType.isBlank()) {
-                contentType = Files.probeContentType(filePath);
-            }
-
-            if (contentType == null) {
-                contentType = "application/octet-stream";
-            }
-
-            Media media = new Media();
-
-            media.setFileName(originalFileName);
-            media.setUploadFile(newFileName);
-            media.setFilePath(filePath.toString());
-            media.setMimeType(contentType);
-            media.setFileType(fileType);
-            media.setFileSize((int) file.getSize());
-            media.setUploadedBy("admin");
-            media.setUploadedAt(LocalDateTime.now());
-
-            Media saveMedia = mediaRepository.save(media);
-
-            return toDTO(saveMedia);
-
-        } catch (IOException ex) {
-
-            throw new RuntimeException("Không thể upload file", ex);
+                return mediaRepository.searchAndFilter(keyword, fileType).stream().map(this::toDTO)
+                                .collect(Collectors.toList());
         }
-    }
 
-    @Override
-    public ResponseEntity<Resource> view(long id) {
+        @Override
+        public ResMediaDTO upload(MultipartFile file) {
 
-        Media media = mediaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy file với id: " + id));
+                if (file == null || file.isEmpty()) {
+                        throw new IllegalArgumentException("File không được để trống");
+                }
 
-        try {
-            Path path = Paths.get(media.getFilePath());
+                if (file.getSize() > MAX_FILE_SIZE) {
+                        throw new IllegalArgumentException("File không được vượt quá 10MB");
+                }
 
-            if (!Files.exists(path)) {
-                throw new RuntimeException("File không tồn tại: " + path);
-            }
+                try {
 
-            Resource resource = new UrlResource(
-                    path.toUri());
+                        Path uploadPath = getUploadPath();
 
-            String contentType = Files.probeContentType(path);
+                        if (!Files.exists(uploadPath)) {
+                                Files.createDirectories(uploadPath);
+                        }
 
-            if (contentType == null) {
-                contentType = media.getMimeType();
-            }
+                        String originalFileName = file.getOriginalFilename();
 
-            if (contentType == null) {
-                contentType = "application/octet-stream";
-            }
+                        if (originalFileName == null || originalFileName.isBlank()) {
 
-            return ResponseEntity.ok()
-                    .contentType(
-                            MediaType.parseMediaType(contentType))
-                    .header(
-                            HttpHeaders.CONTENT_DISPOSITION,
-                            "inline; filename=\"" + media.getFileName() + "\"")
-                    .body(resource);
+                                throw new IllegalArgumentException("Tên file không hợp lệ");
+                        }
 
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Không thể đọc file: " + media.getFilePath(),
-                    e);
+                        String extension = "";
+                        String fileType = "";
+
+                        int dotIndex = originalFileName.lastIndexOf(".");
+
+                        if (dotIndex >= 0 && dotIndex < originalFileName.length() - 1) {
+
+                                extension = originalFileName.substring(dotIndex).toLowerCase();
+
+                                fileType = originalFileName.substring(dotIndex + 1).toLowerCase();
+                        }
+
+                        String newFileName = UUID.randomUUID() + extension;
+
+                        Path filePath = uploadPath.resolve(newFileName);
+
+                        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                        String contentType = file.getContentType();
+
+                        if (contentType == null || contentType.isBlank()) {
+
+                                contentType = Files.probeContentType(filePath);
+                        }
+
+                        if (contentType == null) {
+                                contentType = "application/octet-stream";
+                        }
+
+                        Media media = new Media();
+
+                        media.setFileName(originalFileName);
+                        media.setUploadFile(newFileName);
+                        media.setFilePath("uploads/" + newFileName);
+                        media.setMimeType(contentType);
+                        media.setFileType(fileType);
+                        media.setFileSize((int) file.getSize());
+                        media.setUploadedBy("admin");
+                        media.setUploadedAt(LocalDateTime.now());
+
+                        Media saveMedia = mediaRepository.save(media);
+
+                        return toDTO(saveMedia);
+
+                } catch (IOException ex) {
+
+                        throw new RuntimeException("Không thể upload file", ex);
+                }
         }
-    }
 
-    @Override
-    public ResponseEntity<Resource> download(long id) {
+        @Override
+        public ResponseEntity<Resource> view(long id) {
 
-        Media media = mediaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ảnh " + id + " không tồn tại"));
+                Media media = mediaRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy file với id: " + id));
 
-        try {
+                try {
 
-            Path filePath = uploadPath.resolve(media.getUploadFile()).normalize();
+                        Path uploadPath = getUploadPath();
 
-            if (!Files.exists(filePath)) {
+                        Path filePath = uploadPath.resolve(media.getUploadFile()).normalize();
 
-                throw new RuntimeException("File không tồn tại: " + filePath.toAbsolutePath());
-            }
+                        if (!Files.exists(filePath)) {
 
-            Resource resource = new FileSystemResource(filePath);
+                                throw new RuntimeException("File không tồn tại: " + filePath.toAbsolutePath());
+                        }
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + media.getFileName() + "\"")
-                    .contentType(MediaType.parseMediaType(media.getMimeType()))
-                    .contentLength(Files.size(filePath))
-                    .body(resource);
+                        Resource resource = new FileSystemResource(filePath);
 
-        } catch (IOException e) {
+                        String contentType = media.getMimeType();
 
-            throw new RuntimeException("Không thể tải ảnh", e);
+                        if (contentType == null || contentType.isBlank()) {
+
+                                contentType = Files.probeContentType(filePath);
+                        }
+
+                        if (contentType == null) {
+
+                                contentType = "application/octet-stream";
+                        }
+
+                        return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+                                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                                        "inline; filename=\"" + media.getFileName() + "\"")
+                                        .contentLength(Files.size(filePath))
+                                        .body(resource);
+
+                } catch (IOException e) {
+
+                        throw new RuntimeException("Không thể đọc file: " + media.getFileName(), e);
+                }
         }
-    }
 
-    @Override
-    public void delete(long id) {
+        @Override
+        public ResponseEntity<Resource> download(long id) {
 
-        Media media = mediaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ảnh " + id + " không tồn tại"));
+                Media media = mediaRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("File " + id + " không tồn tại"));
 
-        try {
+                try {
 
-            if (media.getUploadFile() != null) {
+                        Path uploadPath = getUploadPath();
 
-                Path filePath = uploadPath.resolve(media.getUploadFile());
-                Files.deleteIfExists(filePath);
-            }
+                        Path filePath = uploadPath.resolve(media.getUploadFile()).normalize();
 
-            mediaRepository.delete(media);
+                        if (!Files.exists(filePath)) {
 
-        } catch (IOException e) {
-            throw new RuntimeException("Không thể xóa file", e);
+                                throw new RuntimeException("File không tồn tại: " + filePath.toAbsolutePath());
+                        }
+
+                        Resource resource = new FileSystemResource(filePath);
+
+                        String contentType = media.getMimeType();
+
+                        if (contentType == null || contentType.isBlank()) {
+
+                                contentType = "application/octet-stream";
+                        }
+
+                        return ResponseEntity.ok()
+                                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                                        "attachment; filename=\"" + media.getFileName() + "\"")
+                                        .contentType(MediaType.parseMediaType(contentType))
+                                        .contentLength(Files.size(filePath))
+                                        .body(resource);
+
+                } catch (IOException e) {
+
+                        throw new RuntimeException("Không thể tải file", e);
+                }
         }
-    }
 
-    private ResMediaDTO toDTO(Media media) {
+        @Override
+        public void delete(long id) {
 
-        ResMediaDTO response = new ResMediaDTO();
+                Media media = mediaRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("File " + id + " không tồn tại"));
 
-        response.setMediaId(media.getMediaId());
-        response.setFileName(media.getFileName());
-        response.setFilePath("/api/v1/media/" + media.getMediaId() + "/view");
-        response.setMimeType(media.getMimeType());
-        response.setFileSize(media.getFileSize());
-        response.setUploadedBy(media.getUploadedBy());
-        response.setUploadedAt(media.getUploadedAt());
+                try {
 
-        return response;
-    }
+                        if (media.getUploadFile() != null && !media.getUploadFile().isBlank()) {
+
+                                Path uploadPath = getUploadPath();
+
+                                Path filePath = uploadPath.resolve(media.getUploadFile()).normalize();
+
+                                Files.deleteIfExists(filePath);
+                        }
+
+                        mediaRepository.delete(media);
+
+                } catch (IOException e) {
+
+                        throw new RuntimeException("Không thể xóa file", e);
+                }
+        }
+
+        private ResMediaDTO toDTO(Media media) {
+
+                ResMediaDTO response = new ResMediaDTO();
+                response.setMediaId(media.getMediaId());
+                response.setFileName(media.getFileName());
+                response.setFilePath("/api/v1/media/" + media.getMediaId() + "/view");
+                response.setMimeType(media.getMimeType());
+                response.setFileType(media.getFileType());
+                response.setFileSize(media.getFileSize());
+                response.setUploadedBy(media.getUploadedBy());
+                response.setUploadedAt(media.getUploadedAt());
+
+                return response;
+        }
 }

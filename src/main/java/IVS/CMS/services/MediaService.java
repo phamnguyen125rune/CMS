@@ -16,7 +16,7 @@ public interface MediaService {
 
     List<ResMediaDTO> getAllMedia();
 
-    List<ResMediaDTO> search(String keyword);
+    List<ResMediaDTO> searchAndFilter(String keyword, String fileType);
 
     void delete(long mediaId);
 }

@@ -29,8 +29,8 @@ public class ContactRepositoryImpl implements ContactRepository {
 
     @Override
     public Contact save(Contact contact) {
-        String sql = "INSERT INTO contacts (name, email, phone, company, service, subject, message, status, created_at, updated_at) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO contacts (name, email, phone, company, service, subject, message, status, created_at, updated_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         LocalDateTime now = LocalDateTime.now();
 
@@ -83,14 +83,15 @@ public class ContactRepositoryImpl implements ContactRepository {
         }
 
         sql.append(" ORDER BY created_at DESC");
-        
-        // Use direct concatenation for LIMIT/OFFSET (numeric constants, no SQL injection risk)
+
+        // Use direct concatenation for LIMIT/OFFSET (numeric constants, no SQL
+        // injection risk)
         int offset = (page - 1) * size;
         sql.append(" LIMIT ").append(offset).append(", ").append(size);
 
         System.out.println("[ContactRepositoryImpl.findAll] SQL: " + sql.toString());
         System.out.println("[ContactRepositoryImpl.findAll] Params: " + params);
-        
+
         return jdbcTemplate.query(sql.toString(), contactRowMapper, params.toArray());
     }
 
@@ -114,7 +115,7 @@ public class ContactRepositoryImpl implements ContactRepository {
 
         System.out.println("[ContactRepositoryImpl.count] SQL: " + sql.toString());
         System.out.println("[ContactRepositoryImpl.count] Params: " + params);
-        
+
         Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, params.toArray());
         return count != null ? count : 0;
     }

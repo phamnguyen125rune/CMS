@@ -13,7 +13,7 @@ public interface MediaRepository  {
 
     List<Media> findAll();
 
-    List<Media> search(String keyword);
+    List<Media> searchAndFilter(String keyword, String fileType);
 
     long count();
 
