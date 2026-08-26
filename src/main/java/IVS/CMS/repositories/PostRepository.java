@@ -3,6 +3,8 @@ package IVS.CMS.repositories;
 import java.util.List;
 import java.util.Optional;
 import IVS.CMS.domain.Post;
+import IVS.CMS.domain.dto.request.ReqPostFilterDTO;
+import IVS.CMS.domain.dto.response.ResPostDTO;
 import IVS.CMS.domain.dto.response.ResPostListDTO;
 
 public interface PostRepository {
@@ -10,9 +12,9 @@ public interface PostRepository {
 
     Optional<Post> findById(long id);
 
-    List<ResPostListDTO> findAll(int limit, int offset);
+    List<ResPostListDTO> findAll(ReqPostFilterDTO filter, int limit, int offset);
 
-    long count();
+    long count(ReqPostFilterDTO filter);
 
     void delete(long id);
 
@@ -21,4 +23,16 @@ public interface PostRepository {
     boolean existsBySlugForUpdate(long id, String slug);
 
     void updateStatus(long id, String status, Long updatedBy);
+
+    void addTagsToPost(long postId, List<Long> tagIds);
+
+    void addMediaToPost(long postId, List<Long> mediaIds);
+
+    void removeAllTagsFromPost(long postId);
+
+    void removeAllMediaFromPost(long postId);
+
+    List<ResPostDTO.TagInfo> getTagsByPostId(long postId);
+
+    List<ResPostDTO.MediaInfo> getMediaByPostId(long postId);
 }

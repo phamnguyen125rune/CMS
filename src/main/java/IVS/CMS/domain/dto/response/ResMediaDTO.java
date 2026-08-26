@@ -14,6 +14,6 @@ public class ResMediaDTO {
     private String mimeType;
     private String fileType;
     private int fileSize;
-    private String uploadedBy;
+    private Long uploadedBy;
     private LocalDateTime uploadedAt;
 }

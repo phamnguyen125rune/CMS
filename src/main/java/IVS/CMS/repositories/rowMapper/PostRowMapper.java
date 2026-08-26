@@ -93,8 +93,10 @@ public class PostRowMapper implements RowMapper<Post> {
             dto.setTitle(rs.getString("title"));
             dto.setSlug(rs.getString("slug"));
             dto.setSummary(rs.getString("summary"));
-            dto.setFeaturedMediaId(rs.getObject("featured_media_id", Long.class));
-
+            Long featuredMediaId = rs.getObject("featured_media_id", Long.class);
+            if (featuredMediaId != null) {
+                dto.setFeaturedMedia("/api/v1/media/" + featuredMediaId + "/view");
+            }
             String statusStr = rs.getString("status");
             if (statusStr != null && !statusStr.trim().isEmpty()) {
                 dto.setStatus(PostStatusEnum.valueOf(statusStr.trim().toUpperCase()));

@@ -1,4 +1,5 @@
 package IVS.CMS.domain;
+
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +23,6 @@ public class Media {
     @NotNull(message = "File size cannot be blank")
     private int fileSize;
     @NotBlank(message = "Uploaded by cannot be blank")
-    private String uploadedBy;
+    private Long uploadedBy;
     private LocalDateTime uploadedAt;
 }

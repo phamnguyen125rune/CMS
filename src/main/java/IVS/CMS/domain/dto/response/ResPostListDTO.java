@@ -15,7 +15,7 @@ public class ResPostListDTO {
     private PostStatusEnum status;
     private ResPostDTO.CategoryInfo category;
     private ResPostDTO.AuthorInfo author;
-    private Long featuredMediaId;
+    private String featuredMedia;
 
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;

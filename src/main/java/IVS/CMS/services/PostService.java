@@ -1,6 +1,7 @@
 package IVS.CMS.services;
 
 import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
+import IVS.CMS.domain.dto.request.ReqPostFilterDTO;
 import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
 import IVS.CMS.domain.dto.response.ResPostDTO;
 import IVS.CMS.domain.dto.response.ResultPaginationDTO;
@@ -12,7 +13,7 @@ public interface PostService {
 
     ResPostDTO getPostById(long id);
 
-    ResultPaginationDTO getAllPosts(int page, int pageSize);
+    ResultPaginationDTO getAllPosts(ReqPostFilterDTO filter, int page, int pageSize);
 
     void deletePost(long id);
 

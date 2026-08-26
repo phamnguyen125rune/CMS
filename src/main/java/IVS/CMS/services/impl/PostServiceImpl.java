@@ -11,6 +11,7 @@ import IVS.CMS.domain.Post;
 import IVS.CMS.domain.User;
 import IVS.CMS.domain.constants.PostStatusEnum;
 import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
+import IVS.CMS.domain.dto.request.ReqPostFilterDTO;
 import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
 import IVS.CMS.domain.dto.response.ResPostDTO;
 import IVS.CMS.domain.dto.response.ResPostListDTO;
@@ -41,20 +42,27 @@ public class PostServiceImpl implements PostService {
         if (this.postRepository.existsBySlug(req.getSlug())) {
             throw new BadRequestException("Đường dẫn (slug) '" + req.getSlug() + "' đã tồn tại");
         }
-
         PostCategory category = this.categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại"));
 
         Post post = this.postMapper.reqCreateToPost(req);
-
         post.setStatus(PostStatusEnum.DRAFT);
         post.setCreatedAt(LocalDateTime.now());
         post.setCreatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         Post savedPost = this.postRepository.save(post);
 
+        this.postRepository.addTagsToPost(savedPost.getPostId(), req.getTagIds());
+        this.postRepository.addMediaToPost(savedPost.getPostId(), req.getMediaIds());
+
         String authorName = getAuthorName(savedPost.getCreatedBy());
-        return this.postMapper.postToResPostDTO(savedPost, category, authorName, null);
+        String ogImageUrl = getOgImageUrl(savedPost);
+
+        ResPostDTO resDTO = this.postMapper.postToResPostDTO(savedPost, category, authorName, ogImageUrl);
+
+        resDTO.setTags(this.postRepository.getTagsByPostId(savedPost.getPostId()));
+        resDTO.setMediaList(this.postRepository.getMediaByPostId(savedPost.getPostId()));
+        return resDTO;
     }
 
     @Override
@@ -71,36 +79,28 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại"));
 
         Post tempPost = this.postMapper.reqUpdateToPost(req);
-
         currentPost.setTitle(tempPost.getTitle());
         currentPost.setSlug(tempPost.getSlug());
         currentPost.setSummary(tempPost.getSummary());
         currentPost.setContent(tempPost.getContent());
         currentPost.setCategoryId(tempPost.getCategoryId());
-
         currentPost.setMetaTitle(tempPost.getMetaTitle());
         currentPost.setMetaDescription(tempPost.getMetaDescription());
         currentPost.setCanonicalUrl(tempPost.getCanonicalUrl());
-        if (tempPost.getIsIndexable() != null)
+
+        if (tempPost.getIsIndexable() != null) {
             currentPost.setIsIndexable(tempPost.getIsIndexable());
-        if (tempPost.getIsFollowable() != null)
+        }
+        if (tempPost.getIsFollowable() != null) {
             currentPost.setIsFollowable(tempPost.getIsFollowable());
+        }
         currentPost.setOgTitle(tempPost.getOgTitle());
         currentPost.setOgDescription(tempPost.getOgDescription());
         currentPost.setOgImageId(tempPost.getOgImageId());
         currentPost.setFeaturedMediaId(tempPost.getFeaturedMediaId());
 
-        if (tempPost.getStatus() != null) {
-            currentPost.setStatus(tempPost.getStatus());
-            if (tempPost.getStatus() == PostStatusEnum.PUBLISHED) {
-                if (tempPost.getPublishedAt() != null) {
-                    currentPost.setPublishedAt(tempPost.getPublishedAt());
-                } else if (currentPost.getPublishedAt() == null) {
-                    currentPost.setPublishedAt(LocalDateTime.now());
-                }
-            } else {
-                currentPost.setPublishedAt(tempPost.getPublishedAt());
-            }
+        if (currentPost.getStatus() == PostStatusEnum.REJECTED) {
+            currentPost.setStatus(PostStatusEnum.DRAFT);
         }
 
         currentPost.setUpdatedAt(LocalDateTime.now());
@@ -108,8 +108,18 @@ public class PostServiceImpl implements PostService {
 
         Post updatedPost = this.postRepository.save(currentPost);
 
+        this.postRepository.removeAllTagsFromPost(id);
+        this.postRepository.addTagsToPost(id, req.getTagIds());
+        this.postRepository.removeAllMediaFromPost(id);
+        this.postRepository.addMediaToPost(id, req.getMediaIds());
+
         String authorName = getAuthorName(updatedPost.getCreatedBy());
-        return this.postMapper.postToResPostDTO(updatedPost, category, authorName, null);
+        String ogImageUrl = getOgImageUrl(updatedPost);
+
+        ResPostDTO resDTO = this.postMapper.postToResPostDTO(updatedPost, category, authorName, ogImageUrl);
+        resDTO.setTags(this.postRepository.getTagsByPostId(id));
+        resDTO.setMediaList(this.postRepository.getMediaByPostId(id));
+        return resDTO;
     }
 
     @Override
@@ -123,25 +133,28 @@ public class PostServiceImpl implements PostService {
         }
 
         String authorName = getAuthorName(post.getCreatedBy());
+        String ogImageUrl = getOgImageUrl(post);
 
-        // Cần truyền URL thực tế của Media thông qua query nếu cần (tạm để null)
-        String ogImageUrl = null;
+        ResPostDTO resDTO = this.postMapper.postToResPostDTO(post, category, authorName, ogImageUrl);
 
-        return this.postMapper.postToResPostDTO(post, category, authorName, ogImageUrl);
+        resDTO.setTags(this.postRepository.getTagsByPostId(id));
+        resDTO.setMediaList(this.postRepository.getMediaByPostId(id));
+
+        return resDTO;
     }
 
     @Override
-    public ResultPaginationDTO getAllPosts(int page, int pageSize) {
+    public ResultPaginationDTO getAllPosts(ReqPostFilterDTO filter, int page, int pageSize) {
         if (page < 1)
             page = 1;
         if (pageSize < 1)
             pageSize = 10;
 
-        long total = this.postRepository.count();
+        long total = this.postRepository.count(filter);
         int pages = (int) Math.ceil((double) total / pageSize);
         int offset = (page - 1) * pageSize;
 
-        List<ResPostListDTO> listPostRes = this.postRepository.findAll(pageSize, offset);
+        List<ResPostListDTO> listPostRes = this.postRepository.findAll(filter, pageSize, offset);
 
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
         meta.setPage(page);
@@ -171,6 +184,14 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
         try {
             PostStatusEnum newStatus = PostStatusEnum.valueOf(status.trim().toUpperCase());
+
+            if (newStatus == PostStatusEnum.PUBLISHED ||
+                    newStatus == PostStatusEnum.APPROVED ||
+                    newStatus == PostStatusEnum.REJECTED ||
+                    newStatus == PostStatusEnum.UNPUBLISHED) {
+                throw new BadRequestException("Hành động bị từ chối. Vui lòng sử dụng tính năng Kiểm duyệt bài viết.");
+            }
+
             Long updatedBy = SecurityService.getCurrentUserId().orElse(null);
             this.postRepository.updateStatus(post.getPostId(), newStatus.name(), updatedBy);
         } catch (IllegalArgumentException e) {
@@ -182,5 +203,15 @@ public class PostServiceImpl implements PostService {
         if (userId == null)
             return "System";
         return this.userRepository.findById(userId).map(User::getFullName).orElse("System");
+    }
+
+    private String getOgImageUrl(Post post) {
+        if (post.getOgImageId() != null) {
+            return "/api/v1/media/" + post.getOgImageId() + "/view";
+        }
+        if (post.getFeaturedMediaId() != null) {
+            return "/api/v1/media/" + post.getFeaturedMediaId() + "/view";
+        }
+        return null;
     }
 }
