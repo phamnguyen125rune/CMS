@@ -26,12 +26,10 @@ public class MediaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ResMediaDTO>> getMedia(@RequestParam(required = false) String keyword) {
-
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return ResponseEntity.ok(mediaService.getAllMedia());
-        }
-        return ResponseEntity.ok(mediaService.search(keyword));
+    public ResponseEntity<List<ResMediaDTO>> getMedia(@RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String fileType) {
+        return ResponseEntity.ok(
+                mediaService.searchAndFilter(keyword, fileType));
     }
 
     @PostMapping("/upload")

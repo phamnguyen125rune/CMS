@@ -119,34 +119,102 @@ public class MediaRepositoryImpl implements MediaRepository {
                 mapperDb);
     }
 
-    @Override
-    public List<Media> search(String keyword) {
 
-        String sql = """
+    private void appendFileTypeCondition(
+            StringBuilder sql,
+            String fileType) {
+
+        if (fileType == null
+                || fileType.trim().isEmpty()
+                || "all".equalsIgnoreCase(fileType)) {
+            return;
+        }
+
+        switch (fileType.toLowerCase()) {
+
+            case "image":
+                sql.append("""
+                        AND mime_type LIKE 'image/%'
+                        """);
+                break;
+
+            case "pdf":
+                sql.append("""
+                        AND mime_type = 'application/pdf'
+                        """);
+                break;
+
+            case "word":
+                sql.append("""
+                        AND mime_type IN (
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        )
+                        """);
+                break;
+
+            case "excel":
+                sql.append("""
+                        AND mime_type IN (
+                            'application/vnd.ms-excel',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        )
+                        """);
+                break;
+
+            case "other":
+                sql.append("""
+                        AND mime_type NOT LIKE 'image/%'
+                        AND mime_type NOT IN (
+                            'application/pdf',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/vnd.ms-excel',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        )
+                        """);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public List<Media> searchAndFilter(
+            String keyword,
+            String fileType) {
+
+        StringBuilder sql = new StringBuilder("""
                 SELECT *
                 FROM media
-                WHERE LOWER(file_name) LIKE LOWER(:keyword)
-                OR LOWER(upload_file) LIKE LOWER(:keyword)
-                OR LOWER(uploaded_by) LIKE LOWER(:keyword)
-                OR DATE_FORMAT(uploaded_at, '%d/%m/%Y') LIKE :keyword
-                OR DATE_FORMAT(uploaded_at, '%Y-%m-%d') LIKE :keyword
-                ORDER BY uploaded_at DESC
-                """;
+                WHERE 1 = 1
+                """);
 
         MapSqlParameterSource params = new MapSqlParameterSource();
 
-        String value = keyword == null
-                ? ""
-                : keyword.trim();
+        if (keyword != null && !keyword.trim().isEmpty()) {
 
-        params.addValue(
-                "keyword",
-                "%" + value + "%");
+            sql.append("""
+                    AND (
+                        LOWER(file_name) LIKE LOWER(:keyword)
+                        OR LOWER(upload_file) LIKE LOWER(:keyword)
+                        OR LOWER(uploaded_by) LIKE LOWER(:keyword)
+                        OR DATE_FORMAT(uploaded_at, '%d/%m/%Y') LIKE :keyword
+                        OR DATE_FORMAT(uploaded_at, '%Y-%m-%d') LIKE :keyword
+                    )
+                    """);
 
-        return jdbcTemplate.query(
-                sql,
-                params,
-                mapperDb);
+            params.addValue("keyword", "%" + keyword.trim() + "%");
+        }
+
+        appendFileTypeCondition(sql, fileType);
+
+        sql.append("""
+                ORDER BY uploaded_at DESC
+                                """);
+
+        return jdbcTemplate.query(sql.toString(), params, mapperDb);
     }
 
     @Override
