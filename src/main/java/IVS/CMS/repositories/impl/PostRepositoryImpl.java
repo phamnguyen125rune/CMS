@@ -176,9 +176,9 @@ public class PostRepositoryImpl implements PostRepository {
                 UPDATE posts
                 SET status = :status,
                     published_at = CASE
-                                     WHEN :status = 'PUBLISHED' AND published_at IS NULL THEN NOW(6)
-                                     ELSE published_at
-                                   END,
+                                    WHEN :status = 'PUBLISHED' AND published_at IS NULL THEN NOW(6)
+                                    ELSE published_at
+                                    END,
                     updated_at = NOW(6),
                     updated_by = :updatedBy
                 WHERE post_id = :id

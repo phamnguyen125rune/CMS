@@ -16,11 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import IVS.CMS.domain.Role;
 import IVS.CMS.services.RoleService;
-import IVS.CMS.services.dto.request.role.ReqRoleDTO;
-import IVS.CMS.services.dto.response.role.ResRoleDTO;
+import IVS.CMS.services.dto.request.ReqRoleDTO;
+import IVS.CMS.services.dto.response.ResRoleDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 
 @RestController
 @RequestMapping("/api/v1/roles")
@@ -32,7 +31,7 @@ public class RoleController {
     public ResponseEntity<List<ResRoleDTO>> getAllRoles() {
         return ResponseEntity.ok(this.roleService.getAllRoles());
     }
-    
+
     @PostMapping
     public ResponseEntity<Role> createRole(@Valid @RequestBody ReqRoleDTO role) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -40,7 +39,7 @@ public class RoleController {
     }
 
     @PutMapping
-        public ResponseEntity<Role> updateRoleByRoleName(@Valid @RequestBody ReqRoleDTO req) {
+    public ResponseEntity<Role> updateRoleByRoleName(@Valid @RequestBody ReqRoleDTO req) {
         return ResponseEntity.ok(this.roleService.updateRoleByRoleName(req));
     }
 

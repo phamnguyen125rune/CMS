@@ -16,7 +16,7 @@ import IVS.CMS.repositories.PermissionRepository;
 import IVS.CMS.repositories.rowMapper.ActionRowMapper;
 import IVS.CMS.repositories.rowMapper.ApiRowMapper;
 import IVS.CMS.repositories.rowMapper.PermissionRowMapper;
-import IVS.CMS.services.dto.response.role.ResActionDTO;
+import IVS.CMS.services.dto.response.ResActionDTO;
 
 @Repository
 public class PermissionRepositoryImpl implements PermissionRepository {
@@ -26,7 +26,8 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     private final ApiRowMapper apiMapperDb;
     private final PermissionRowMapper permissionMapperDb;
 
-    public PermissionRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, ActionRowMapper actionMapperDb, ApiRowMapper apiMapperDb, PermissionRowMapper permissionMapperDb){
+    public PermissionRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, ActionRowMapper actionMapperDb,
+            ApiRowMapper apiMapperDb, PermissionRowMapper permissionMapperDb) {
         this.jdbcTemplate = jdbcTemplate;
         this.actionMapperDb = actionMapperDb;
         this.apiMapperDb = apiMapperDb;
@@ -34,7 +35,7 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     }
 
     @Override
-    public List<ResActionDTO> findAllAction(){
+    public List<ResActionDTO> findAllAction() {
         String sql = "SELECT * FROM actions ORDER BY action_id ASC";
         List<Action> actions = jdbcTemplate.query(sql, actionMapperDb);
         return actions.stream().map(action -> {
@@ -45,9 +46,9 @@ public class PermissionRepositoryImpl implements PermissionRepository {
             return dto;
         }).toList();
     }
-    
+
     @Override
-    public List<Api> findAllApi(){
+    public List<Api> findAllApi() {
         String sql = "SELECT * FROM apis ORDER BY api_id ASC";
         List<Api> apis = jdbcTemplate.query(sql, apiMapperDb);
         return apis;
@@ -57,12 +58,12 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     public Permission findById(long apiId, long actionId) {
 
         String sql = """
-            SELECT *
-            FROM permissions p
-            WHERE p.api_id = :apiId
-            AND p.action_id = :actionId
-            ORDER BY p.permission_id ASC
-            """;
+                SELECT *
+                FROM permissions p
+                WHERE p.api_id = :apiId
+                AND p.action_id = :actionId
+                ORDER BY p.permission_id ASC
+                """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("apiId", apiId)
@@ -78,13 +79,13 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     public Permission findByLinkApi(String apiLink, String actionName) {
 
         String sql = """
-            SELECT p.* FROM permissions p
-            INNER JOIN actions ac ON p.action_id = ac.action_id
-            INNER JOIN apis a ON p.api_id = a.api_id
-            WHERE a.api_link = :apiLink
-            AND ac.action_name = :actionName
-            ORDER BY permission_id ASC;
-            """;
+                SELECT p.* FROM permissions p
+                INNER JOIN actions ac ON p.action_id = ac.action_id
+                INNER JOIN apis a ON p.api_id = a.api_id
+                WHERE a.api_link = :apiLink
+                AND ac.action_name = :actionName
+                ORDER BY permission_id ASC;
+                """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("apiLink", apiLink)
@@ -98,12 +99,12 @@ public class PermissionRepositoryImpl implements PermissionRepository {
 
     @Override
     @Transactional
-    public int updateRolePermission(Role role, List<Long> permissionIds){
+    public int updateRolePermission(Role role, List<Long> permissionIds) {
 
         String deleteSql = """
-            DELETE FROM role_permission
-            WHERE role_id = :roleId
-            """;
+                DELETE FROM role_permission
+                WHERE role_id = :roleId
+                """;
 
         MapSqlParameterSource deleteParams = new MapSqlParameterSource()
                 .addValue("roleId", role.getRoleId());
@@ -114,9 +115,9 @@ public class PermissionRepositoryImpl implements PermissionRepository {
             return 0;
         }
         String insertSql = """
-            INSERT INTO role_permission (role_id, permission_id)
-            VALUES (:roleId, :permissionId)
-            """;
+                INSERT INTO role_permission (role_id, permission_id)
+                VALUES (:roleId, :permissionId)
+                """;
 
         int count = 0;
 
@@ -145,81 +146,86 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     }
 }
 
+// private final PermissionRowMapper mapperDb;
 
-//     private final PermissionRowMapper mapperDb;
+// public PermissionRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate,
+// PermissionRowMapper mapperDb) {
+// this.jdbcTemplate = jdbcTemplate;
+// this.mapperDb = mapperDb;
+// }
 
-//     public PermissionRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, PermissionRowMapper mapperDb) {
-//         this.jdbcTemplate = jdbcTemplate;
-//         this.mapperDb = mapperDb;
-//     }
+// @Override
+// public Permission save(Permission permission) {
+// if (permission.getPermissionId() == null || permission.getPermissionId() ==
+// 0) {
+// String sql = """
+// INSERT INTO permissions (action_id, api_id, created_at, created_by)
+// VALUES (:actionId, :apiId, :createdAt, :createdBy)
+// """;
+// KeyHolder keyHolder = new GeneratedKeyHolder();
+// jdbcTemplate.update(sql, mapperDb.toParams(permission), keyHolder, new
+// String[] { "permission_id" });
+// if (keyHolder.getKey() != null) {
+// permission.setPermissionId(keyHolder.getKey().longValue());
+// }
+// } else {
+// String sql = """
+// UPDATE permissions
+// SET action_id = :actionId,
+// api_id = :apiId,
+// updated_at = :updatedAt,
+// updated_by = :updatedBy
+// WHERE permission_id = :permissionId
+// """;
+// jdbcTemplate.update(sql, mapperDb.toParams(permission));
+// }
+// return permission;
+// }
 
-//     @Override
-//     public Permission save(Permission permission) {
-//         if (permission.getPermissionId() == null || permission.getPermissionId() == 0) {
-//             String sql = """
-//                     INSERT INTO permissions (action_id, api_id, created_at, created_by)
-//                     VALUES (:actionId, :apiId, :createdAt, :createdBy)
-//                     """;
-//             KeyHolder keyHolder = new GeneratedKeyHolder();
-//             jdbcTemplate.update(sql, mapperDb.toParams(permission), keyHolder, new String[] { "permission_id" });
-//             if (keyHolder.getKey() != null) {
-//                 permission.setPermissionId(keyHolder.getKey().longValue());
-//             }
-//         } else {
-//             String sql = """
-//                     UPDATE permissions
-//                     SET action_id = :actionId,
-//                         api_id = :apiId,
-//                         updated_at = :updatedAt,
-//                         updated_by = :updatedBy
-//                     WHERE permission_id = :permissionId
-//                     """;
-//             jdbcTemplate.update(sql, mapperDb.toParams(permission));
-//         }
-//         return permission;
-//     }
+// @Override
+// public Optional<Permission> findById(long id) {
+// String sql = """
+// SELECT p.*, a.action_name, api.api_link
+// FROM permissions p
+// INNER JOIN actions a ON p.action_id = a.action_id
+// INNER JOIN apis api ON p.api_id = api.api_id
+// WHERE p.permission_id = :id
+// """;
+// return jdbcTemplate.query(sql, new MapSqlParameterSource("id", id),
+// mapperDb).stream().findFirst();
+// }
 
-//     @Override
-//     public Optional<Permission> findById(long id) {
-//         String sql = """
-//                 SELECT p.*, a.action_name, api.api_link
-//                 FROM permissions p
-//                 INNER JOIN actions a ON p.action_id = a.action_id
-//                 INNER JOIN apis api ON p.api_id = api.api_id
-//                 WHERE p.permission_id = :id
-//                 """;
-//         return jdbcTemplate.query(sql, new MapSqlParameterSource("id", id), mapperDb).stream().findFirst();
-//     }
+// @Override
+// public List<Permission> findAll() {
+// String sql = """
+// SELECT p.*, a.action_name, api.api_link
+// FROM permissions p
+// INNER JOIN actions a ON p.action_id = a.action_id
+// INNER JOIN apis api ON p.api_id = api.api_id
+// ORDER BY api.api_link ASC, a.action_name ASC
+// """;
+// return jdbcTemplate.query(sql, mapperDb);
+// }
 
-//     @Override
-//     public List<Permission> findAll() {
-//         String sql = """
-//                 SELECT p.*, a.action_name, api.api_link
-//                 FROM permissions p
-//                 INNER JOIN actions a ON p.action_id = a.action_id
-//                 INNER JOIN apis api ON p.api_id = api.api_id
-//                 ORDER BY api.api_link ASC, a.action_name ASC
-//                 """;
-//         return jdbcTemplate.query(sql, mapperDb);
-//     }
+// @Override
+// public void delete(Permission permission) {
+// String sql = "DELETE FROM permissions WHERE permission_id = :id";
+// jdbcTemplate.update(sql, new MapSqlParameterSource("id",
+// permission.getPermissionId()));
+// }
 
-//     @Override
-//     public void delete(Permission permission) {
-//         String sql = "DELETE FROM permissions WHERE permission_id = :id";
-//         jdbcTemplate.update(sql, new MapSqlParameterSource("id", permission.getPermissionId()));
-//     }
-
-//     @Override
-//     public List<Permission> findByRoleId(long roleId) {
-//         String sql = """
-//                 SELECT p.*, a.action_name, api.api_link
-//                 FROM permissions p
-//                 INNER JOIN role_permission rp ON p.permission_id = rp.permission_id
-//                 INNER JOIN actions a ON p.action_id = a.action_id
-//                 INNER JOIN apis api ON p.api_id = api.api_id
-//                 WHERE rp.role_id = :roleId
-//                 ORDER BY api.api_link ASC, a.action_name ASC
-//                 """;
-//         return jdbcTemplate.query(sql, new MapSqlParameterSource("roleId", roleId), mapperDb);
-//     }
+// @Override
+// public List<Permission> findByRoleId(long roleId) {
+// String sql = """
+// SELECT p.*, a.action_name, api.api_link
+// FROM permissions p
+// INNER JOIN role_permission rp ON p.permission_id = rp.permission_id
+// INNER JOIN actions a ON p.action_id = a.action_id
+// INNER JOIN apis api ON p.api_id = api.api_id
+// WHERE rp.role_id = :roleId
+// ORDER BY api.api_link ASC, a.action_name ASC
+// """;
+// return jdbcTemplate.query(sql, new MapSqlParameterSource("roleId", roleId),
+// mapperDb);
+// }
 // }

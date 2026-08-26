@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.Role;
-import IVS.CMS.services.dto.response.role.ResRoleDTO;
+import IVS.CMS.services.dto.response.ResRoleDTO;
 
 @Repository
 public interface RoleRepository {

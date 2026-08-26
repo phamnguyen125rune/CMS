@@ -12,8 +12,8 @@ import org.springframework.stereotype.Repository;
 import IVS.CMS.domain.Role;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.repositories.rowMapper.RoleRowMapper;
-import IVS.CMS.services.dto.response.role.PermissionLinkDTO;
-import IVS.CMS.services.dto.response.role.ResRoleDTO;
+import IVS.CMS.services.dto.response.PermissionLinkDTO;
+import IVS.CMS.services.dto.response.ResRoleDTO;
 
 @Repository
 public class RoleRepositoryImpl implements RoleRepository {
@@ -23,8 +23,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
     public RoleRepositoryImpl(
             NamedParameterJdbcTemplate jdbcTemplate,
-            RoleRowMapper mapperDb
-    ) {
+            RoleRowMapper mapperDb) {
         this.jdbcTemplate = jdbcTemplate;
         this.mapperDb = mapperDb;
     }
@@ -59,8 +58,7 @@ public class RoleRepositoryImpl implements RoleRepository {
                     sql,
                     mapperDb.toParams(role),
                     keyHolder,
-                    new String[]{"role_id"}
-            );
+                    new String[] { "role_id" });
 
             Number key = keyHolder.getKey();
 
@@ -77,33 +75,31 @@ public class RoleRepositoryImpl implements RoleRepository {
     public List<ResRoleDTO> findAll() {
 
         String roleSql = """
-            SELECT *
-            FROM roles
-            ORDER BY role_id ASC
-            """;
+                SELECT *
+                FROM roles
+                ORDER BY role_id ASC
+                """;
 
         String permissionSql = """
-            SELECT
-                rp.role_id,
-                a.api_link,
-                ac.action_name
-            FROM role_permission rp
-            JOIN permissions p
-                ON rp.permission_id = p.permission_id
-            JOIN apis a
-                ON p.api_id = a.api_id
-            JOIN actions ac
-                ON p.action_id = ac.action_id
-            ORDER BY rp.role_id ASC, p.permission_id ASC
-            """;
+                SELECT
+                    rp.role_id,
+                    a.api_link,
+                    ac.action_name
+                FROM role_permission rp
+                JOIN permissions p
+                    ON rp.permission_id = p.permission_id
+                JOIN apis a
+                    ON p.api_id = a.api_id
+                JOIN actions ac
+                    ON p.action_id = ac.action_id
+                ORDER BY rp.role_id ASC, p.permission_id ASC
+                """;
 
         List<Role> roles = jdbcTemplate.query(roleSql, mapperDb);
 
-        List<Map<String, Object>> permissionRows =
-            jdbcTemplate.queryForList(
-                    permissionSql,
-                    new MapSqlParameterSource()
-        );
+        List<Map<String, Object>> permissionRows = jdbcTemplate.queryForList(
+                permissionSql,
+                new MapSqlParameterSource());
 
         return roles.stream()
                 .map(role -> {
@@ -115,19 +111,13 @@ public class RoleRepositoryImpl implements RoleRepository {
                     dto.setIsActive(role.getIsActive());
                     dto.setIsSystem(role.getIsSystem());
 
-                    List<PermissionLinkDTO> permissions =
-                            permissionRows.stream()
-                                    .filter(row ->
-                                            ((Number) row.get("role_id"))
-                                                    .longValue() == role.getRoleId()
-                                    )
-                                    .map(row ->
-                                            new PermissionLinkDTO(
-                                                    (String) row.get("api_link"),
-                                                    (String) row.get("action_name")
-                                            )
-                                    )
-                                    .toList();
+                    List<PermissionLinkDTO> permissions = permissionRows.stream()
+                            .filter(row -> ((Number) row.get("role_id"))
+                                    .longValue() == role.getRoleId())
+                            .map(row -> new PermissionLinkDTO(
+                                    (String) row.get("api_link"),
+                                    (String) row.get("action_name")))
+                            .toList();
 
                     dto.setPermissions(permissions);
 
@@ -152,8 +142,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
         jdbcTemplate.update(
                 sql,
-                mapperDb.toParams(role)
-        );
+                mapperDb.toParams(role));
 
         return role;
     }
@@ -174,8 +163,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
         jdbcTemplate.update(
                 sql,
-                mapperDb.toParams(role)
-        );
+                mapperDb.toParams(role));
 
         return role;
     }
@@ -206,8 +194,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
         int rowsAffected = jdbcTemplate.update(
                 sql,
-                new MapSqlParameterSource("id", role.getRoleId())
-        );
+                new MapSqlParameterSource("id", role.getRoleId()));
 
         if (rowsAffected == 0) {
             return null;
@@ -230,45 +217,51 @@ public class RoleRepositoryImpl implements RoleRepository {
     }
 }
 
+// @Override
+// public void delete(Role role) {
+// String deleteMappingSql = "DELETE FROM role_permission WHERE role_id =
+// :roleId";
+// jdbcTemplate.update(deleteMappingSql, new MapSqlParameterSource("roleId",
+// role.getRoleId()));
 
-//     @Override
-//     public void delete(Role role) {
-//         String deleteMappingSql = "DELETE FROM role_permission WHERE role_id = :roleId";
-//         jdbcTemplate.update(deleteMappingSql, new MapSqlParameterSource("roleId", role.getRoleId()));
+// String sql = "DELETE FROM roles WHERE role_id = :id";
+// jdbcTemplate.update(sql, new MapSqlParameterSource("id", role.getRoleId()));
+// }
 
-//         String sql = "DELETE FROM roles WHERE role_id = :id";
-//         jdbcTemplate.update(sql, new MapSqlParameterSource("id", role.getRoleId()));
-//     }
+// @Override
+// public void updateRolePermissions(long roleId, List<Long> permissionIds) {
+// String deleteSql = "DELETE FROM role_permission WHERE role_id = :roleId";
+// jdbcTemplate.update(deleteSql, new MapSqlParameterSource("roleId", roleId));
 
-//     @Override
-//     public void updateRolePermissions(long roleId, List<Long> permissionIds) {
-//         String deleteSql = "DELETE FROM role_permission WHERE role_id = :roleId";
-//         jdbcTemplate.update(deleteSql, new MapSqlParameterSource("roleId", roleId));
+// if (permissionIds != null && !permissionIds.isEmpty()) {
+// String insertSql = "INSERT INTO role_permission (role_id, permission_id)
+// VALUES (:roleId, :permissionId)";
+// MapSqlParameterSource[] batchParams = permissionIds.stream()
+// .map(permissionId -> new MapSqlParameterSource()
+// .addValue("roleId", roleId)
+// .addValue("permissionId", permissionId))
+// .toArray(MapSqlParameterSource[]::new);
+// jdbcTemplate.batchUpdate(insertSql, batchParams);
+// }
+// }
 
-//         if (permissionIds != null && !permissionIds.isEmpty()) {
-//             String insertSql = "INSERT INTO role_permission (role_id, permission_id) VALUES (:roleId, :permissionId)";
-//             MapSqlParameterSource[] batchParams = permissionIds.stream()
-//                     .map(permissionId -> new MapSqlParameterSource()
-//                             .addValue("roleId", roleId)
-//                             .addValue("permissionId", permissionId))
-//                     .toArray(MapSqlParameterSource[]::new);
-//             jdbcTemplate.batchUpdate(insertSql, batchParams);
-//         }
-//     }
+// @Override
+// public boolean existsByName(String name) {
+// String sql = "SELECT COUNT(1) FROM roles WHERE LOWER(role_name) =
+// LOWER(:name)";
+// Integer count = jdbcTemplate.queryForObject(sql, new
+// MapSqlParameterSource("name", name), Integer.class);
+// return count != null && count > 0;
+// }
 
-//     @Override
-//     public boolean existsByName(String name) {
-//         String sql = "SELECT COUNT(1) FROM roles WHERE LOWER(role_name) = LOWER(:name)";
-//         Integer count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource("name", name), Integer.class);
-//         return count != null && count > 0;
-//     }
-
-//     @Override
-//     public Optional<Role> findByName(String name) {
-//         String sql = "SELECT * FROM roles WHERE LOWER(role_name) = LOWER(:name)";
-//         Optional<Role> roleOpt = jdbcTemplate.query(sql, new MapSqlParameterSource("name", name), mapperDb).stream()
-//                 .findFirst();
-//         roleOpt.ifPresent(role -> role.setPermissions(permissionRepository.findByRoleId(role.getRoleId())));
-//         return roleOpt;
-//     }
+// @Override
+// public Optional<Role> findByName(String name) {
+// String sql = "SELECT * FROM roles WHERE LOWER(role_name) = LOWER(:name)";
+// Optional<Role> roleOpt = jdbcTemplate.query(sql, new
+// MapSqlParameterSource("name", name), mapperDb).stream()
+// .findFirst();
+// roleOpt.ifPresent(role ->
+// role.setPermissions(permissionRepository.findByRoleId(role.getRoleId())));
+// return roleOpt;
+// }
 // }

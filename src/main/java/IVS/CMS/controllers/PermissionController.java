@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import IVS.CMS.domain.Api;
 import IVS.CMS.services.PermissionService;
-import IVS.CMS.services.dto.request.role.ReqPermissionApiLinkDTO;
-import IVS.CMS.services.dto.request.role.ReqPermissionIdDTO;
-import IVS.CMS.services.dto.response.role.ResActionDTO;
+import IVS.CMS.services.dto.request.ReqPermissionApiLinkDTO;
+import IVS.CMS.services.dto.request.ReqPermissionIdDTO;
+import IVS.CMS.services.dto.response.ResActionDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -36,16 +36,16 @@ public class PermissionController {
     }
 
     @PutMapping("/update/{roleId}")
-    public ResponseEntity<String> updateRolePermissionsById(@PathVariable("roleId") long roleId, @Valid @RequestBody ReqPermissionIdDTO req) {
+    public ResponseEntity<String> updateRolePermissionsById(@PathVariable("roleId") long roleId,
+            @Valid @RequestBody ReqPermissionIdDTO req) {
         return ResponseEntity.ok(
-                permissionService.assignPermissionToRoleById(roleId, req)
-        );
+                permissionService.assignPermissionToRoleById(roleId, req));
     }
 
     @PutMapping("/update/link/{roleId}")
-    public ResponseEntity<String> updateRolePermissionsByApiLink(@PathVariable("roleId") long roleId, @Valid @RequestBody ReqPermissionApiLinkDTO req) {
+    public ResponseEntity<String> updateRolePermissionsByApiLink(@PathVariable("roleId") long roleId,
+            @Valid @RequestBody ReqPermissionApiLinkDTO req) {
         return ResponseEntity.ok(
-                permissionService.assignPermissionToRoleByApiLink(roleId, req)
-        );
+                permissionService.assignPermissionToRoleByApiLink(roleId, req));
     }
 }

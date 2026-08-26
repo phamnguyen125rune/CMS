@@ -12,11 +12,11 @@ import IVS.CMS.domain.Role;
 import IVS.CMS.repositories.PermissionRepository;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.services.PermissionService;
-import IVS.CMS.services.dto.request.role.PermissionDTO;
-import IVS.CMS.services.dto.request.role.PermissionLinkDTO;
-import IVS.CMS.services.dto.request.role.ReqPermissionApiLinkDTO;
-import IVS.CMS.services.dto.request.role.ReqPermissionIdDTO;
-import IVS.CMS.services.dto.response.role.ResActionDTO;
+import IVS.CMS.services.dto.request.PermissionDTO;
+import IVS.CMS.services.dto.request.PermissionLinkDTO;
+import IVS.CMS.services.dto.request.ReqPermissionApiLinkDTO;
+import IVS.CMS.services.dto.request.ReqPermissionIdDTO;
+import IVS.CMS.services.dto.response.ResActionDTO;
 import IVS.CMS.services.error.ConflictException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,12 +29,12 @@ public class PermissionServiceImpl implements PermissionService {
     private final RoleRepository roleRepository;
 
     @Override
-    public List<ResActionDTO> getAllActions(){
+    public List<ResActionDTO> getAllActions() {
         return permissionRepository.findAllAction();
     }
 
     @Override
-    public List<Api> getAllApis(){
+    public List<Api> getAllApis() {
         return permissionRepository.findAllApi();
     }
 
@@ -50,19 +50,17 @@ public class PermissionServiceImpl implements PermissionService {
         }
         List<Long> permissionIds = new ArrayList<>();
         for (PermissionDTO item : req.getPermissions()) {
-            Permission permission = permissionRepository.findById(item.getApiId(),item.getActionId());
+            Permission permission = permissionRepository.findById(item.getApiId(), item.getActionId());
             if (permission == null) {
                 throw new ResourceNotFoundException(
-                        "Permission doesn't exist"
-                );
+                        "Permission doesn't exist");
             }
             permissionIds.add(permission.getPermissionId());
         }
-        int rows = permissionRepository.updateRolePermission(role,permissionIds);
+        int rows = permissionRepository.updateRolePermission(role, permissionIds);
 
         return PermissionMessage(rows);
     }
-
 
     @Override
     @Transactional
@@ -79,17 +77,16 @@ public class PermissionServiceImpl implements PermissionService {
             Permission permission = permissionRepository.findByLinkApi(item.getApiLink(), item.getActionName());
             if (permission == null) {
                 throw new ResourceNotFoundException(
-                        "Permission doesn't exist"
-                );
+                        "Permission doesn't exist");
             }
             permissionIds.add(permission.getPermissionId());
         }
-        int rows = permissionRepository.updateRolePermission(role,permissionIds);
+        int rows = permissionRepository.updateRolePermission(role, permissionIds);
 
         return PermissionMessage(rows);
     }
 
-    private String PermissionMessage(int rows){
+    private String PermissionMessage(int rows) {
         if (rows > 0) {
             return "Gán permission cho role thành công!!!";
         }

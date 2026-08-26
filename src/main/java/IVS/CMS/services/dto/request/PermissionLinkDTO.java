@@ -1,4 +1,4 @@
-package IVS.CMS.services.dto.request.role;
+package IVS.CMS.services.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,5 +1,4 @@
-package IVS.CMS.services.dto.request.role;
-
+package IVS.CMS.services.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

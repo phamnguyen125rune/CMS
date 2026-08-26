@@ -9,18 +9,16 @@ import IVS.CMS.domain.Role;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.RoleService;
-import IVS.CMS.services.dto.request.role.ReqRoleDTO;
-import IVS.CMS.services.dto.response.role.ResRoleDTO;
+import IVS.CMS.services.dto.request.ReqRoleDTO;
+import IVS.CMS.services.dto.response.ResRoleDTO;
 import IVS.CMS.services.error.ConflictException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
-    
+
     final RoleRepository roleRepository;
 
     @Override
@@ -34,7 +32,8 @@ public class RoleServiceImpl implements RoleService {
         role.setIsActive(true);
         role.setIsSystem(req.isSystem());
         role.setCreatedAt(LocalDateTime.now());
-        role.setCreatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from security context
+        role.setCreatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from
+                                                                            // security context
         return roleRepository.save(role);
     }
 
@@ -53,7 +52,8 @@ public class RoleServiceImpl implements RoleService {
         role.setRoleDescription(req.getRoleDescription());
         role.setIsActive(role.getIsActive()); // Keep the current active status
         role.setUpdatedAt(LocalDateTime.now());
-        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from security context
+        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from
+                                                                            // security context
         return roleRepository.updateById(role);
     }
 
@@ -67,12 +67,13 @@ public class RoleServiceImpl implements RoleService {
         role.setRoleDescription(req.getRoleDescription());
         role.setIsActive(role.getIsActive()); // Keep the current active status
         role.setUpdatedAt(LocalDateTime.now());
-        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from security context
+        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from
+                                                                            // security context
         return roleRepository.updateByRoleName(role);
     }
 
     @Override
-    public Role updateActiveRole(Long id){
+    public Role updateActiveRole(Long id) {
         Role role = roleRepository.findById(id);
         if (role == null) {
             throw new ResourceNotFoundException("Role not found with id " + id);
@@ -87,7 +88,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public void deleteRole(Long id){
+    public void deleteRole(Long id) {
         Role role = roleRepository.findById(id);
         if (role == null) {
             throw new ResourceNotFoundException("Role not found with id " + id);
