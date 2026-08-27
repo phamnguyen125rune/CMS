@@ -19,7 +19,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Tiện ích làm sạch dữ liệu nhạy cảm và chuyển đổi đối tượng sang chuỗi JSON
- * tối giản.
  */
 @Component
 public class AuditDataSanitizer {
@@ -135,7 +134,7 @@ public class AuditDataSanitizer {
 
     /**
      * Tạo mã đối chiếu Fingerprint 8 ký tự đầu bằng SHA-256.
-     * TODO: Trực tiếp return "[PROTECTED]" nếu trong tương lai không cần/
+     * TODO: Trực tiếp return "[PROTECTED]" nếu trong tương lai không cần.
      */
     private String createHashFingerprint(String rawText) {
         try {

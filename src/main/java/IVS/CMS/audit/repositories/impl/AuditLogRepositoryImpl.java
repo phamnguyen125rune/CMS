@@ -8,9 +8,6 @@ import IVS.CMS.audit.repositories.AuditLogRepository;
 import IVS.CMS.domain.AuditLog;
 import lombok.RequiredArgsConstructor;
 
-/**
- * Triển khai lưu trữ Audit Log vào MySQL bằng NamedParameterJdbcTemplate.
- */
 @Repository
 @RequiredArgsConstructor
 public class AuditLogRepositoryImpl implements AuditLogRepository {

@@ -29,20 +29,19 @@ public class AuditLogEventListener {
         try {
             AuditLog logEntity = new AuditLog();
             logEntity.setUserId(event.getUserId());
-            logEntity.setEntityType(event.getEntityType());
+            logEntity.setEntityType(event.getEntityType() != null ? event.getEntityType() : "UNKNOWN");
             logEntity.setEntityId(event.getEntityId() != null ? event.getEntityId().intValue() : 0);
-            logEntity.setAction(event.getAction());
-            
-            // Làm sạch và chuyển đổi DTO sang JSON
+            logEntity.setAction(event.getAction() != null ? event.getAction() : "UNKNOWN");
+
             logEntity.setOldValue(sanitizer.sanitizeAndSerialize(event.getRequestData()));
             logEntity.setNewValue(sanitizer.sanitizeAndSerialize(event.getResponseData()));
-            
-            logEntity.setStatusCode(event.getStatusCode());
+
+            logEntity.setStatusCode(event.getStatusCode() != null ? event.getStatusCode() : 500);
             logEntity.setCreatedAt(LocalDateTime.now());
 
             auditLogRepository.save(logEntity);
         } catch (Exception e) {
-            log.error("Lỗi khi ghi audit log bất đồng bộ: {}", e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 }

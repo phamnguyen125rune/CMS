@@ -2,9 +2,6 @@ package IVS.CMS.audit.events;
 
 import lombok.Getter;
 
-/**
- * Event đại diện cho một hành vi nghiệp vụ cần lưu vết trong hệ thống.
- */
 @Getter
 public class AuditLogEvent {
 
