@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import IVS.CMS.domain.dto.request.ReqPostCreateDTO;
+import IVS.CMS.domain.dto.request.ReqPostFilterDTO;
 import IVS.CMS.domain.dto.request.ReqPostUpdateDTO;
 import IVS.CMS.domain.dto.response.ResPostDTO;
 import IVS.CMS.domain.dto.response.ResultPaginationDTO;
@@ -45,9 +47,10 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<ResultPaginationDTO> getAllPosts(
+            @ModelAttribute ReqPostFilterDTO filter,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int pageSize) {
-        return ResponseEntity.ok(this.postService.getAllPosts(page, pageSize));
+        return ResponseEntity.ok(this.postService.getAllPosts(filter, page, pageSize));
     }
 
     @DeleteMapping("/{id}")

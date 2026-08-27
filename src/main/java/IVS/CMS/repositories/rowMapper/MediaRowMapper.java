@@ -24,7 +24,7 @@ public class MediaRowMapper implements RowMapper<Media> {
         media.setMimeType(rs.getString("mime_type"));
         media.setFileType(rs.getString("file_type"));
         media.setFileSize(rs.getInt("file_size"));
-        media.setUploadedBy(rs.getString("uploaded_by"));
+        media.setUploadedBy(rs.getLong("uploaded_by"));
         
         Timestamp uploadedAt = rs.getTimestamp("uploaded_at");
         if (uploadedAt != null)

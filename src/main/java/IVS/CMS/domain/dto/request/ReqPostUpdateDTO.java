@@ -32,7 +32,7 @@ public class ReqPostUpdateDTO {
 
     @NotNull(message = "Danh mục bài viết không được để trống")
     private Long categoryId;
-    private PostStatusEnum status;
+    // private PostStatusEnum status;
     private LocalDateTime publishedAt;
 
     private List<Long> tagIds;

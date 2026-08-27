@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import IVS.CMS.domain.Media;
 import IVS.CMS.domain.dto.response.ResMediaDTO;
 import IVS.CMS.repositories.MediaRepository;
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.MediaService;
 
 @Service
@@ -125,7 +126,7 @@ public class MediaServiceImpl implements MediaService {
             media.setMimeType(contentType);
             media.setFileType(fileType);
             media.setFileSize((int) file.getSize());
-            media.setUploadedBy("admin");
+            media.setUploadedBy(SecurityService.getCurrentUserId().orElse(null));
             media.setUploadedAt(LocalDateTime.now());
 
             Media saveMedia = mediaRepository.save(media);
@@ -239,7 +240,7 @@ public class MediaServiceImpl implements MediaService {
         response.setFilePath("/api/v1/media/" + media.getMediaId() + "/view");
         response.setMimeType(media.getMimeType());
         response.setFileSize(media.getFileSize());
-        response.setUploadedBy(media.getUploadedBy());
+        response.setUploadedBy(SecurityService.getCurrentUserId().orElse(null));
         response.setUploadedAt(media.getUploadedAt());
 
         return response;
