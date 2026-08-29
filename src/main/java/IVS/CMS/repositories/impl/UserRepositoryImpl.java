@@ -176,15 +176,6 @@ public class UserRepositoryImpl implements UserRepository {
         return count != null && count > 0;
     }
 
-    @Override
-    public boolean existsByPhoneNumberForUpdate(long userId, String phoneNumber) {
-        String sql = "SELECT COUNT(1) FROM users WHERE phone_number = :phoneNumber AND user_id != :userId";
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("phoneNumber", phoneNumber)
-                .addValue("userId", userId);
-        Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
-        return count != null && count > 0;
-    }
 
     @Override
     public String findMaxEmployeeCode() {
@@ -319,5 +310,47 @@ public class UserRepositoryImpl implements UserRepository {
                 .addValue("updatedBy", updatedBy)
                 .addValue("updatedAt", updatedAt);
         jdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public void updateLoginSecurity(long userId, int failedAttempts, int lockCount, LocalDateTime lockedUntil) {
+        String sql = """
+                UPDATE users
+                SET failed_login_attempts = :failedAttempts,
+                    lock_count = :lockCount,
+                    locked_until = :lockedUntil,
+                    updated_at = NOW()
+                WHERE user_id = :userId
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("failedAttempts", failedAttempts)
+                .addValue("lockCount", lockCount)
+                .addValue("lockedUntil", lockedUntil);
+        jdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public void clearLoginFailures(long userId) {
+        String sql = """
+                UPDATE users
+                SET failed_login_attempts = 0,
+                    locked_until = NULL,
+                    updated_at = NOW()
+                WHERE user_id = :userId
+                """;
+        jdbcTemplate.update(sql, new MapSqlParameterSource("userId", userId));
+    }
+
+    @Override
+    public User findByEmailOrEmployeeCodeIncludeDeleted(String loginId) {
+        String sql = """
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE LOWER(u.email) = LOWER(:loginId) OR u.employee_code = :loginId
+                """;
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("loginId", loginId), mapperDb).stream().findFirst()
+                .orElse(null);
     }
 }
