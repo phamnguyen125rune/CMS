@@ -3,6 +3,7 @@ package IVS.CMS.controllers;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ public class MediaController {
     }
 
     @GetMapping
+    @PreAuthorize("@permissionService.hasPermission('media', 'VIEW')")
     public ResponseEntity<List<ResMediaDTO>> getMedia(@RequestParam(required = false) String keyword,
             @RequestParam(required = false) String fileType) {
         return ResponseEntity.ok(
@@ -33,24 +35,28 @@ public class MediaController {
     }
 
     @PostMapping("/upload")
+    @PreAuthorize("@permissionService.hasPermission('media', 'CREATE')")
     public ResponseEntity<ResMediaDTO> upload(@RequestParam("file") MultipartFile file) {
         ResMediaDTO result = mediaService.upload(file);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{mediaId}/view")
+    @PreAuthorize("@permissionService.hasPermission('media', 'VIEW')")
     public ResponseEntity<Resource> viewMedia(
             @PathVariable long mediaId) {
         return mediaService.view(mediaId);
     }
 
     @GetMapping("/{mediaId}/download")
+    @PreAuthorize("@permissionService.hasPermission('media', 'VIEW')")
     public ResponseEntity<Resource> downloadMedia(
             @PathVariable long mediaId) {
         return mediaService.download(mediaId);
     }
 
     @DeleteMapping("/{mediaId}")
+    @PreAuthorize("@permissionService.hasPermission('media', 'DELETE')")
     public ResponseEntity<Void> deleteMedia(@PathVariable long mediaId) {
         mediaService.delete(mediaId);
         return ResponseEntity.noContent().build();

@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class PostReviewController {
     private final PostReviewService postReviewService;
 
     @PostMapping
+    @PreAuthorize("@permissionService.hasPermission('post', 'CREATE')")
     public ResponseEntity<PostReview> reviewPost(
             @PathVariable("postId") long postId,
             @Valid @RequestBody ReqPostReviewDTO req) {
@@ -29,11 +31,13 @@ public class PostReviewController {
     }
 
     @GetMapping
+    @PreAuthorize("@permissionService.hasPermission('post', 'VIEW')")
     public ResponseEntity<List<ResPostReviewDTO>> getPostReviews(@PathVariable("postId") long postId) {
         return ResponseEntity.ok(this.postReviewService.getReviewsByPostId(postId));
     }
 
     @GetMapping("/{reviewId}")
+    @PreAuthorize("@permissionService.hasPermission('post', 'VIEW')")
     public ResponseEntity<PostReview> getReviewById(
             @PathVariable("postId") long postId,
             @PathVariable("reviewId") long reviewId) {
@@ -41,6 +45,7 @@ public class PostReviewController {
     }
 
     @PutMapping("/{reviewId}")
+    @PreAuthorize("@permissionService.hasPermission('post', 'UPDATE')")
     public ResponseEntity<PostReview> updateReview(
             @PathVariable("postId") long postId,
             @PathVariable("reviewId") long reviewId,
@@ -49,6 +54,7 @@ public class PostReviewController {
     }
 
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("@permissionService.hasPermission('post', 'DELETE')")
     public ResponseEntity<Void> deleteReview(
             @PathVariable("postId") long postId,
             @PathVariable("reviewId") long reviewId) {

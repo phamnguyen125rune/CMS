@@ -65,7 +65,7 @@ public class AuthController {
     }
 
     @PutMapping("/auth/change-password")
-    @PreAuthorize("hasAuthority('auth:EDIT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ReqChangePasswordDTO req) {
         this.userService.changePassword(req);
         return ResponseEntity.ok().build();

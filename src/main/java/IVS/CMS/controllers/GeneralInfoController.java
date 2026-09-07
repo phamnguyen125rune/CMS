@@ -7,6 +7,7 @@ import IVS.CMS.services.dto.response.RestResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +21,7 @@ public class GeneralInfoController {
     }
 
     @GetMapping
+    @PreAuthorize("@permissionService.hasPermission('global', 'VIEW')")
     public ResponseEntity<RestResponse<GeneralInfo>> getGeneralInfo() {
         GeneralInfo data = service.getGeneralInfo();
         RestResponse<GeneralInfo> response = new RestResponse<>();
@@ -30,6 +32,7 @@ public class GeneralInfoController {
     }
 
     @PostMapping
+    @PreAuthorize("@permissionService.hasPermission('global', 'UPDATE')")
     public ResponseEntity<RestResponse<GeneralInfo>> updateGeneralInfo(@Valid @RequestBody ReqUpdateGeneralInfoDTO dto) {
         // Tạm gán userId là 1L, thực tế lấy từ Token bảo mật
         GeneralInfo updated = service.saveOrUpdateGeneralInfo(dto, 1L);

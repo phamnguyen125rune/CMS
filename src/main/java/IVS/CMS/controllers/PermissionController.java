@@ -22,12 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/permissions")
 @RequiredArgsConstructor
 public class PermissionController {
-@RestController
-@RequestMapping("/api/v1/permissions")
-@RequiredArgsConstructor
-public class PermissionController {
 
-    private final PermissionService permissionService;
     private final PermissionService permissionService;
 
     @GetMapping("/apiAction")

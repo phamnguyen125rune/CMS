@@ -8,6 +8,7 @@ import IVS.CMS.services.dto.response.RestResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class FormCategoryController {
     }
 
     @PostMapping
+    @PreAuthorize("@permissionService.hasPermission('contact', 'CREATE')")
     public ResponseEntity<RestResponse<FormCategory>> createCategory(@Valid @RequestBody ReqCreateFormCategoryDTO dto) {
         FormCategory category = formCategoryService.createCategory(dto);
         RestResponse<FormCategory> response = new RestResponse<>();
@@ -31,6 +33,7 @@ public class FormCategoryController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@permissionService.hasPermission('contact', 'UPDATE')")
     public ResponseEntity<RestResponse<FormCategory>> updateCategory(
             @PathVariable("id") Long id, 
             @Valid @RequestBody ReqUpdateFormCategoryDTO dto) {
@@ -41,6 +44,7 @@ public class FormCategoryController {
     }
 
     @GetMapping
+    @PreAuthorize("@permissionService.hasPermission('contact', 'VIEW')")
     public ResponseEntity<RestResponse<List<FormCategory>>> getAllCategories() {
         List<FormCategory> categories = formCategoryService.getAllCategories();
         RestResponse<List<FormCategory>> response = new RestResponse<>();
@@ -49,6 +53,7 @@ public class FormCategoryController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@permissionService.hasPermission('contact', 'VIEW')")
     public ResponseEntity<RestResponse<FormCategory>> getCategoryById(@PathVariable("id") Long id) {
         FormCategory category = formCategoryService.getCategoryById(id);
         RestResponse<FormCategory> response = new RestResponse<>();
@@ -56,7 +61,8 @@ public class FormCategoryController {
         return ResponseEntity.ok(response);
     }
 
-@DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@permissionService.hasPermission('contact', 'DELETE')")
     public ResponseEntity<RestResponse<Void>> deleteCategory(@PathVariable("id") Long id) {
         RestResponse<Void> response = new RestResponse<>();
         try {
