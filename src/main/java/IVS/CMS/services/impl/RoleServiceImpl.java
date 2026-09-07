@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import IVS.CMS.domain.Role;
+import IVS.CMS.domain.User;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.RoleService;
@@ -41,6 +42,15 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public List<ResRoleDTO> getAllRoles() {
         return roleRepository.findAll();
+    }
+
+    @Override
+    public List<User> getUsersByRole(Long id){
+        Role role = roleRepository.findById(id);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        return roleRepository.getUsersByRoleId(id);
     }
 
     @Override

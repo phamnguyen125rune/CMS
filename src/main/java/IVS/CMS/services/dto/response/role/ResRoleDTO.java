@@ -14,5 +14,6 @@ public class ResRoleDTO {
     private String roleDescription;
     private Boolean isActive;
     private Boolean isSystem;
+    private long memmberCount;
     private List<PermissionLinkDTO> permissions;
 }

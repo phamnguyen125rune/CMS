@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import IVS.CMS.domain.Api;
 import IVS.CMS.domain.Permission;
 import IVS.CMS.domain.Role;
 import IVS.CMS.repositories.PermissionRepository;
@@ -16,7 +15,7 @@ import IVS.CMS.services.dto.request.role.PermissionDTO;
 import IVS.CMS.services.dto.request.role.PermissionLinkDTO;
 import IVS.CMS.services.dto.request.role.ReqPermissionApiLinkDTO;
 import IVS.CMS.services.dto.request.role.ReqPermissionIdDTO;
-import IVS.CMS.services.dto.response.role.ResActionDTO;
+import IVS.CMS.services.dto.response.role.ResApiActionDTO;
 import IVS.CMS.services.error.ConflictException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +28,10 @@ public class PermissionServiceImpl implements PermissionService {
     private final RoleRepository roleRepository;
 
     @Override
-    public List<ResActionDTO> getAllActions(){
-        return permissionRepository.findAllAction();
+    public List<ResApiActionDTO> getAllApiActions(){
+        return permissionRepository.findAllApiAction();
     }
 
-    @Override
-    public List<Api> getAllApis(){
-        return permissionRepository.findAllApi();
-    }
 
     @Override
     @Transactional

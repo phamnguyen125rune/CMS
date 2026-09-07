@@ -5,10 +5,9 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import IVS.CMS.domain.Api;
 import IVS.CMS.domain.Permission;
 import IVS.CMS.domain.Role;
-import IVS.CMS.services.dto.response.role.ResActionDTO;
+import IVS.CMS.services.dto.response.role.ResApiActionDTO;
 
 @Repository
 public interface PermissionRepository {
@@ -16,9 +15,7 @@ public interface PermissionRepository {
 
     Optional<Permission> findById(long id);
 
-    List<ResActionDTO> findAllAction();
-
-    List<Api> findAllApi();
+    List<ResApiActionDTO> findAllApiAction();
 
     Permission findById(long apiId, long actionId);
 
