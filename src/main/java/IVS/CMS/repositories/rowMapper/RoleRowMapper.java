@@ -3,6 +3,7 @@ package IVS.CMS.repositories.rowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Component;
@@ -57,8 +58,8 @@ public class RoleRowMapper implements RowMapper<Role> {
         Long updatedBy = rs.getObject("updated_by", Long.class);
         role.setUpdatedBy(updatedBy);
 
-        return role;
-    }
+                return role;
+        }
 
     public MapSqlParameterSource toParams(Role role) {
 

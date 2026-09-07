@@ -11,6 +11,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
 
 import IVS.CMS.security.CustomAuthenticationEntryPoint;
 
@@ -18,43 +19,47 @@ import IVS.CMS.security.CustomAuthenticationEntryPoint;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-    private final String[] publicEndpoints = {
-            "/",
-            "/uploads/**",
-            "/api/v1/auth/login",
-            "/api/v1/auth/refresh",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html"
-    };
+        private final String[] publicEndpoints = {
+                        "/",
+                        "/uploads/**",
+                        "/api/v1/auth/login",
+                        "/api/v1/auth/refresh",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/api/v1/auth/forgot-password/request-otp",
+                        "/api/v1/auth/forgot-password/verify-otp",
+                        "/api/v1/auth/forgot-password/reset"
+        };
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-    @Bean
-    public SecurityFilterChain filterChain(
-            HttpSecurity http,
-            CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
+        @Bean
+        public SecurityFilterChain filterChain(
+                        HttpSecurity http,
+                        CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
 
-        http
-                .cors(Customizer.withDefaults())
-                .csrf(c -> c.disable())
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(publicEndpoints).permitAll()
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(Customizer.withDefaults())
-                        .authenticationEntryPoint(customAuthenticationEntryPoint))
-                .formLogin(f -> f.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                http
+                                .cors(Customizer.withDefaults())
+                                .csrf(c -> c.disable())
+                                .authorizeHttpRequests(authz -> authz
+                                                .requestMatchers(publicEndpoints).permitAll()
+                                                .anyRequest().authenticated())
+                                .oauth2ResourceServer(oauth2 -> oauth2
+                                                .jwt(Customizer.withDefaults())
+                                                .authenticationEntryPoint(customAuthenticationEntryPoint))
+                                .formLogin(f -> f.disable())
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        return http.build();
-    }
+                return http.build();
+        }
 }

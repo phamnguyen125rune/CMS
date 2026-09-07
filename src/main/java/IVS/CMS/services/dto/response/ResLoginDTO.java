@@ -1,5 +1,7 @@
 package IVS.CMS.services.dto.response;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
@@ -25,7 +27,18 @@ public class ResLoginDTO {
         private String employeeCode;
         private String fullname;
         private String avatarUrl;
+        // private RoleLogin role;
     }
+
+    // @Setter
+    // @Getter
+    // @AllArgsConstructor
+    // @NoArgsConstructor
+    // public static class RoleLogin {
+    // private long id;
+    // private String name;
+    // private List<String> permissions;
+    // }
 
     @Setter
     @Getter

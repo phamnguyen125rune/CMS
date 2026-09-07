@@ -8,17 +8,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.PostCategory;
 import IVS.CMS.domain.Post;
+import IVS.CMS.domain.User;
 import IVS.CMS.domain.constants.PostStatusEnum;
+import IVS.CMS.services.dto.request.ReqPostCreateDTO;
+import IVS.CMS.services.dto.request.ReqPostFilterDTO;
+import IVS.CMS.services.dto.request.ReqPostUpdateDTO;
+import IVS.CMS.services.dto.response.ResPostDTO;
+import IVS.CMS.services.dto.response.ResPostListDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import IVS.CMS.repositories.PostCategoryRepository;
 import IVS.CMS.repositories.PostRepository;
 import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.PostService;
-import IVS.CMS.services.dto.request.ReqPostCreateDTO;
-import IVS.CMS.services.dto.request.ReqPostUpdateDTO;
-import IVS.CMS.services.dto.response.ResPostDTO;
-import IVS.CMS.services.dto.response.ResPostListDTO;
-import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import IVS.CMS.services.error.BadRequestException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 import IVS.CMS.services.mapper.PostMapper;
@@ -31,8 +33,8 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final PostCategoryRepository categoryRepository;
-    private final PostMapper postMapper;
     private final UserRepository userRepository;
+    private final PostMapper postMapper;
 
     @Override
     @Transactional
@@ -49,7 +51,18 @@ public class PostServiceImpl implements PostService {
         post.setCreatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         Post savedPost = this.postRepository.save(post);
-        return this.postMapper.postToResPostDTO(savedPost, category);
+
+        this.postRepository.addTagsToPost(savedPost.getPostId(), req.getTagIds());
+        this.postRepository.addMediaToPost(savedPost.getPostId(), req.getMediaIds());
+
+        String authorName = getAuthorName(savedPost.getCreatedBy());
+        String ogImageUrl = getOgImageUrl(savedPost);
+
+        ResPostDTO resDTO = this.postMapper.postToResPostDTO(savedPost, category, authorName, ogImageUrl);
+
+        resDTO.setTags(this.postRepository.getTagsByPostId(savedPost.getPostId()));
+        resDTO.setMediaList(this.postRepository.getMediaByPostId(savedPost.getPostId()));
+        return resDTO;
     }
 
     @Override
@@ -71,48 +84,77 @@ public class PostServiceImpl implements PostService {
         currentPost.setSummary(tempPost.getSummary());
         currentPost.setContent(tempPost.getContent());
         currentPost.setCategoryId(tempPost.getCategoryId());
+        currentPost.setMetaTitle(tempPost.getMetaTitle());
+        currentPost.setMetaDescription(tempPost.getMetaDescription());
+        currentPost.setCanonicalUrl(tempPost.getCanonicalUrl());
 
-        if (tempPost.getStatus() != null) {
-            currentPost.setStatus(tempPost.getStatus());
+        if (tempPost.getIsIndexable() != null) {
+            currentPost.setIsIndexable(tempPost.getIsIndexable());
+        }
+        if (tempPost.getIsFollowable() != null) {
+            currentPost.setIsFollowable(tempPost.getIsFollowable());
+        }
+        currentPost.setOgTitle(tempPost.getOgTitle());
+        currentPost.setOgDescription(tempPost.getOgDescription());
+        currentPost.setOgImageId(tempPost.getOgImageId());
+        currentPost.setFeaturedMediaId(tempPost.getFeaturedMediaId());
+
+        if (currentPost.getStatus() == PostStatusEnum.REJECTED) {
+            currentPost.setStatus(PostStatusEnum.DRAFT);
         }
 
         currentPost.setUpdatedAt(LocalDateTime.now());
         currentPost.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         Post updatedPost = this.postRepository.save(currentPost);
-        return this.postMapper.postToResPostDTO(updatedPost, category);
+
+        this.postRepository.removeAllTagsFromPost(id);
+        this.postRepository.addTagsToPost(id, req.getTagIds());
+        this.postRepository.removeAllMediaFromPost(id);
+        this.postRepository.addMediaToPost(id, req.getMediaIds());
+
+        String authorName = getAuthorName(updatedPost.getCreatedBy());
+        String ogImageUrl = getOgImageUrl(updatedPost);
+
+        ResPostDTO resDTO = this.postMapper.postToResPostDTO(updatedPost, category, authorName, ogImageUrl);
+        resDTO.setTags(this.postRepository.getTagsByPostId(id));
+        resDTO.setMediaList(this.postRepository.getMediaByPostId(id));
+        return resDTO;
     }
 
     @Override
     public ResPostDTO getPostById(long id) {
         Post post = this.postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
-        PostCategory category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
-        ResPostDTO res = this.postMapper.postToResPostDTO(post, category);
 
-        if (post.getCreatedBy() != null) {
-            this.userRepository.findById(post.getCreatedBy())
-                    .ifPresent(u -> res.getCreatedBy().setFullname(u.getFullName()));
+        PostCategory category = null;
+        if (post.getCategoryId() != null && post.getCategoryId() > 0) {
+            category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
         }
-        if (post.getUpdatedBy() != null) {
-            this.userRepository.findById(post.getUpdatedBy())
-                    .ifPresent(u -> res.getUpdatedBy().setFullname(u.getFullName()));
-        }
-        return res;
+
+        String authorName = getAuthorName(post.getCreatedBy());
+        String ogImageUrl = getOgImageUrl(post);
+
+        ResPostDTO resDTO = this.postMapper.postToResPostDTO(post, category, authorName, ogImageUrl);
+
+        resDTO.setTags(this.postRepository.getTagsByPostId(id));
+        resDTO.setMediaList(this.postRepository.getMediaByPostId(id));
+
+        return resDTO;
     }
 
     @Override
-    public ResultPaginationDTO getAllPosts(int page, int pageSize) {
+    public ResultPaginationDTO getAllPosts(ReqPostFilterDTO filter, int page, int pageSize) {
         if (page < 1)
             page = 1;
         if (pageSize < 1)
             pageSize = 10;
 
-        long total = this.postRepository.count();
+        long total = this.postRepository.count(filter);
         int pages = (int) Math.ceil((double) total / pageSize);
         int offset = (page - 1) * pageSize;
 
-        List<ResPostListDTO> listPostRes = this.postRepository.findAll(pageSize, offset);
+        List<ResPostListDTO> listPostRes = this.postRepository.findAll(filter, pageSize, offset);
 
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
         meta.setPage(page);
@@ -142,11 +184,34 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
         try {
             PostStatusEnum newStatus = PostStatusEnum.valueOf(status.trim().toUpperCase());
+
+            if (newStatus == PostStatusEnum.PUBLISHED ||
+                    newStatus == PostStatusEnum.APPROVED ||
+                    newStatus == PostStatusEnum.REJECTED ||
+                    newStatus == PostStatusEnum.UNPUBLISHED) {
+                throw new BadRequestException("Hành động bị từ chối. Vui lòng sử dụng tính năng Kiểm duyệt bài viết.");
+            }
+
             Long updatedBy = SecurityService.getCurrentUserId().orElse(null);
             this.postRepository.updateStatus(post.getPostId(), newStatus.name(), updatedBy);
         } catch (IllegalArgumentException e) {
-            throw new BadRequestException(
-                    "Trạng thái bài viết không hợp lệ. Chấp nhận: DRAFT, PENDING, PUBLISHED,...");
+            throw new BadRequestException("Trạng thái bài viết không hợp lệ.");
         }
+    }
+
+    private String getAuthorName(Long userId) {
+        if (userId == null)
+            return "System";
+        return this.userRepository.findById(userId).map(User::getFullName).orElse("System");
+    }
+
+    private String getOgImageUrl(Post post) {
+        if (post.getOgImageId() != null) {
+            return "/api/v1/media/" + post.getOgImageId() + "/view";
+        }
+        if (post.getFeaturedMediaId() != null) {
+            return "/api/v1/media/" + post.getFeaturedMediaId() + "/view";
+        }
+        return null;
     }
 }

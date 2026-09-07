@@ -31,7 +31,6 @@ public interface UserRepository {
 
     boolean existsByPhoneNumber(String phoneNumber);
 
-    boolean existsByPhoneNumberForUpdate(long userId, String phoneNumber);
 
     Optional<User> findByIdIncludeDeleted(long userId);
 
@@ -54,5 +53,11 @@ public interface UserRepository {
     User findByEmployeeCode(String employeeCode);
 
     User findByEmailOrEmployeeCode(String loginId);
+
+    void updateLoginSecurity(long userId, int failedAttempts, int lockCount, LocalDateTime lockedUntil);
+
+    void clearLoginFailures(long userId);
+
+    User findByEmailOrEmployeeCodeIncludeDeleted(String loginId);
 
 }
