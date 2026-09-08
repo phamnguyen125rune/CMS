@@ -25,6 +25,8 @@ public class SecurityConfiguration {
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
+                        "/api/v1/media/*/view",
+                        "/api/v1/media/*/download",
                         "/api/v1/auth/forgot-password/request-otp",
                         "/api/v1/auth/forgot-password/verify-otp",
                         "/api/v1/auth/forgot-password/reset"
@@ -44,12 +46,15 @@ public class SecurityConfiguration {
         public SecurityFilterChain filterChain(
                         HttpSecurity http,
                         CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
-
                 http
                                 .cors(Customizer.withDefaults())
                                 .csrf(c -> c.disable())
                                 .authorizeHttpRequests(authz -> authz
                                                 .requestMatchers(publicEndpoints).permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/posts/**",
+                                                                "/api/v1/categories/**", "/api/v1/tags/**",
+                                                                "/api/v1/comments/**")
+                                                .permitAll()
                                                 .anyRequest().authenticated())
                                 .oauth2ResourceServer(oauth2 -> oauth2
                                                 .jwt(Customizer.withDefaults())

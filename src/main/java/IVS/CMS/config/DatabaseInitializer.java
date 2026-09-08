@@ -352,5 +352,21 @@ public class DatabaseInitializer {
                         updated_at DATETIME(6),
                         updated_by INTEGER UNSIGNED
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-                    """;
+
+                    -- ============================================================
+                    -- 20. COMMENTS
+                    -- ============================================================
+                    CREATE TABLE IF NOT EXISTS comments (
+                        comment_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        post_id INTEGER UNSIGNED NOT NULL,
+                        parent_id INTEGER UNSIGNED DEFAULT NULL,
+                        comment_text TEXT NOT NULL,
+                        image_url VARCHAR(500),
+                        status ENUM('pending', 'approved', 'rejected', 'spam') NOT NULL DEFAULT 'pending',
+                        created_at DATETIME(6),
+                        created_by INTEGER UNSIGNED NOT NULL,
+                        updated_at DATETIME(6),
+                        updated_by INTEGER UNSIGNED
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                """;
 }

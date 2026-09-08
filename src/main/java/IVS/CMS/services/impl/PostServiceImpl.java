@@ -180,23 +180,38 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public void changeStatus(long id, String status) {
-        Post post = this.postRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
+        PostStatusEnum newStatus;
         try {
-            PostStatusEnum newStatus = PostStatusEnum.valueOf(status.trim().toUpperCase());
-
-            if (newStatus == PostStatusEnum.PUBLISHED ||
-                    newStatus == PostStatusEnum.APPROVED ||
-                    newStatus == PostStatusEnum.REJECTED ||
-                    newStatus == PostStatusEnum.UNPUBLISHED) {
-                throw new BadRequestException("Hành động bị từ chối. Vui lòng sử dụng tính năng Kiểm duyệt bài viết.");
-            }
-
-            Long updatedBy = SecurityService.getCurrentUserId().orElse(null);
-            this.postRepository.updateStatus(post.getPostId(), newStatus.name(), updatedBy);
-        } catch (IllegalArgumentException e) {
+            newStatus = PostStatusEnum.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
             throw new BadRequestException("Trạng thái bài viết không hợp lệ.");
         }
+
+        if (newStatus == PostStatusEnum.APPROVED ||
+                newStatus == PostStatusEnum.REJECTED ||
+                newStatus == PostStatusEnum.UNPUBLISHED) {
+            throw new BadRequestException("Hành động bị từ chối. Vui lòng sử dụng tính năng Kiểm duyệt bài viết.");
+        }
+
+        Post post = this.postRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
+
+        if (newStatus == PostStatusEnum.PUBLISHED) {
+            String currentStatus = String.valueOf(post.getStatus());
+
+            if (!PostStatusEnum.APPROVED.name().equals(currentStatus)) {
+                throw new BadRequestException(
+                        "Hành động bị từ chối. Chỉ có thể Đăng bài (công khai) đối với những bài viết đã được duyệt.");
+            }
+
+            if (post.getPublishedAt() == null) {
+                post.setPublishedAt(java.time.LocalDateTime.now());
+                this.postRepository.save(post);
+            }
+        }
+
+        Long updatedBy = SecurityService.getCurrentUserId().orElse(null);
+        this.postRepository.updateStatus(post.getPostId(), newStatus.name(), updatedBy);
     }
 
     private String getAuthorName(Long userId) {
