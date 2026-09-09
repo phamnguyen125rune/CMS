@@ -5,12 +5,15 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.Role;
-import IVS.CMS.services.dto.response.ResRoleDTO;
+import IVS.CMS.domain.User;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
 @Repository
 public interface RoleRepository {
 
     List<ResRoleDTO> findAll();
+
+    List<User> getUsersByRoleId(Long roleId);
 
     Role save(Role role);
 
@@ -23,6 +26,10 @@ public interface RoleRepository {
     Role changeRoleStatus(Role role);
 
     Role findByRoleName(String roleName);
+
+    List<User> searchUsersNotInRole(Long roleId, String keyword);
+
+    int updateUsersRole(List<Long> userIds, Long roleId);
 
     Boolean checkIsSystemRole(Long id);
 

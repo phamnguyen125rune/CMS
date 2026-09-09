@@ -1,16 +1,18 @@
 package IVS.CMS.config;
 
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.sql.Connection;
+
+import javax.sql.DataSource;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -22,23 +24,46 @@ public class DatabaseInitializer {
     private final PasswordEncoder passwordEncoder;
 
     @PostConstruct
-    public void initialize() {
+    @SuppressWarnings("unused")
+    private void initialize() {
         log.info("Starting database initialization and data seeding...");
+
         try (Connection connection = dataSource.getConnection()) {
+
             ByteArrayResource resource = new ByteArrayResource(SCHEMA_SQL.getBytes());
+
             ScriptUtils.executeSqlScript(connection, resource);
 
-            jdbcTemplate.execute(
-                    "INSERT IGNORE INTO roles (role_id, role_name, is_active, is_system) VALUES (1, 'SUPER_ADMIN', 1, 1)");
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM roles",
+                    Integer.class);
 
-            String insertUserSql = "INSERT IGNORE INTO users (employee_code, full_name, email, password_hash, role_id, is_active, is_system, gender) "
-                    +
-                    "VALUES ('EMP0000', 'Admin System', 'cms@gmail.com', ?, 1, 1, 1, 'others')";
-            jdbcTemplate.update(insertUserSql, passwordEncoder.encode("123456"));
+            if (count == null || count == 0) {
+
+                ByteArrayResource seedResource = new ByteArrayResource(SEED_SQL.getBytes());
+
+                ScriptUtils.executeSqlScript(connection, seedResource);
+
+                String insertUserSql = "INSERT INTO users " +
+                        "(employee_code, full_name, email, password_hash, role_id, is_active, is_system, gender) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+                jdbcTemplate.update(
+                        insertUserSql,
+                        "EMP0000",
+                        "Admin System",
+                        "cms@gmail.com",
+                        passwordEncoder.encode("123456"),
+                        1,
+                        true,
+                        true,
+                        "others");
+            }
 
             log.info("Database initialization completed successfully.");
+
         } catch (Exception e) {
-            log.error("Error initializing database: {}", e.getMessage());
+            log.error("Error initializing database", e);
         }
     }
 
@@ -369,4 +394,62 @@ public class DatabaseInitializer {
                         updated_by INTEGER UNSIGNED
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                 """;
+
+    private static final String SEED_SQL = """
+            -- ============================================================
+            -- SEED ROLES
+            -- ============================================================
+            INSERT IGNORE INTO roles
+                (role_name, role_description, is_system)
+            VALUES
+                ('Admin', 'Toàn quyền hệ thống', 1),
+                ('User', 'Người dùng thông thường, chỉ truy cập chức năng được cấp', 0),
+                ('Customer', 'Khách hàng, có quyền truy cập và sử dụng các chức năng dành riêng cho khách hàng', 0);
+
+            -- ============================================================
+            -- SEED APIS
+            -- ============================================================
+            INSERT IGNORE INTO apis
+                (api_link, api_description)
+            VALUES
+                ('user', 'Màn hình Quản lý Người dùng'),
+                ('role', 'Màn hình Quản lý Nhóm người dùng'),
+                ('permission', 'Màn hình Quản lý Phân Quyền'),
+                ('post', 'Màn hình Quản lý Bài viết'),
+                ('category', 'Màn hình Quản lý Danh mục'),
+                ('media', 'Màn hình Quản lý Media'),
+                ('contact', 'Màn hình Quản lý Liên hệ'),
+                ('global', 'Màn hình Quản lý Thông tin chung'),
+                ('logs', 'Màn hình Quản lý Nhật Ký');
+
+            -- ============================================================
+            -- SEED ACTIONS
+            -- ============================================================
+            INSERT IGNORE INTO actions (action_name)
+            VALUES
+                ('VIEW'),
+                ('CREATE'),
+                ('UPDATE'),
+                ('DELETE');
+
+            -- ============================================================
+            -- SEED PERMISSIONS
+            -- ============================================================
+            INSERT IGNORE INTO permissions (action_id, api_id)
+            VALUES
+                (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9),
+                (2, 1), (2, 2), (2, 4), (2, 5), (2, 6), (2, 7),
+                (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8),
+                (4, 1), (4, 2), (4, 4), (4, 5), (4, 6), (4, 7);
+
+            -- ============================================================
+            -- SEED ROLE PERMISSIONS
+            -- ============================================================
+            INSERT IGNORE INTO role_permission (role_id, permission_id)
+            VALUES
+                (1, 2), (1, 11), (1, 17), (1, 25), (1, 3), (1, 18),
+                (1, 1), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
+                (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 19), (1, 20),
+                (1, 21), (1, 22), (1, 23), (1, 24), (1, 26), (1, 27), (1, 28), (1, 29);
+            """;
 }

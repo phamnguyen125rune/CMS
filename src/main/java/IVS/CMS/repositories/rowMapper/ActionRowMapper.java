@@ -10,25 +10,27 @@ import org.springframework.stereotype.Component;
 import IVS.CMS.domain.Action;
 
 @Component
-public class ActionRowMapper implements RowMapper<Action> {
+public class ActionRowMapper implements RowMapper<Action>{
         @Override
-        public Action mapRow(ResultSet rs, int rowNum) throws SQLException {
+    public Action mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-                Action action = new Action();
+        Action action = new Action();
 
-                action.setActionId(
-                                rs.getLong("action_id"));
+        action.setActionId(
+                rs.getLong("action_id")
+        );
 
-                action.setActionName(
-                                rs.getString("action_name"));
+        action.setActionName(
+                rs.getString("action_name")
+        );
 
-                return action;
-        }
+        return action;
+    }
 
-        public MapSqlParameterSource toParams(Action action) {
+    public MapSqlParameterSource toParams(Action action) {
 
-                return new MapSqlParameterSource()
-                                .addValue("actionId", action.getActionId())
-                                .addValue("actionName", action.getActionName());
-        }
+        return new MapSqlParameterSource()
+                .addValue("actionId", action.getActionId())
+                .addValue("actionName", action.getActionName());
+    }
 }

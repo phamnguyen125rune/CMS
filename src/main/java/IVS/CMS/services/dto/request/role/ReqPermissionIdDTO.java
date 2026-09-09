@@ -1,4 +1,5 @@
-package IVS.CMS.services.dto.request;
+package IVS.CMS.services.dto.request.role;
+
 
 import java.util.List;
 

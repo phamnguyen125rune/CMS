@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,6 +27,7 @@ public class FormDetailController {
 
     // Client endpoint: Gửi form liên hệ
     @PostMapping
+    @PreAuthorize("@permissionService.hasPermission('contact', 'CREATE')")
     public ResponseEntity<RestResponse<FormDetail>> createFormDetail(@Valid @RequestBody ReqCreateFormDetailDTO dto) {
         FormDetail formDetail = formDetailService.createFormDetail(dto);
         RestResponse<FormDetail> response = new RestResponse<>();
@@ -37,6 +39,7 @@ public class FormDetailController {
 
     // Admin endpoint: Lấy danh sách phân trang + search
     @GetMapping
+    @PreAuthorize("@permissionService.hasPermission('contact', 'VIEW')")
     public ResponseEntity<RestResponse<PaginationResponseDTO>> getAllFormDetails(
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "status", required = false, defaultValue = "ALL") String status,
@@ -53,6 +56,7 @@ public class FormDetailController {
 
     // Admin endpoint: Xem chi tiết form liên hệ
     @GetMapping("/{id}")
+    @PreAuthorize("@permissionService.hasPermission('contact', 'VIEW')")
     public ResponseEntity<RestResponse<FormDetail>> getFormDetailById(@PathVariable("id") Long id) {
         FormDetail formDetail = formDetailService.getFormDetailById(id);
         RestResponse<FormDetail> response = new RestResponse<>();
@@ -64,6 +68,7 @@ public class FormDetailController {
 
     // Admin endpoint: Phản hồi form liên hệ
     @PostMapping("/{id}/reply")
+    @PreAuthorize("@permissionService.hasPermission('contact', 'UPDATE')")
     public ResponseEntity<RestResponse<FormDetail>> replyFormDetail(
             @PathVariable("id") Long id,
             @Valid @RequestBody ReqReplyFormDetailDTO dto
@@ -78,6 +83,7 @@ public class FormDetailController {
 
     // Admin endpoint: Xóa form liên hệ
     @DeleteMapping("/{id}")
+    @PreAuthorize("@permissionService.hasPermission('contact', 'DELETE')")
     public ResponseEntity<RestResponse<Void>> deleteFormDetail(@PathVariable("id") Long id) {
         formDetailService.deleteFormDetail(id);
         RestResponse<Void> response = new RestResponse<>();
@@ -87,6 +93,7 @@ public class FormDetailController {
     }
     
     @PatchMapping("/{id}/status")
+    @PreAuthorize("@permissionService.hasPermission('contact', 'UPDATE')")
     public ResponseEntity<RestResponse<FormDetail>> updateStatus(
             @PathVariable("id") Long id,
             @RequestBody Map<String, String> body

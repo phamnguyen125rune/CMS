@@ -27,33 +27,33 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('categories:EDIT')")
+    @PreAuthorize("@permissionService.hasPermission('category', 'CREATE')")
     public ResponseEntity<PostCategory> createCategory(@Valid @RequestBody PostCategory category) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(this.categoryService.createCategory(category));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('categories:EDIT')")
+    @PreAuthorize("@permissionService.hasPermission('category', 'UPDATE')")
     public ResponseEntity<PostCategory> updateCategory(@PathVariable("id") long id,
             @Valid @RequestBody PostCategory category) {
         return ResponseEntity.ok(this.categoryService.updateCategory(id, category));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('categories:VIEW')")
+    @PreAuthorize("@permissionService.hasPermission('category', 'VIEW')")
     public ResponseEntity<PostCategory> getCategoryById(@PathVariable("id") long id) {
         return ResponseEntity.ok(this.categoryService.fetchById(id));
     }
 
     @GetMapping
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("@permissionService.hasPermission('category', 'VIEW')")
     public ResponseEntity<List<PostCategory>> getAllCategories() {
         return ResponseEntity.ok(this.categoryService.fetchAll());
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('categories:EDIT')")
+    @PreAuthorize("@permissionService.hasPermission('category', 'DELETE')")
     public ResponseEntity<Void> deleteCategory(@PathVariable("id") long id) {
         this.categoryService.deleteCategory(id);
         return ResponseEntity.ok().build();
