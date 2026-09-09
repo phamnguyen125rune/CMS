@@ -1,12 +1,13 @@
-package IVS.CMS.domain;
+package IVS.CMS.services.dto.response;
+
+import java.time.LocalDateTime;
 
 import lombok.Getter;
 import lombok.Setter;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class Menu {
+public class ResMenuDTO {
     private Long menuId;
     private Long parentId;
     private String title;
