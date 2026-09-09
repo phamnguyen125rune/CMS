@@ -194,7 +194,7 @@ public class DatabaseInitializer {
                         file_name VARCHAR(50) NOT NULL,
                         upload_file VARCHAR(255),
                         file_path TEXT NOT NULL,
-                        mime_type VARCHAR(50) NOT NULL,
+                        mime_type VARCHAR(255) NOT NULL,
                         file_type VARCHAR(20) NOT NULL,
                         file_size BIGINT UNSIGNED NOT NULL,
                         created_by INTEGER UNSIGNED,
@@ -366,9 +366,9 @@ public class DatabaseInitializer {
                     -- ============================================================
                     CREATE TABLE IF NOT EXISTS menu (
                         menu_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        parent_id INTEGER UNSIGNED,
                         title VARCHAR(255) NOT NULL,
                         url VARCHAR(500) NOT NULL,
-                        menu_type INTEGER NOT NULL,
                         display_order INTEGER NOT NULL,
                         level INTEGER NOT NULL,
                         visible BOOLEAN NOT NULL,
