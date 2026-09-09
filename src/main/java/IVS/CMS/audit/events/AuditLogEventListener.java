@@ -6,7 +6,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import IVS.CMS.audit.repositories.AuditLogRepository;
+import IVS.CMS.repositories.AuditLogRepository;
 import IVS.CMS.audit.utils.AuditDataSanitizer;
 import IVS.CMS.domain.AuditLog;
 import lombok.RequiredArgsConstructor;
