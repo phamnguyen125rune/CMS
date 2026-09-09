@@ -27,6 +27,10 @@ public interface RoleRepository {
 
     Role findByRoleName(String roleName);
 
+    List<User> searchUsersNotInRole(Long roleId, String keyword);
+
+    int updateUsersRole(List<Long> userIds, Long roleId);
+
     Boolean checkIsSystemRole(Long id);
 
     void delete(Role role);

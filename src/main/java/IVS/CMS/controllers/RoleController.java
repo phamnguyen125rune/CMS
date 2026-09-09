@@ -1,6 +1,7 @@
 package IVS.CMS.controllers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import IVS.CMS.domain.Role;
@@ -44,6 +46,16 @@ public class RoleController {
         return ResponseEntity.ok(this.roleService.getUsersByRole(id));
     }
     
+    @GetMapping("/{id}/search")
+    @PreAuthorize("""
+        @permissionService.hasPermission('role', 'VIEW') && 
+        @permissionService.hasPermission('user', 'VIEW')""")
+    public ResponseEntity<List<User>> searchUsersNotInRole(
+            @PathVariable("id") long id,
+            @RequestParam(required = false, defaultValue = "") String keyword) {
+        return ResponseEntity.ok(this.roleService.findUsersNotInRole(keyword, id));
+    }
+
     @PostMapping
     @PreAuthorize("@permissionService.hasPermission('role', 'CREATE')")
     public ResponseEntity<Role> createRole(@Valid @RequestBody ReqRoleDTO role) {
@@ -62,6 +74,24 @@ public class RoleController {
     public ResponseEntity<Role> updateRole(@PathVariable("id") long id, @Valid @RequestBody ReqRoleDTO req) {
         return ResponseEntity.ok(this.roleService.updateRole(id, req));
     }
+
+    @PutMapping("/{id}/users")
+    @PreAuthorize("""
+        @permissionService.hasPermission('role', 'UPDATE') &&
+        @permissionService.hasPermission('user', 'UPDATE')
+    """)
+    public ResponseEntity<Map<String, String>> updateUsersRole(
+            @PathVariable("id") Long roleId,
+            @RequestBody List<Long> userIds
+    ) {
+
+        String message = roleService.updateUsersRole(userIds, roleId);
+
+        return ResponseEntity.ok(
+                Map.of("message", message)
+        );
+    }
+
 
     @PatchMapping("/status/{id}")
     @PreAuthorize("@permissionService.hasPermission('role', 'UPDATE')")

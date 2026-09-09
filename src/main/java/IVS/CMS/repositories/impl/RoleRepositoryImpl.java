@@ -11,6 +11,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.domain.Role;
 import IVS.CMS.domain.User;
 import IVS.CMS.repositories.RoleRepository;
@@ -263,6 +264,50 @@ public class RoleRepositoryImpl implements RoleRepository {
         }
 
         return role;
+    }
+
+    @Override 
+    public List<User> searchUsersNotInRole(Long roleId, String keyword) {
+        String sql = """
+                SELECT *
+                FROM users
+                WHERE role_id <> :roleId
+                  AND (
+                        employee_code LIKE :keyword
+                        OR full_name LIKE :keyword
+                        OR email LIKE :keyword
+                  )
+                ORDER BY full_name ASC
+                """;
+
+        String searchKeyword = "%" + (keyword == null ? "" : keyword.trim()) + "%";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("roleId", roleId)
+                .addValue("keyword", searchKeyword);
+        return jdbcTemplate.query(sql, params, userRowMapper);
+    }
+
+    @Override
+    public int updateUsersRole(List<Long> userIds, Long roleId) {
+        if (userIds == null || userIds.isEmpty()) {
+            return 0;
+        }
+
+        String sql = """
+                UPDATE users
+                SET
+                    role_id = :roleId,
+                    updated_at = CURRENT_TIMESTAMP,
+                    updated_by = :currentUserId
+                WHERE user_id IN (:userIds)
+                """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("roleId", roleId)
+                .addValue("userIds", userIds)
+                .addValue("currentUserId", SecurityService.getCurrentUserId().orElse(null));
+
+        return jdbcTemplate.update(sql, params);
     }
 
     @Override

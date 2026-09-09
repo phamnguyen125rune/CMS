@@ -53,6 +53,35 @@ public class RoleServiceImpl implements RoleService {
         return roleRepository.getUsersByRoleId(id);
     }
 
+    @Override 
+    public List<User> findUsersNotInRole(String keyword, Long id){
+        Role role = roleRepository.findById(id);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        return roleRepository.searchUsersNotInRole(id, keyword);
+    }
+
+    @Override
+    public String updateUsersRole(List<Long> userIds, Long roleId) {
+        if (userIds == null || userIds.isEmpty()) {
+            throw new ConflictException("User list cannot be empty");
+        }
+        Role role = roleRepository.findById(roleId);
+        if (role == null) {
+            throw new ResourceNotFoundException(
+                    "Role not found with id " + roleId
+            );
+        }
+        if (!Boolean.TRUE.equals(role.getIsActive())) {
+            throw new ConflictException(
+                    "Cannot assign users to inactive role"
+            );
+        }
+        int updatedCount = roleRepository.updateUsersRole(userIds, roleId);
+        return "Cập nhật thành công role của " + updatedCount + " user";
+    }
+
     @Override
     public Role updateRole(Long id, ReqRoleDTO req) {
         Role role = roleRepository.findById(id);

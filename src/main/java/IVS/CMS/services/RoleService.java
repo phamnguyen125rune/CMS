@@ -13,6 +13,10 @@ public interface RoleService {
 
     List<User> getUsersByRole(Long id);
 
+    List<User> findUsersNotInRole(String keyword, Long id);
+
+    String updateUsersRole(List<Long> userIds, Long roleId);
+
     Role createRole(ReqRoleDTO req);
 
     Role updateRole(Long id, ReqRoleDTO req);
