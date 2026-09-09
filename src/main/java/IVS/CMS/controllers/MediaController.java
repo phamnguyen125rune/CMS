@@ -26,10 +26,10 @@ public class MediaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ResMediaDTO>> getMedia(@RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String fileType) {
-        return ResponseEntity.ok(
-                mediaService.searchAndFilter(keyword, fileType));
+    public ResponseEntity<List<ResMediaDTO>> getMedia(
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "fileType", required = false) String fileType) {
+        return ResponseEntity.ok(mediaService.searchAndFilter(keyword, fileType));
     }
 
     @PostMapping("/upload")
@@ -40,18 +40,18 @@ public class MediaController {
 
     @GetMapping("/{mediaId}/view")
     public ResponseEntity<Resource> viewMedia(
-            @PathVariable long mediaId) {
+            @PathVariable("mediaId") long mediaId) {
         return mediaService.view(mediaId);
     }
 
     @GetMapping("/{mediaId}/download")
     public ResponseEntity<Resource> downloadMedia(
-            @PathVariable long mediaId) {
+            @PathVariable("mediaId") long mediaId) {
         return mediaService.download(mediaId);
     }
 
     @DeleteMapping("/{mediaId}")
-    public ResponseEntity<Void> deleteMedia(@PathVariable long mediaId) {
+    public ResponseEntity<Void> deleteMedia(@PathVariable("mediaId") long mediaId) {
         mediaService.delete(mediaId);
         return ResponseEntity.noContent().build();
     }

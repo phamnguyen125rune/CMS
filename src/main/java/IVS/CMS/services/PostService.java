@@ -18,4 +18,6 @@ public interface PostService {
     void deletePost(long id);
 
     void changeStatus(long id, String status);
+
+    ResPostDTO getPostBySlug(String slug);
 }

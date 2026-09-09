@@ -67,4 +67,9 @@ public class PostController {
         this.postService.changeStatus(id, status);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/slug/{slug}")
+    public ResponseEntity<ResPostDTO> getPostBySlug(@PathVariable("slug") String slug) {
+        return ResponseEntity.ok(this.postService.getPostBySlug(slug));
+    }
 }

@@ -2,6 +2,7 @@ package IVS.CMS.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -10,7 +11,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.http.HttpMethod;
 
 import IVS.CMS.security.CustomAuthenticationEntryPoint;
 
@@ -25,8 +25,6 @@ public class SecurityConfiguration {
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/api/v1/media/*/view",
-                        "/api/v1/media/*/download",
                         "/api/v1/auth/forgot-password/request-otp",
                         "/api/v1/auth/forgot-password/verify-otp",
                         "/api/v1/auth/forgot-password/reset"
@@ -46,14 +44,18 @@ public class SecurityConfiguration {
         public SecurityFilterChain filterChain(
                         HttpSecurity http,
                         CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
+
                 http
                                 .cors(Customizer.withDefaults())
                                 .csrf(c -> c.disable())
                                 .authorizeHttpRequests(authz -> authz
                                                 .requestMatchers(publicEndpoints).permitAll()
-                                                .requestMatchers(HttpMethod.GET, "/api/v1/posts/**",
-                                                                "/api/v1/categories/**", "/api/v1/tags/**",
-                                                                "/api/v1/comments/**")
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/v1/posts/**",
+                                                                "/api/v1/categories/**",
+                                                                "/api/v1/tags/**",
+                                                                "/api/v1/comments/**",
+                                                                "/api/v1/media/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .oauth2ResourceServer(oauth2 -> oauth2
