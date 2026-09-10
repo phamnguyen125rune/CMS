@@ -12,82 +12,82 @@ import java.sql.Timestamp;
 @Component
 public class GeneralInfoRowMapper implements RowMapper<GeneralInfo> {
 
-    @Override
-    public GeneralInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
+        @Override
+        public GeneralInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-        GeneralInfo info = new GeneralInfo();
+                GeneralInfo info = new GeneralInfo();
 
-        info.setGeneralInfoId(
-                rs.getLong("general_info_id"));
+                info.setGeneralInfoId(
+                                rs.getLong("general_info_id"));
 
-        info.setLogo(
-                rs.getString("logo"));
+                info.setLogo(
+                                rs.getString("logo"));
 
-        info.setCompanyName(
-                rs.getString("company_name"));
+                info.setCompanyName(
+                                rs.getString("company_name"));
 
-        info.setWebsiteName(
-                rs.getString("website_name"));
+                info.setWebsiteName(
+                                rs.getString("website_name"));
 
-        info.setWebsiteDescription(
-                rs.getString("website_description"));
+                info.setWebsiteDescription(
+                                rs.getString("website_description"));
 
-        info.setEmail(
-                rs.getString("email"));
+                info.setEmail(
+                                rs.getString("email"));
 
-        info.setFacebookLink(
-                rs.getString("facebook_link"));
+                info.setFacebookLink(
+                                rs.getString("facebook_link"));
 
-        info.setTwitterLink(
-                rs.getString("twitter_link"));
+                info.setTwitterLink(
+                                rs.getString("twitter_link"));
 
-        info.setInstagramLink(
-                rs.getString("instagram_link"));
+                info.setInstagramLink(
+                                rs.getString("instagram_link"));
 
-        info.setLinkedinLink(
-                rs.getString("linkedin_link"));
+                info.setLinkedinLink(
+                                rs.getString("linkedin_link"));
 
-        info.setYoutubeLink(
-                rs.getString("youtube_link"));
+                info.setYoutubeLink(
+                                rs.getString("youtube_link"));
 
-        info.setZaloLink(
-                rs.getString("zalo_link"));
+                info.setZaloLink(
+                                rs.getString("zalo_link"));
 
-        info.setCompanyPhoneNumber(
-                rs.getString("company_phone_number"));
+                info.setCompanyPhoneNumber(
+                                rs.getString("company_phone_number"));
 
-        info.setAddress(
-                rs.getString("address"));
+                info.setAddress(
+                                rs.getString("address"));
 
-        info.setWorkingHours(
-                rs.getString("working_hour"));
+                info.setWorkingHours(
+                                rs.getString("working_hours"));
 
-        info.setMapEmbedUrl(
-                rs.getString("map_embed_url"));
+                info.setMapEmbedUrl(
+                                rs.getString("map_embed_url"));
 
-        info.setFooterLinks(
-                rs.getString("footer_links"));
+                info.setFooterLinks(
+                                rs.getString("footer_links"));
 
-        Timestamp createdAt = rs.getTimestamp("created_at");
+                Timestamp createdAt = rs.getTimestamp("created_at");
 
-        if (createdAt != null) {
-            info.setCreatedAt(
-                    createdAt.toLocalDateTime());
+                if (createdAt != null) {
+                        info.setCreatedAt(
+                                        createdAt.toLocalDateTime());
+                }
+
+                info.setCreatedBy(
+                                rs.getObject("created_by", Long.class));
+
+                Timestamp updatedAt = rs.getTimestamp("updated_at");
+
+                if (updatedAt != null) {
+                        info.setUpdatedAt(
+                                        updatedAt.toLocalDateTime());
+                }
+
+                info.setUpdatedBy(
+                                rs.getObject("updated_by", Long.class));
+
+                return info;
         }
-
-        info.setCreatedBy(
-                rs.getObject("created_by", Long.class));
-
-        Timestamp updatedAt = rs.getTimestamp("updated_at");
-
-        if (updatedAt != null) {
-            info.setUpdatedAt(
-                    updatedAt.toLocalDateTime());
-        }
-
-        info.setUpdatedBy(
-                rs.getObject("updated_by", Long.class));
-
-        return info;
-    }
 }

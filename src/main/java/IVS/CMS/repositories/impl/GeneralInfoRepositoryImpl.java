@@ -3,6 +3,7 @@ package IVS.CMS.repositories.impl;
 import IVS.CMS.domain.GeneralInfo;
 import IVS.CMS.repositories.GeneralInfoRepository;
 import IVS.CMS.repositories.rowMapper.GeneralInfoRowMapper;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -16,20 +17,28 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
+public class GeneralInfoRepositoryImpl
+                implements GeneralInfoRepository {
 
         private final JdbcTemplate jdbcTemplate;
         private final GeneralInfoRowMapper rowMapper;
 
-        public GeneralInfoRepositoryImpl(JdbcTemplate jdbcTemplate, GeneralInfoRowMapper rowMapper) {
+        public GeneralInfoRepositoryImpl(
+                        JdbcTemplate jdbcTemplate,
+                        GeneralInfoRowMapper rowMapper) {
+
                 this.jdbcTemplate = jdbcTemplate;
                 this.rowMapper = rowMapper;
         }
 
         @Override
         public Optional<GeneralInfo> findFirst() {
-                List<GeneralInfo> list = jdbcTemplate
-                                .query("SELECT * FROM general_info ORDER BY general_info_id ASC LIMIT 1", rowMapper);
+
+                List<GeneralInfo> list = jdbcTemplate.query(
+                                "SELECT * FROM general_info " +
+                                                "ORDER BY general_info_id ASC LIMIT 1",
+                                rowMapper);
+
                 return list.stream().findFirst();
         }
 
@@ -37,10 +46,24 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
         public GeneralInfo save(GeneralInfo info) {
 
                 String sql = "INSERT INTO general_info " +
-                                "(logo, company_name, website_name, website_description, email, " +
-                                "facebook_link, twitter_link, instagram_link, linkedin_link, " +
-                                "youtube_link, zalo_link, company_phone_number, address, working_hours," +
-                                "embed_map_url, footer_links, created_at, created_by) " +
+                                "(logo, " +
+                                "company_name, " +
+                                "website_name, " +
+                                "website_description, " +
+                                "email, " +
+                                "facebook_link, " +
+                                "twitter_link, " +
+                                "instagram_link, " +
+                                "linkedin_link, " +
+                                "youtube_link, " +
+                                "zalo_link, " +
+                                "company_phone_number, " +
+                                "address, " +
+                                "working_hours, " +
+                                "map_embed_url, " +
+                                "footer_links, " +
+                                "created_at, " +
+                                "created_by) " +
                                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -130,7 +153,6 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
                 }, keyHolder);
 
                 if (keyHolder.getKey() != null) {
-
                         info.setGeneralInfoId(
                                         keyHolder.getKey().longValue());
                 }
@@ -158,7 +180,7 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
                                 "company_phone_number = ?, " +
                                 "address = ?, " +
                                 "working_hours = ?, " +
-                                "embed_map_url = ?, " +
+                                "map_embed_url = ?, " +
                                 "footer_links = ?, " +
                                 "updated_at = ?, " +
                                 "updated_by = ? " +
@@ -170,39 +192,25 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
                                 sql,
 
                                 info.getLogo(),
-
                                 info.getCompanyName(),
-
                                 info.getWebsiteName(),
-
                                 info.getWebsiteDescription(),
-
                                 info.getEmail(),
 
                                 info.getFacebookLink(),
-
                                 info.getTwitterLink(),
-
                                 info.getInstagramLink(),
-
                                 info.getLinkedinLink(),
-
                                 info.getYoutubeLink(),
-
                                 info.getZaloLink(),
 
                                 info.getCompanyPhoneNumber(),
-
                                 info.getAddress(),
-
                                 info.getWorkingHours(),
-
                                 info.getMapEmbedUrl(),
-
                                 info.getFooterLinks(),
 
                                 Timestamp.valueOf(now),
-
                                 info.getUpdatedBy(),
 
                                 info.getGeneralInfoId());
