@@ -23,6 +23,5 @@ public class ReqUserUpdateDTO {
     private String address;
     private GenderEnum gender;
     private LocalDate dateOfBirth;
-    private Long roleId;
     private Boolean isActive;
 }
