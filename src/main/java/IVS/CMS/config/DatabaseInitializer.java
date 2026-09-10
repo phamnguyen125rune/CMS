@@ -397,6 +397,19 @@ public class DatabaseInitializer {
             -- ============================================================
             -- SEED ROLES
             -- ============================================================
+            SET @OLD_SQL_MODE = @@SESSION.sql_mode;
+            SET SESSION sql_mode = CONCAT(@@SESSION.sql_mode, ',NO_AUTO_VALUE_ON_ZERO');
+            INSERT IGNORE INTO roles (
+                role_id,
+                role_name,
+                role_description,
+                is_system) VALUES (
+                0,
+                'DEFAULT_ROLE',
+                'Role không có quyền gì đặc biệt',
+                1);
+            SET SESSION sql_mode = @OLD_SQL_MODE;
+
             INSERT IGNORE INTO roles
                 (role_name, role_description, is_system)
             VALUES

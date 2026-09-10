@@ -31,6 +31,8 @@ public interface RoleRepository {
 
     int updateUsersRole(List<Long> userIds, Long roleId);
 
+    int setUsersToDefaultRole(List<Long> userIds);
+
     Boolean checkIsSystemRole(Long id);
 
     void delete(Role role);

@@ -67,6 +67,11 @@ public class RoleServiceImpl implements RoleService {
         if (userIds == null || userIds.isEmpty()) {
             throw new ConflictException("User list cannot be empty");
         }
+        Long currentUserId = SecurityService.getCurrentUserId().orElseThrow();
+
+        if (userIds.contains(currentUserId)) {
+            throw new ConflictException("Cannot change your own role");
+        }
         Role role = roleRepository.findById(roleId);
         if (role == null) {
             throw new ResourceNotFoundException(
@@ -79,6 +84,20 @@ public class RoleServiceImpl implements RoleService {
             );
         }
         int updatedCount = roleRepository.updateUsersRole(userIds, roleId);
+        return "Cập nhật thành công role của " + updatedCount + " user";
+    }
+
+    @Override
+    public String setUsersToDefaultRole(List<Long> userIds){
+        if (userIds == null || userIds.isEmpty()) {
+            throw new ConflictException("User list cannot be empty");
+        }
+        Long currentUserId = SecurityService.getCurrentUserId().orElseThrow();
+
+        if (userIds.contains(currentUserId)) {
+            throw new ConflictException("Cannot change your own role");
+        }
+        int updatedCount = roleRepository.setUsersToDefaultRole(userIds);
         return "Cập nhật thành công role của " + updatedCount + " user";
     }
 

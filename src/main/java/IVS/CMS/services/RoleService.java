@@ -17,6 +17,8 @@ public interface RoleService {
 
     String updateUsersRole(List<Long> userIds, Long roleId);
 
+    String setUsersToDefaultRole(List<Long> userIds);
+
     Role createRole(ReqRoleDTO req);
 
     Role updateRole(Long id, ReqRoleDTO req);
