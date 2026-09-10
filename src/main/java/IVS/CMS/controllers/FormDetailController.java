@@ -16,7 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/form-details") // Bạn có thể giữ lại "/api/v1/contacts" nếu Frontend chưa kịp đổi
+@RequestMapping("/api/v1/form-details")
 public class FormDetailController {
 
     private final FormDetailService formDetailService;
@@ -44,8 +44,7 @@ public class FormDetailController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "status", required = false, defaultValue = "ALL") String status,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
-    ) {
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         PaginationResponseDTO data = formDetailService.getAllFormDetails(search, status, page, size);
         RestResponse<PaginationResponseDTO> response = new RestResponse<>();
         response.setStatusCode(HttpStatus.OK.value());
@@ -71,8 +70,7 @@ public class FormDetailController {
     @PreAuthorize("@permissionService.hasPermission('contact', 'UPDATE')")
     public ResponseEntity<RestResponse<FormDetail>> replyFormDetail(
             @PathVariable("id") Long id,
-            @Valid @RequestBody ReqReplyFormDetailDTO dto
-    ) {
+            @Valid @RequestBody ReqReplyFormDetailDTO dto) {
         FormDetail formDetail = formDetailService.replyFormDetail(id, dto);
         RestResponse<FormDetail> response = new RestResponse<>();
         response.setStatusCode(HttpStatus.OK.value());
@@ -91,23 +89,22 @@ public class FormDetailController {
         response.setMessage("Xóa form liên hệ thành công");
         return ResponseEntity.ok(response);
     }
-    
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("@permissionService.hasPermission('contact', 'UPDATE')")
     public ResponseEntity<RestResponse<FormDetail>> updateStatus(
             @PathVariable("id") Long id,
-            @RequestBody Map<String, String> body
-    ) {
+            @RequestBody Map<String, String> body) {
         String status = body.get("status");
-        
+
         // Gọi hàm update từ Service (Đã được viết sẵn từ trước)
         FormDetail formDetail = formDetailService.updateFormDetailStatus(id, status);
-        
+
         RestResponse<FormDetail> response = new RestResponse<>();
         response.setStatusCode(HttpStatus.OK.value());
         response.setMessage("Cập nhật trạng thái thành công");
         response.setData(formDetail);
-        
+
         return ResponseEntity.ok(response);
     }
 }
