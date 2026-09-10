@@ -122,7 +122,7 @@ public class MediaServiceImpl implements MediaService {
                         media.setMimeType(contentType);
                         media.setFileType(fileType);
                         media.setFileSize((int) file.getSize());
-                        media.setUploadedBy(1L);
+                        SecurityService.getCurrentUserId().ifPresent(media::setUploadedBy);
                         media.setUploadedAt(LocalDateTime.now());
 
                         Media saveMedia = mediaRepository.save(media);
