@@ -197,8 +197,6 @@ public class DatabaseInitializer {
                         mime_type VARCHAR(255) NOT NULL,
                         file_type VARCHAR(20) NOT NULL,
                         file_size BIGINT UNSIGNED NOT NULL,
-                        created_by INTEGER UNSIGNED,
-                        created_at DATETIME(6),
                         updated_by INTEGER UNSIGNED,
                         updated_at DATETIME(6),
                         uploaded_at DATETIME(6),
@@ -251,7 +249,7 @@ public class DatabaseInitializer {
                         updated_by INTEGER UNSIGNED,
 
 
-                     CONSTRAINT fk_post_category FOREIGN KEY (category_id) REFERENCES post_categories(category_id) ON DELETE RESTRICT,
+                    CONSTRAINT fk_post_category FOREIGN KEY (category_id) REFERENCES post_categories(category_id) ON DELETE RESTRICT,
                         CONSTRAINT fk_post_og_image FOREIGN KEY (og_image_id) REFERENCES media(media_id) ON DELETE SET NULL,
                         CONSTRAINT fk_post_featured_media FOREIGN KEY (featured_media_id) REFERENCES media(media_id) ON DELETE SET NULL
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -303,7 +301,7 @@ public class DatabaseInitializer {
                         post_id INTEGER UNSIGNED NOT NULL,
                         media_id INTEGER UNSIGNED NOT NULL,
                         display_order TINYINT NOT NULL,
-                       PRIMARY KEY (post_id, media_id),
+                        PRIMARY KEY (post_id, media_id),
                         CONSTRAINT fk_post_media_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
                         CONSTRAINT fk_post_media_media FOREIGN KEY (media_id) REFERENCES media(media_id) ON DELETE CASCADE
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -420,7 +418,8 @@ public class DatabaseInitializer {
                 ('media', 'Màn hình Quản lý Media'),
                 ('contact', 'Màn hình Quản lý Liên hệ'),
                 ('global', 'Màn hình Quản lý Thông tin chung'),
-                ('logs', 'Màn hình Quản lý Nhật Ký');
+                ('logs', 'Màn hình Quản lý Nhật Ký'),
+                ('tag', 'Màn hình Quản lý Thẻ');
 
             -- ============================================================
             -- SEED ACTIONS
@@ -440,7 +439,8 @@ public class DatabaseInitializer {
                 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9),
                 (2, 1), (2, 2), (2, 4), (2, 5), (2, 6), (2, 7),
                 (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8),
-                (4, 1), (4, 2), (4, 4), (4, 5), (4, 6), (4, 7);
+                (4, 1), (4, 2), (4, 4), (4, 5), (4, 6), (4, 7),
+                (1, 10), (2, 10), (3, 10), (4, 10);
 
             -- ============================================================
             -- SEED ROLE PERMISSIONS
@@ -450,6 +450,24 @@ public class DatabaseInitializer {
                 (1, 2), (1, 11), (1, 17), (1, 25), (1, 3), (1, 18),
                 (1, 1), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
                 (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 19), (1, 20),
-                (1, 21), (1, 22), (1, 23), (1, 24), (1, 26), (1, 27), (1, 28), (1, 29);
+                (1, 21), (1, 22), (1, 23), (1, 24), (1, 26), (1, 27), (1, 28), (1, 29),
+                (1, 30), (1, 31), (1, 32), (1, 33);
+
+            -- ============================================================
+            -- SEED MENU
+            -- ============================================================
+            INSERT IGNORE INTO menu (parent_id, title, url, display_order, level, visible)
+            VALUES
+                (NULL, 'Giới thiệu', '/gioi-thieu', 2, 1, 1),
+                (NULL, 'Bài viết', '/bai-viet', 3, 1, 1),
+                (3, 'Tin tức công ty', '/bai-viet?danh-muc=tin-tuc', 2, 2, 1),
+                (NULL, 'Dự án', '/du-an', 4, 1, 1),
+                (NULL, 'Khách hàng', '/khach-hang', 5, 1, 1),
+                (NULL, 'Tuyển dụng', '/tuyen-dung', 6, 1, 1),
+                (NULL, 'Liên hệ', '/lien-he', 7, 1, 1),
+                (3, 'Kiến thức chuyên ngành', '/bai-viet?danh-muc=kien-thuc', 1, 2, 1),
+                (5, 'Dự án nổi bật', '/du-an?loai=noi-bat', 2, 2, 1),
+                (5, 'Đã hoàn thành', '/du-an?loai=hoan-thanh', 1, 2, 1),
+                (NULL, 'Trang chủ', '/', 1, 1, 1);
             """;
 }
