@@ -92,6 +92,22 @@ public class RoleController {
         );
     }
 
+    @PutMapping("/default/users")
+    @PreAuthorize("""
+        @permissionService.hasPermission('role', 'UPDATE') &&
+        @permissionService.hasPermission('user', 'UPDATE')
+    """)
+    public ResponseEntity<Map<String, String>> setUsersToDefaultRole(
+            @RequestBody List<Long> userIds
+    ) {
+
+        String message = roleService.setUsersToDefaultRole(userIds);
+
+        return ResponseEntity.ok(
+                Map.of("message", message)
+        );
+    }
+
 
     @PatchMapping("/status/{id}")
     @PreAuthorize("@permissionService.hasPermission('role', 'UPDATE')")

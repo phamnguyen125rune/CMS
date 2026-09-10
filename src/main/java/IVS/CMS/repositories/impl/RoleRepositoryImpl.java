@@ -11,12 +11,12 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import IVS.CMS.security.SecurityService;
 import IVS.CMS.domain.Role;
 import IVS.CMS.domain.User;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.repositories.rowMapper.RoleRowMapper;
 import IVS.CMS.repositories.rowMapper.UserRowMapper;
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.dto.response.role.PermissionLinkDTO;
 import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
@@ -272,18 +272,21 @@ public class RoleRepositoryImpl implements RoleRepository {
                 SELECT *
                 FROM users
                 WHERE role_id <> :roleId
-                  AND (
+                  AND user_id <> :currentUserId
+                  AND
+                   (
                         employee_code LIKE :keyword
                         OR full_name LIKE :keyword
                         OR email LIKE :keyword
                   )
                 ORDER BY full_name ASC
                 """;
-
+        
         String searchKeyword = "%" + (keyword == null ? "" : keyword.trim()) + "%";
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("roleId", roleId)
-                .addValue("keyword", searchKeyword);
+                .addValue("keyword", searchKeyword)
+                .addValue("currentUserId", SecurityService.getCurrentUserId().orElse(null));
         return jdbcTemplate.query(sql, params, userRowMapper);
     }
 
@@ -304,6 +307,33 @@ public class RoleRepositoryImpl implements RoleRepository {
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("roleId", roleId)
+                .addValue("userIds", userIds)
+                .addValue("currentUserId", SecurityService.getCurrentUserId().orElse(null));
+
+        return jdbcTemplate.update(sql, params);
+    }
+
+    @Override 
+    public int setUsersToDefaultRole(List<Long> userIds){
+                if (userIds == null || userIds.isEmpty()) {
+            return 0;
+        }
+
+        String sql = """
+                UPDATE users
+                SET
+                    role_id = (
+                        SELECT role_id
+                        FROM roles
+                        WHERE role_name = 'DEFAULT_ROLE'
+                        LIMIT 1
+                    ),
+                    updated_at = CURRENT_TIMESTAMP,
+                    updated_by = :currentUserId
+                WHERE user_id IN (:userIds)
+                """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("userIds", userIds)
                 .addValue("currentUserId", SecurityService.getCurrentUserId().orElse(null));
 
