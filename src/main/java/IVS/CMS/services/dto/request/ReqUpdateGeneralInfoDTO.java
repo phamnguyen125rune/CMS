@@ -4,7 +4,11 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class ReqUpdateGeneralInfoDTO {
 
     @NotBlank(message = "Logo không được để trống")
@@ -55,121 +59,9 @@ public class ReqUpdateGeneralInfoDTO {
     @Size(max = 255, message = "Địa chỉ không được vượt quá 255 ký tự")
     private String address;
 
+    private String workingHours;
+
+    private String mapEmbedUrl;
+
     private String footerLinks;
-
-    // =========================
-    // Getters and Setters
-    // =========================
-
-    public String getLogo() {
-        return logo;
-    }
-
-    public void setLogo(String logo) {
-        this.logo = logo;
-    }
-
-    public String getCompanyName() {
-        return companyName;
-    }
-
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-
-    public String getWebsiteName() {
-        return websiteName;
-    }
-
-    public void setWebsiteName(String websiteName) {
-        this.websiteName = websiteName;
-    }
-
-    public String getWebsiteDescription() {
-        return websiteDescription;
-    }
-
-    public void setWebsiteDescription(String websiteDescription) {
-        this.websiteDescription = websiteDescription;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFacebookLink() {
-        return facebookLink;
-    }
-
-    public void setFacebookLink(String facebookLink) {
-        this.facebookLink = facebookLink;
-    }
-
-    public String getTwitterLink() {
-        return twitterLink;
-    }
-
-    public void setTwitterLink(String twitterLink) {
-        this.twitterLink = twitterLink;
-    }
-
-    public String getInstagramLink() {
-        return instagramLink;
-    }
-
-    public void setInstagramLink(String instagramLink) {
-        this.instagramLink = instagramLink;
-    }
-
-    public String getLinkedinLink() {
-        return linkedinLink;
-    }
-
-    public void setLinkedinLink(String linkedinLink) {
-        this.linkedinLink = linkedinLink;
-    }
-
-    public String getYoutubeLink() {
-        return youtubeLink;
-    }
-
-    public void setYoutubeLink(String youtubeLink) {
-        this.youtubeLink = youtubeLink;
-    }
-
-    public String getZaloLink() {
-        return zaloLink;
-    }
-
-    public void setZaloLink(String zaloLink) {
-        this.zaloLink = zaloLink;
-    }
-
-    public String getCompanyPhoneNumber() {
-        return companyPhoneNumber;
-    }
-
-    public void setCompanyPhoneNumber(String companyPhoneNumber) {
-        this.companyPhoneNumber = companyPhoneNumber;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getFooterLinks() {
-        return footerLinks;
-    }
-
-    public void setFooterLinks(String footerLinks) {
-        this.footerLinks = footerLinks;
-    }
 }

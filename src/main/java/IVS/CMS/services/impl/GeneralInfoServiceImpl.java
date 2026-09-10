@@ -39,54 +39,21 @@ public class GeneralInfoServiceImpl implements GeneralInfoService {
 
             GeneralInfo info = opt.get();
 
-            info.setLogo(
-                    trimToNull(dto.getLogo()));
-
-            info.setCompanyName(
-                    trimToNull(dto.getCompanyName()));
-
-            info.setWebsiteName(
-                    trimToNull(dto.getWebsiteName()));
-
-            info.setWebsiteDescription(
-                    trimToNull(dto.getWebsiteDescription()));
-
-            info.setEmail(
-                    trimToNull(dto.getEmail()));
-
-            info.setFacebookLink(
-                    trimToNull(dto.getFacebookLink()));
-
-            info.setTwitterLink(
-                    trimToNull(dto.getTwitterLink()));
-
-            info.setInstagramLink(
-                    trimToNull(dto.getInstagramLink()));
-
-            info.setLinkedinLink(
-                    trimToNull(dto.getLinkedinLink()));
-
-            info.setYoutubeLink(
-                    trimToNull(dto.getYoutubeLink()));
-
-            info.setZaloLink(
-                    trimToNull(dto.getZaloLink()));
-
-            info.setCompanyPhoneNumber(
-                    trimToNull(dto.getCompanyPhoneNumber()));
-
-            info.setAddress(
-                    trimToNull(dto.getAddress()));
-
-            info.setFooterLinks(
-                    trimToNull(dto.getFooterLinks()));
-
-            info.setUpdatedBy(userId);
+            mapDataGlobeInfo(info, dto);
 
             return repository.update(info);
         }
 
         GeneralInfo info = new GeneralInfo();
+
+        mapDataGlobeInfo(info, dto);
+
+        info.setCreatedBy(userId);
+
+        return repository.save(info);
+    }
+
+    private void mapDataGlobeInfo(GeneralInfo info, ReqUpdateGeneralInfoDTO dto) {
 
         info.setLogo(
                 trimToNull(dto.getLogo()));
@@ -127,12 +94,14 @@ public class GeneralInfoServiceImpl implements GeneralInfoService {
         info.setAddress(
                 trimToNull(dto.getAddress()));
 
+        info.setWorkingHours(
+                trimToNull(dto.getWorkingHours()));
+
+        info.setMapEmbedUrl(
+                trimToNull(dto.getMapEmbedUrl()));
+
         info.setFooterLinks(
                 trimToNull(dto.getFooterLinks()));
-
-        info.setCreatedBy(userId);
-
-        return repository.save(info);
     }
 
     /**

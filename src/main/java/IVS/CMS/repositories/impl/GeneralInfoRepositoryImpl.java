@@ -39,9 +39,9 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
                 String sql = "INSERT INTO general_info " +
                                 "(logo, company_name, website_name, website_description, email, " +
                                 "facebook_link, twitter_link, instagram_link, linkedin_link, " +
-                                "youtube_link, zalo_link, company_phone_number, address, footer_links, " +
-                                "created_at, created_by) " +
-                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                "youtube_link, zalo_link, company_phone_number, address, working_hours," +
+                                "embed_map_url, footer_links, created_at, created_by) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -107,14 +107,22 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
 
                         ps.setString(
                                         14,
+                                        info.getWorkingHours());
+
+                        ps.setString(
+                                        15,
+                                        info.getMapEmbedUrl());
+
+                        ps.setString(
+                                        16,
                                         info.getFooterLinks());
 
                         ps.setTimestamp(
-                                        15,
+                                        17,
                                         Timestamp.valueOf(now));
 
                         ps.setObject(
-                                        16,
+                                        18,
                                         info.getCreatedBy());
 
                         return ps;
@@ -149,6 +157,8 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
                                 "zalo_link = ?, " +
                                 "company_phone_number = ?, " +
                                 "address = ?, " +
+                                "working_hours = ?, " +
+                                "embed_map_url = ?, " +
                                 "footer_links = ?, " +
                                 "updated_at = ?, " +
                                 "updated_by = ? " +
@@ -184,6 +194,10 @@ public class GeneralInfoRepositoryImpl implements GeneralInfoRepository {
                                 info.getCompanyPhoneNumber(),
 
                                 info.getAddress(),
+
+                                info.getWorkingHours(),
+
+                                info.getMapEmbedUrl(),
 
                                 info.getFooterLinks(),
 

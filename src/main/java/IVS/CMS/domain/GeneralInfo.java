@@ -21,6 +21,8 @@ public class GeneralInfo {
     private String linkedinLink;
     private String youtubeLink;
     private String zaloLink;
+    private String workingHours;
+    private String mapEmbedUrl;
     private String footerLinks;
     private LocalDateTime createdAt;
     private Long createdBy;

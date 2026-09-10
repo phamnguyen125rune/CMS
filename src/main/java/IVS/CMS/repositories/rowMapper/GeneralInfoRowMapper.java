@@ -59,6 +59,12 @@ public class GeneralInfoRowMapper implements RowMapper<GeneralInfo> {
         info.setAddress(
                 rs.getString("address"));
 
+        info.setWorkingHours(
+                rs.getString("working_hour"));
+
+        info.setMapEmbedUrl(
+                rs.getString("map_embed_url"));
+
         info.setFooterLinks(
                 rs.getString("footer_links"));
 
