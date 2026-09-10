@@ -37,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String STATUS_LOCKED = "LOCKED";
     private static final String DEFAULT_RESET_PASSWORD = "123456";
+    private static final long DEFAULT_USER_ROLE_ID = 0L;
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final long[] LOCK_MINUTES = { 1, 5, 15, 30, 60 };
 
@@ -50,6 +51,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public synchronized ResUserCreateDTO createUser(ReqUserCreateDTO req) {
         User user = userMapper.reqCreateToUser(req);
+        user.setRoleId(DEFAULT_USER_ROLE_ID);
         user.setEmail(normalizeEmail(user.getEmail()));
         user.setFullName(resolveStaffFullname(user.getFullName(), user.getEmail()));
 
@@ -60,13 +62,23 @@ public class UserServiceImpl implements UserService {
             }
             restoreDeletedStaffUser(existing, user);
             existing = this.userRepository.save(existing);
+            existing = this.userRepository.findById(existing.getUserId())
+                    .orElse(existing);
             return this.userMapper.userToResCreateDTO(existing);
         }
 
         validateCreatableRole(user);
         applyStaffAccountDefaults(user);
         user.setEmployeeCode(generateEmployeeCode());
+        LocalDateTime now = LocalDateTime.now();
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(null);
+        user.setCreatedAt(now);
+        user.setCreatedBy(currentUserId);
+        user.setUpdatedAt(now);
+        user.setUpdatedBy(currentUserId);
         user = this.userRepository.save(user);
+        user = this.userRepository.findById(user.getUserId())
+                .orElse(user);
         return this.userMapper.userToResCreateDTO(user);
     }
 
@@ -131,7 +143,8 @@ public class UserServiceImpl implements UserService {
         userCurrent.setAddress(req.getAddress());
         userCurrent.setAvatarUrl(req.getAvatarUrl());
         userCurrent.setDateOfBirth(req.getDateOfBirth());
-        userCurrent.setRoleId(req.getRoleId());
+        userCurrent.setUpdatedAt(LocalDateTime.now());
+        userCurrent.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         userCurrent = this.userRepository.save(userCurrent);
         return this.userMapper.userToReqUserUpdate(userCurrent);
@@ -179,6 +192,12 @@ public class UserServiceImpl implements UserService {
         user.setLockCount(0);
         user.setLockedUntil(null);
         user.setEmployeeCode(generateEmployeeCode());
+        LocalDateTime now = LocalDateTime.now();
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(null);
+        user.setCreatedAt(now);
+        user.setCreatedBy(currentUserId);
+        user.setUpdatedAt(now);
+        user.setUpdatedBy(currentUserId);
 
         if (isBlank(req.getPassword())) {
             throw new BadRequestException("Mật khẩu không được để trống");
@@ -392,6 +411,8 @@ public class UserServiceImpl implements UserService {
         user.setAddress(req.getAddress());
         user.setGender(req.getGender());
         user.setDateOfBirth(req.getDateOfBirth());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
         User updatedUser = this.userRepository.save(user);
         return this.userMapper.userToResUserDTO(updatedUser);
     }

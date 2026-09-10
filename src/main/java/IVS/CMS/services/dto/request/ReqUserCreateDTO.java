@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import IVS.CMS.domain.constants.GenderEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,7 +26,4 @@ public class ReqUserCreateDTO {
     private String address;
     private GenderEnum gender;
     private LocalDate dateOfBirth;
-
-    @NotNull(message = "Role không được để trống")
-    private Long roleId;
 }

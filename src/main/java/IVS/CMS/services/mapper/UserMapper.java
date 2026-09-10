@@ -22,7 +22,6 @@ public class UserMapper {
         user.setAddress(dto.getAddress());
         user.setGender(dto.getGender());
         user.setDateOfBirth(dto.getDateOfBirth());
-        user.setRoleId(dto.getRoleId());
         return user;
     }
 
@@ -86,7 +85,6 @@ public class UserMapper {
         req.setAddress(user.getAddress());
         req.setGender(user.getGender());
         req.setDateOfBirth(user.getDateOfBirth());
-        req.setRoleId(user.getRoleId());
         req.setIsActive(user.getIsActive());
         return req;
     }
