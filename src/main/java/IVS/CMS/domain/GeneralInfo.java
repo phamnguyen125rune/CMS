@@ -13,13 +13,15 @@ public class GeneralInfo {
     private String websiteName;
     private String websiteDescription;
     private String email;
+    private String companyPhoneNumber;
+    private String address;
     private String facebookLink;
     private String twitterLink;
     private String instagramLink;
     private String linkedinLink;
     private String youtubeLink;
     private String zaloLink;
-    private String companyPhoneNumber;
+    private String footerLinks;
     private LocalDateTime createdAt;
     private Long createdBy;
     private LocalDateTime updatedAt;

@@ -20,8 +20,7 @@ public class DatabaseConfig {
             @Value("${spring.datasource.url}") String dbUrl,
             @Value("${spring.datasource.username}") String username,
             @Value("${spring.datasource.password}") String password,
-            @Value("${spring.datasource.driver-class-name}") String driverClassName
-    ) throws Exception {
+            @Value("${spring.datasource.driver-class-name}") String driverClassName) throws Exception {
 
         Class.forName(driverClassName);
 
@@ -39,8 +38,7 @@ public class DatabaseConfig {
 
     private void createDatabase(String username, String password) throws Exception {
 
-        String adminUrl =
-                "jdbc:mysql://localhost:3306/"
+        String adminUrl = "jdbc:mysql://localhost:3306/"
                 + "?useSSL=false"
                 + "&serverTimezone=UTC"
                 + "&allowPublicKeyRetrieval=true";
@@ -48,15 +46,14 @@ public class DatabaseConfig {
         try (Connection connection = DriverManager.getConnection(
                 adminUrl,
                 username,
-                password
-        );
-             Statement statement = connection.createStatement()) {
+                password);
+                Statement statement = connection.createStatement()) {
 
             statement.execute("""
-                CREATE DATABASE IF NOT EXISTS `cms`
-                DEFAULT CHARACTER SET utf8mb4
-                COLLATE utf8mb4_unicode_ci
-                """);
+                    CREATE DATABASE IF NOT EXISTS `cms`
+                    DEFAULT CHARACTER SET utf8mb4
+                    COLLATE utf8mb4_unicode_ci
+                    """);
         }
     }
 }

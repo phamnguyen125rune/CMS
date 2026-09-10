@@ -21,7 +21,6 @@ public class GeneralInfoController {
     }
 
     @GetMapping
-    @PreAuthorize("@permissionService.hasPermission('global', 'VIEW')")
     public ResponseEntity<RestResponse<GeneralInfo>> getGeneralInfo() {
         GeneralInfo data = service.getGeneralInfo();
         RestResponse<GeneralInfo> response = new RestResponse<>();
@@ -33,7 +32,8 @@ public class GeneralInfoController {
 
     @PostMapping
     @PreAuthorize("@permissionService.hasPermission('global', 'UPDATE')")
-    public ResponseEntity<RestResponse<GeneralInfo>> updateGeneralInfo(@Valid @RequestBody ReqUpdateGeneralInfoDTO dto) {
+    public ResponseEntity<RestResponse<GeneralInfo>> updateGeneralInfo(
+            @Valid @RequestBody ReqUpdateGeneralInfoDTO dto) {
         // Tạm gán userId là 1L, thực tế lấy từ Token bảo mật
         GeneralInfo updated = service.saveOrUpdateGeneralInfo(dto, 1L);
         RestResponse<GeneralInfo> response = new RestResponse<>();

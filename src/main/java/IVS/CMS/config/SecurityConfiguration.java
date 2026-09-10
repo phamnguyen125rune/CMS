@@ -29,7 +29,7 @@ public class SecurityConfiguration {
                         "/swagger-ui.html",
                         "/api/v1/auth/forgot-password/request-otp",
                         "/api/v1/auth/forgot-password/verify-otp",
-                        "/api/v1/auth/forgot-password/reset"
+                        "/api/v1/auth/forgot-password/reset",
         };
 
         @Bean
@@ -57,7 +57,8 @@ public class SecurityConfiguration {
                                                                 "/api/v1/categories/**",
                                                                 "/api/v1/tags/**",
                                                                 "/api/v1/comments/**",
-                                                                "/api/v1/media/**")
+                                                                "/api/v1/media/**",
+                                                                "/api/v1/general-info")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .oauth2ResourceServer(oauth2 -> oauth2

@@ -68,334 +68,338 @@ public class DatabaseInitializer {
     }
 
     private static final String SCHEMA_SQL = """
-                    -- ============================================================
-                    -- 1. ROLES
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS roles (
-                        role_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        role_name VARCHAR(60) NOT NULL UNIQUE,
-                        role_description VARCHAR(255),
-                        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                        is_system BOOLEAN NOT NULL DEFAULT FALSE,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 1. ROLES
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS roles (
+                    role_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    role_name VARCHAR(60) NOT NULL UNIQUE,
+                    role_description VARCHAR(255),
+                    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                    is_system BOOLEAN NOT NULL DEFAULT FALSE,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 2. ACTIONS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS actions (
-                        action_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        action_name VARCHAR(30) NOT NULL
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 2. ACTIONS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS actions (
+                    action_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    action_name VARCHAR(30) NOT NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 3. APIS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS apis (
-                        api_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        api_link VARCHAR(255) NOT NULL,
-                        api_description VARCHAR(255)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 3. APIS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS apis (
+                    api_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    api_link VARCHAR(255) NOT NULL,
+                    api_description VARCHAR(255)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 4. PERMISSIONS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS permissions (
-                        permission_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        action_id INTEGER UNSIGNED NOT NULL,
-                        api_id INTEGER UNSIGNED NOT NULL,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED,
-                        CONSTRAINT fk_perm_action FOREIGN KEY (action_id) REFERENCES actions(action_id) ON DELETE CASCADE,
-                        CONSTRAINT fk_perm_api FOREIGN KEY (api_id) REFERENCES apis(api_id) ON DELETE CASCADE
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 4. PERMISSIONS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS permissions (
+                    permission_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    action_id INTEGER UNSIGNED NOT NULL,
+                    api_id INTEGER UNSIGNED NOT NULL,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED,
+                    CONSTRAINT fk_perm_action FOREIGN KEY (action_id) REFERENCES actions(action_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_perm_api FOREIGN KEY (api_id) REFERENCES apis(api_id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 5. ROLE_PERMISSION
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS role_permission (
-                        role_id INTEGER UNSIGNED NOT NULL,
-                        permission_id INTEGER UNSIGNED NOT NULL,
-                        PRIMARY KEY (role_id, permission_id),
-                        CONSTRAINT fk_rp_role FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE CASCADE,
-                        CONSTRAINT fk_rp_perm FOREIGN KEY (permission_id) REFERENCES permissions(permission_id) ON DELETE CASCADE
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 5. ROLE_PERMISSION
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS role_permission (
+                    role_id INTEGER UNSIGNED NOT NULL,
+                    permission_id INTEGER UNSIGNED NOT NULL,
+                    PRIMARY KEY (role_id, permission_id),
+                    CONSTRAINT fk_rp_role FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_rp_perm FOREIGN KEY (permission_id) REFERENCES permissions(permission_id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 6. USERS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS users (
-                        user_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        employee_code VARCHAR(50) UNIQUE,
-                        full_name VARCHAR(60) NOT NULL,
-                        email VARCHAR(100) NOT NULL UNIQUE,
-                        password_hash VARCHAR(255) NOT NULL,
-                        avatar_url VARCHAR(255) DEFAULT '/images/default-avatar.png',
-                        phone_number VARCHAR(15) UNIQUE,
-                        date_of_birth DATE,
-                        gender ENUM('male', 'female', 'others') NOT NULL DEFAULT 'others',
-                        address VARCHAR(500),
-                        role_id INTEGER UNSIGNED NOT NULL,
-                        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                        is_system BOOLEAN NOT NULL,
-                        failed_login_attempts INT NOT NULL DEFAULT 0,
-                        lock_count INT NOT NULL DEFAULT 0,
-                        locked_until DATETIME(6),
-                        deleted_at DATETIME(6),
-                        deleted_by INTEGER,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED,
-                        CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE RESTRICT
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 6. USERS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    employee_code VARCHAR(50) UNIQUE,
+                    full_name VARCHAR(60) NOT NULL,
+                    email VARCHAR(100) NOT NULL UNIQUE,
+                    password_hash VARCHAR(255) NOT NULL,
+                    avatar_url VARCHAR(255) DEFAULT '/images/default-avatar.png',
+                    phone_number VARCHAR(15) UNIQUE,
+                    date_of_birth DATE,
+                    gender ENUM('male', 'female', 'others') NOT NULL DEFAULT 'others',
+                    address VARCHAR(500),
+                    role_id INTEGER UNSIGNED NOT NULL,
+                    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                    is_system BOOLEAN NOT NULL DEFAULT FALSE,
+                    failed_login_attempts INT NOT NULL DEFAULT 0,
+                    lock_count INT NOT NULL DEFAULT 0,
+                    locked_until DATETIME(6),
+                    deleted_at DATETIME(6),
+                    deleted_by INTEGER,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED,
+                    CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE RESTRICT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 7. REFRESH TOKENS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS refresh_tokens (
-                        refresh_token_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        user_id INTEGER UNSIGNED NOT NULL,
-                        token TEXT(65535) NOT NULL,
-                        expired_at DATETIME NOT NULL,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED,
-                        CONSTRAINT fk_refresh_token_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 7. REFRESH TOKENS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS refresh_tokens (
+                    refresh_token_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    user_id INTEGER UNSIGNED NOT NULL,
+                    token TEXT(65535) NOT NULL,
+                    expired_at DATETIME NOT NULL,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED,
+                    CONSTRAINT fk_refresh_token_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 8. AUDIT LOGS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS audit_logs (
-                        log_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        user_id INTEGER UNSIGNED,
-                        entity_type VARCHAR(255) NOT NULL,
-                        entity_id INTEGER NOT NULL,
-                        action VARCHAR(255) NOT NULL,
-                        old_value TEXT,
-                        new_value TEXT,
-                        created_at DATETIME(6),
-                        status_code INTEGER NOT NULL
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 8. AUDIT LOGS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS audit_logs (
+                    log_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    user_id INTEGER UNSIGNED,
+                    entity_type VARCHAR(255) NOT NULL,
+                    entity_id INTEGER NOT NULL,
+                    action VARCHAR(255) NOT NULL,
+                    old_value TEXT,
+                    new_value TEXT,
+                    created_at DATETIME(6),
+                    status_code INTEGER NOT NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 9. MEDIA LIBRARY
-                    -- TODO: media_lib , upload_file_name
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS media (
-                        media_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        file_name VARCHAR(50) NOT NULL,
-                        upload_file VARCHAR(255),
-                        file_path TEXT NOT NULL,
-                        mime_type VARCHAR(255) NOT NULL,
-                        file_type VARCHAR(20) NOT NULL,
-                        file_size BIGINT UNSIGNED NOT NULL,
-                        updated_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        uploaded_at DATETIME(6),
-                        uploaded_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 9. MEDIA LIBRARY
+                -- TODO: media_lib , upload_file_name
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS media (
+                    media_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    file_name VARCHAR(50) NOT NULL,
+                    upload_file VARCHAR(255),
+                    file_path TEXT NOT NULL,
+                    mime_type VARCHAR(255) NOT NULL,
+                    file_type VARCHAR(20) NOT NULL,
+                    file_size BIGINT UNSIGNED NOT NULL,
+                    updated_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    uploaded_at DATETIME(6),
+                    uploaded_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 10. POST CATEGORIES
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS post_categories (
-                        category_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        category_name VARCHAR(60) NOT NULL,
-                        slug VARCHAR(255) NOT NULL UNIQUE,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 10. POST CATEGORIES
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS post_categories (
+                    category_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    category_name VARCHAR(60) NOT NULL,
+                    slug VARCHAR(255) NOT NULL UNIQUE,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 11. POSTS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS posts (
-                        post_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        title VARCHAR(100) NOT NULL,
-                        slug VARCHAR(255) NOT NULL UNIQUE,
-                        summary TEXT(65535),
-                        content LONGTEXT,
+                -- ============================================================
+                -- 11. POSTS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS posts (
+                    post_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    title VARCHAR(100) NOT NULL,
+                    slug VARCHAR(255) NOT NULL UNIQUE,
+                    summary TEXT(65535),
+                    content LONGTEXT,
 
-            -- Nhóm Metadata
-            meta_title VARCHAR(255),
-            meta_description VARCHAR(320),
-            canonical_url VARCHAR(255),
-            is_indexable BOOLEAN NOT NULL DEFAULT TRUE,
-            is_followable BOOLEAN NOT NULL DEFAULT TRUE,
+                    -- Nhóm Metadata
+                    meta_title VARCHAR(255),
+                    meta_description VARCHAR(320),
+                    canonical_url VARCHAR(255),
+                    is_indexable BOOLEAN NOT NULL DEFAULT TRUE,
+                    is_followable BOOLEAN NOT NULL DEFAULT TRUE,
 
-            -- Nhóm OpenGraph (Mạng xã hội)
-            og_title VARCHAR(255),
-            og_description VARCHAR(320),
-            og_image_id INTEGER UNSIGNED,
-            featured_media_id INTEGER UNSIGNED,
+                    -- Nhóm OpenGraph (Mạng xã hội)
+                    og_title VARCHAR(255),
+                    og_description VARCHAR(320),
+                    og_image_id INTEGER UNSIGNED,
+                    featured_media_id INTEGER UNSIGNED,
 
-                        status ENUM('pending', 'draft', 'rejected', 'deleted', 'approved', 'published', 'unpublished') NOT NULL,
-                        category_id INTEGER UNSIGNED,
+                    status ENUM('pending', 'draft', 'rejected', 'deleted', 'approved', 'published', 'unpublished') NOT NULL,
+                    category_id INTEGER UNSIGNED,
 
-            published_at DATETIME,
-                        created_at DATETIME(6) NOT NULL,
-                        created_by INTEGER UNSIGNED NOT NULL,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED,
+                    published_at DATETIME,
+                    created_at DATETIME(6) NOT NULL,
+                    created_by INTEGER UNSIGNED NOT NULL,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED,
 
 
-                    CONSTRAINT fk_post_category FOREIGN KEY (category_id) REFERENCES post_categories(category_id) ON DELETE RESTRICT,
-                        CONSTRAINT fk_post_og_image FOREIGN KEY (og_image_id) REFERENCES media(media_id) ON DELETE SET NULL,
-                        CONSTRAINT fk_post_featured_media FOREIGN KEY (featured_media_id) REFERENCES media(media_id) ON DELETE SET NULL
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                CONSTRAINT fk_post_category FOREIGN KEY (category_id) REFERENCES post_categories(category_id) ON DELETE RESTRICT,
+                    CONSTRAINT fk_post_og_image FOREIGN KEY (og_image_id) REFERENCES media(media_id) ON DELETE SET NULL,
+                    CONSTRAINT fk_post_featured_media FOREIGN KEY (featured_media_id) REFERENCES media(media_id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 12. POST REVIEWS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS post_reviews (
-                        review_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        post_id INTEGER UNSIGNED NOT NULL,
-                        reviewer_id INTEGER UNSIGNED,
-                        action ENUM('rejected', 'published', 'unpublished', 'approved') NOT NULL,
-                        comment TEXT(65535),
-                        created_at DATETIME(6),
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED,
-                        CONSTRAINT fk_review_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
-                        CONSTRAINT fk_review_reviewer FOREIGN KEY (reviewer_id) REFERENCES users(user_id) ON DELETE SET NULL
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 12. POST REVIEWS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS post_reviews (
+                    review_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    post_id INTEGER UNSIGNED NOT NULL,
+                    reviewer_id INTEGER UNSIGNED,
+                    action ENUM('rejected', 'published', 'unpublished', 'approved') NOT NULL,
+                    comment TEXT(65535),
+                    created_at DATETIME(6),
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED,
+                    CONSTRAINT fk_review_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_review_reviewer FOREIGN KEY (reviewer_id) REFERENCES users(user_id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 13. TAGS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS tags (
-                        tag_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        tag_name VARCHAR(60) NOT NULL,
-                        slug VARCHAR(255) NOT NULL UNIQUE,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 13. TAGS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS tags (
+                    tag_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    tag_name VARCHAR(60) NOT NULL,
+                    slug VARCHAR(255) NOT NULL UNIQUE,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 14. POST_TAG
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS post_tag (
-                        tag_id INTEGER UNSIGNED NOT NULL,
-                        post_id INTEGER UNSIGNED NOT NULL,
-                        PRIMARY KEY (tag_id, post_id),
-                        CONSTRAINT fk_post_tag_tag FOREIGN KEY (tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE,
-                        CONSTRAINT fk_post_tag_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 14. POST_TAG
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS post_tag (
+                    tag_id INTEGER UNSIGNED NOT NULL,
+                    post_id INTEGER UNSIGNED NOT NULL,
+                    PRIMARY KEY (tag_id, post_id),
+                    CONSTRAINT fk_post_tag_tag FOREIGN KEY (tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_post_tag_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 15. POST_MEDIA
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS post_media (
-                        post_id INTEGER UNSIGNED NOT NULL,
-                        media_id INTEGER UNSIGNED NOT NULL,
-                        display_order TINYINT NOT NULL,
-                        PRIMARY KEY (post_id, media_id),
-                        CONSTRAINT fk_post_media_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
-                        CONSTRAINT fk_post_media_media FOREIGN KEY (media_id) REFERENCES media(media_id) ON DELETE CASCADE
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 15. POST_MEDIA
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS post_media (
+                    post_id INTEGER UNSIGNED NOT NULL,
+                    media_id INTEGER UNSIGNED NOT NULL,
+                    display_order TINYINT NOT NULL,
+                    PRIMARY KEY (post_id, media_id),
+                    CONSTRAINT fk_post_media_post FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_post_media_media FOREIGN KEY (media_id) REFERENCES media(media_id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 16. FORM CATEGORIES
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS form_categories (
-                        form_category_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        category_name VARCHAR(255) NOT NULL,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 16. FORM CATEGORIES
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS form_categories (
+                    form_category_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    category_name VARCHAR(255) NOT NULL,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 17. FORM DETAILS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS form_details (
-                        form_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        form_code VARCHAR(50) NOT NULL UNIQUE,
-                        full_name VARCHAR(60) NOT NULL,
-                        email VARCHAR(255) NOT NULL,
-                        phone_number VARCHAR(15) NOT NULL,
-                        company VARCHAR(255),
-                        form_category_id INTEGER UNSIGNED NOT NULL,
-                        message TEXT NOT NULL,
-                        status VARCHAR(30) NOT NULL DEFAULT 'NEW',
-                        reply_message TEXT,
-                        created_at DATETIME(6),
-                        CONSTRAINT fk_form_category FOREIGN KEY (form_category_id) REFERENCES form_categories(form_category_id) ON DELETE RESTRICT
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 17. FORM DETAILS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS form_details (
+                    form_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    form_code VARCHAR(50) NOT NULL UNIQUE,
+                    full_name VARCHAR(60) NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    phone_number VARCHAR(15) NOT NULL,
+                    company VARCHAR(255),
+                    form_category_id INTEGER UNSIGNED NOT NULL,
+                    message TEXT NOT NULL,
+                    status VARCHAR(30) NOT NULL DEFAULT 'NEW',
+                    reply_message TEXT,
+                    created_at DATETIME(6),
+                    CONSTRAINT fk_form_category FOREIGN KEY (form_category_id) REFERENCES form_categories(form_category_id) ON DELETE RESTRICT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 18. GENERAL INFO
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS general_info (
-                        general_info_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        logo VARCHAR(255) NOT NULL,
-                        company_name VARCHAR(255) NOT NULL,
-                        website_name VARCHAR(60),
-                        website_description TEXT(65535),
-                        email VARCHAR(255),
-                        facebook_link VARCHAR(255),
-                        twitter_link VARCHAR(255),
-                        instagram_link VARCHAR(255),
-                        linkedin_link VARCHAR(255),
-                        youtube_link VARCHAR(255),
-                        zalo_link VARCHAR(255),
-                        company_phone_number VARCHAR(255),
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 18. GENERAL INFO
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS general_info (
+                    general_info_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    logo VARCHAR(255) NOT NULL,
+                    company_name VARCHAR(255) NOT NULL,
+                    website_name VARCHAR(60),
+                    website_description TEXT(65535),
+                    email VARCHAR(255),
+                    company_phone_number VARCHAR(255),
+                    address VARCHAR(500),
+                    working_hours VARCHAR(255),
+                    map_embed_url TEXT(65535),
+                    facebook_link VARCHAR(255),
+                    twitter_link VARCHAR(255),
+                    instagram_link VARCHAR(255),
+                    linkedin_link VARCHAR(255),
+                    youtube_link VARCHAR(255),
+                    zalo_link VARCHAR(255),
+                    footer_links TEXT(65535),
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 19. MENU
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS menu (
-                        menu_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        parent_id INTEGER UNSIGNED,
-                        title VARCHAR(255) NOT NULL,
-                        url VARCHAR(500) NOT NULL,
-                        display_order INTEGER NOT NULL,
-                        level INTEGER NOT NULL,
-                        visible BOOLEAN NOT NULL,
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                -- ============================================================
+                -- 19. MENU
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS menu (
+                    menu_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    parent_id INTEGER UNSIGNED,
+                    title VARCHAR(255) NOT NULL,
+                    url VARCHAR(500) NOT NULL,
+                    display_order INTEGER NOT NULL,
+                    level INTEGER NOT NULL,
+                    visible BOOLEAN NOT NULL,
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-                    -- ============================================================
-                    -- 20. COMMENTS
-                    -- ============================================================
-                    CREATE TABLE IF NOT EXISTS comments (
-                        comment_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        post_id INTEGER UNSIGNED NOT NULL,
-                        parent_id INTEGER UNSIGNED DEFAULT NULL,
-                        comment_text TEXT NOT NULL,
-                        image_url VARCHAR(500),
-                        status ENUM('pending', 'approved', 'rejected', 'spam') NOT NULL DEFAULT 'pending',
-                        created_at DATETIME(6),
-                        created_by INTEGER UNSIGNED NOT NULL,
-                        updated_at DATETIME(6),
-                        updated_by INTEGER UNSIGNED
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-                """;
+                -- ============================================================
+                -- 20. COMMENTS
+                -- ============================================================
+                CREATE TABLE IF NOT EXISTS comments (
+                    comment_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    post_id INTEGER UNSIGNED NOT NULL,
+                    parent_id INTEGER UNSIGNED DEFAULT NULL,
+                    comment_text TEXT NOT NULL,
+                    image_url VARCHAR(500),
+                    status ENUM('pending', 'approved', 'rejected', 'spam') NOT NULL DEFAULT 'pending',
+                    created_at DATETIME(6),
+                    created_by INTEGER UNSIGNED NOT NULL,
+                    updated_at DATETIME(6),
+                    updated_by INTEGER UNSIGNED
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """;
 
     private static final String SEED_SQL = """
             -- ============================================================
-            -- SEED ROLES
+            -- 1.SEED ROLES
             -- ============================================================
             INSERT IGNORE INTO roles
                 (role_name, role_description, is_system)
@@ -405,7 +409,17 @@ public class DatabaseInitializer {
                 ('Customer', 'Khách hàng, có quyền truy cập và sử dụng các chức năng dành riêng cho khách hàng', 0);
 
             -- ============================================================
-            -- SEED APIS
+            -- 2. SEED ACTIONS
+            -- ============================================================
+            INSERT IGNORE INTO actions (action_name)
+            VALUES
+                ('VIEW'),
+                ('CREATE'),
+                ('UPDATE'),
+                ('DELETE');
+
+            -- ============================================================
+            -- 3. SEED APIS
             -- ============================================================
             INSERT IGNORE INTO apis
                 (api_link, api_description)
@@ -422,17 +436,7 @@ public class DatabaseInitializer {
                 ('tag', 'Màn hình Quản lý Thẻ');
 
             -- ============================================================
-            -- SEED ACTIONS
-            -- ============================================================
-            INSERT IGNORE INTO actions (action_name)
-            VALUES
-                ('VIEW'),
-                ('CREATE'),
-                ('UPDATE'),
-                ('DELETE');
-
-            -- ============================================================
-            -- SEED PERMISSIONS
+            -- 4. SEED PERMISSIONS
             -- ============================================================
             INSERT IGNORE INTO permissions (action_id, api_id)
             VALUES
@@ -443,7 +447,7 @@ public class DatabaseInitializer {
                 (1, 10), (2, 10), (3, 10), (4, 10);
 
             -- ============================================================
-            -- SEED ROLE PERMISSIONS
+            -- 5. SEED ROLE_PERMISSIONS
             -- ============================================================
             INSERT IGNORE INTO role_permission (role_id, permission_id)
             VALUES
@@ -454,7 +458,66 @@ public class DatabaseInitializer {
                 (1, 30), (1, 31), (1, 32), (1, 33);
 
             -- ============================================================
-            -- SEED MENU
+            -- 10. POST CATEGORIES
+            -- ============================================================
+            INSERT IGNORE INTO post_categories (category_name, slug)
+            VALUES
+                ('Công nghệ', 'cong-nghe'),
+                ('Phát triển phần mềm', 'phat-trien-phan-mem'),
+                ('Trí tuệ nhân tạo', 'tri-tue-nhan-tao'),
+                ('Điện toán đám mây', 'dien-toan-dam-may'),
+                ('An ninh mạng', 'an-ninh-mang'),
+                ('IoT', 'iot'),
+                ('Chuyển đổi số', 'chuyen-doi-so'),
+                ('Xu hướng công nghệ', 'xu-huong-cong-nghe'),
+                ('Khác', 'khac');
+
+            -- ============================================================
+            -- 13. TAGS
+            -- ============================================================
+            INSERT IGNORE INTO tags (tag_name, slug)
+            VALUES
+                ('AI', 'ai'),
+                ('Machine Learning', 'machine-learning'),
+                ('Cloud Computing', 'cloud-computing'),
+                ('Cybersecurity', 'cybersecurity'),
+                ('IoT', 'iot'),
+                ('Web Development', 'web-development'),
+                ('Software Architecture', 'software-architecture'),
+                ('DevOps', 'devops'),
+                ('Database', 'database'),
+                ('Digital Transformation', 'digital-transformation'),
+                ('Other', 'other');
+
+            -- ============================================================
+            -- 16. FORM CATEGORIES
+            -- ============================================================
+            INSERT IGNORE INTO form_categories (category_name)
+            VALUES
+                ('Tư vấn giải pháp công nghệ'),
+                ('Phát triển phần mềm'),
+                ('Chuyển đổi số'),
+                ('Trí tuệ nhân tạo và Machine Learning'),
+                ('IoT và hệ thống nhúng'),
+                ('Hợp tác và liên hệ doanh nghiệp'),
+                ('Khác');
+
+            -- ============================================================
+            -- 18. GENERAL INFO
+            -- ============================================================
+            INSERT IGNORE INTO general_info (logo, company_name, website_name, website_description, email,
+                                            facebook_link, twitter_link, instagram_link, linkedin_link, youtube_link, zalo_link,
+                                            company_phone_number, address, working_hours, map_embed_url, footer_links, created_at
+            )
+            VALUES (
+            'default-logo.png', 'CMS Technology', 'CMS Portal', 'Công ty giải pháp công nghệ hàng đầu Việt Nam.',
+            'info@cms.vn', 'https://facebook.com/', 'https://twitter.com/', 'https://instagram.com/', 'https://linkedin.com/',
+            'https://youtube.com/', 'https://zalo.me/', '+84 28 3456 7890', 'Tầng 12, 141 Lê Duẩn, Q.1, TP.HCM',
+            'Thứ 2 - Thứ 6: 08:00 - 17:30', 'https://www.google.com/maps/embed?pb=','Chính sách bảo mật, Điều khoản sử dụng', NOW(6)
+            );
+
+            -- ============================================================
+            -- 19. SEED MENU
             -- ============================================================
             INSERT IGNORE INTO menu (parent_id, title, url, display_order, level, visible)
             VALUES

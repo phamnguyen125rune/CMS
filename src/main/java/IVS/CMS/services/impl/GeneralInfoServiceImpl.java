@@ -4,6 +4,7 @@ import IVS.CMS.domain.GeneralInfo;
 import IVS.CMS.repositories.GeneralInfoRepository;
 import IVS.CMS.services.GeneralInfoService;
 import IVS.CMS.services.dto.request.ReqUpdateGeneralInfoDTO;
+
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -13,52 +14,140 @@ public class GeneralInfoServiceImpl implements GeneralInfoService {
 
     private final GeneralInfoRepository repository;
 
-    public GeneralInfoServiceImpl(GeneralInfoRepository repository) {
+    public GeneralInfoServiceImpl(
+            GeneralInfoRepository repository) {
+
         this.repository = repository;
     }
 
     @Override
     public GeneralInfo getGeneralInfo() {
+
         Optional<GeneralInfo> opt = repository.findFirst();
-        // Nếu chưa có bản ghi nào trong DB, trả về một object rỗng mặc định tránh lỗi Null
+
         return opt.orElseGet(GeneralInfo::new);
     }
 
     @Override
-    public GeneralInfo saveOrUpdateGeneralInfo(ReqUpdateGeneralInfoDTO dto, Long userId) {
+    public GeneralInfo saveOrUpdateGeneralInfo(
+            ReqUpdateGeneralInfoDTO dto,
+            Long userId) {
+
         Optional<GeneralInfo> opt = repository.findFirst();
+
         if (opt.isPresent()) {
+
             GeneralInfo info = opt.get();
-            info.setLogo(dto.getLogo() != null ? dto.getLogo() : info.getLogo());
-            info.setCompanyName(dto.getCompanyName());
-            info.setWebsiteName(dto.getWebsiteName());
-            info.setWebsiteDescription(dto.getWebsiteDescription());
-            info.setEmail(dto.getEmail());
-            info.setFacebookLink(dto.getFacebookLink());
-            info.setTwitterLink(dto.getTwitterLink());
-            info.setInstagramLink(dto.getInstagramLink());
-            info.setLinkedinLink(dto.getLinkedinLink());
-            info.setYoutubeLink(dto.getYoutubeLink());
-            info.setZaloLink(dto.getZaloLink());
-            info.setCompanyPhoneNumber(dto.getCompanyPhoneNumber());
+
+            info.setLogo(
+                    trimToNull(dto.getLogo()));
+
+            info.setCompanyName(
+                    trimToNull(dto.getCompanyName()));
+
+            info.setWebsiteName(
+                    trimToNull(dto.getWebsiteName()));
+
+            info.setWebsiteDescription(
+                    trimToNull(dto.getWebsiteDescription()));
+
+            info.setEmail(
+                    trimToNull(dto.getEmail()));
+
+            info.setFacebookLink(
+                    trimToNull(dto.getFacebookLink()));
+
+            info.setTwitterLink(
+                    trimToNull(dto.getTwitterLink()));
+
+            info.setInstagramLink(
+                    trimToNull(dto.getInstagramLink()));
+
+            info.setLinkedinLink(
+                    trimToNull(dto.getLinkedinLink()));
+
+            info.setYoutubeLink(
+                    trimToNull(dto.getYoutubeLink()));
+
+            info.setZaloLink(
+                    trimToNull(dto.getZaloLink()));
+
+            info.setCompanyPhoneNumber(
+                    trimToNull(dto.getCompanyPhoneNumber()));
+
+            info.setAddress(
+                    trimToNull(dto.getAddress()));
+
+            info.setFooterLinks(
+                    trimToNull(dto.getFooterLinks()));
+
             info.setUpdatedBy(userId);
+
             return repository.update(info);
-        } else {
-            GeneralInfo info = new GeneralInfo();
-            info.setLogo(dto.getLogo() != null ? dto.getLogo() : "default.png");
-            info.setCompanyName(dto.getCompanyName());
-            info.setWebsiteName(dto.getWebsiteName());
-            info.setWebsiteDescription(dto.getWebsiteDescription());
-            info.setEmail(dto.getEmail());
-            info.setFacebookLink(dto.getFacebookLink());
-            info.setTwitterLink(dto.getTwitterLink());
-            info.setInstagramLink(dto.getInstagramLink());
-            info.setLinkedinLink(dto.getLinkedinLink());
-            info.setYoutubeLink(dto.getYoutubeLink());
-            info.setZaloLink(dto.getZaloLink());
-            info.setCompanyPhoneNumber(dto.getCompanyPhoneNumber());
-            info.setCreatedBy(userId);
-            return repository.save(info);
         }
+
+        GeneralInfo info = new GeneralInfo();
+
+        info.setLogo(
+                trimToNull(dto.getLogo()));
+
+        info.setCompanyName(
+                trimToNull(dto.getCompanyName()));
+
+        info.setWebsiteName(
+                trimToNull(dto.getWebsiteName()));
+
+        info.setWebsiteDescription(
+                trimToNull(dto.getWebsiteDescription()));
+
+        info.setEmail(
+                trimToNull(dto.getEmail()));
+
+        info.setFacebookLink(
+                trimToNull(dto.getFacebookLink()));
+
+        info.setTwitterLink(
+                trimToNull(dto.getTwitterLink()));
+
+        info.setInstagramLink(
+                trimToNull(dto.getInstagramLink()));
+
+        info.setLinkedinLink(
+                trimToNull(dto.getLinkedinLink()));
+
+        info.setYoutubeLink(
+                trimToNull(dto.getYoutubeLink()));
+
+        info.setZaloLink(
+                trimToNull(dto.getZaloLink()));
+
+        info.setCompanyPhoneNumber(
+                trimToNull(dto.getCompanyPhoneNumber()));
+
+        info.setAddress(
+                trimToNull(dto.getAddress()));
+
+        info.setFooterLinks(
+                trimToNull(dto.getFooterLinks()));
+
+        info.setCreatedBy(userId);
+
+        return repository.save(info);
+    }
+
+    /**
+     * Chuyển chuỗi rỗng hoặc chỉ chứa khoảng trắng thành null.
+     */
+    private String trimToNull(String value) {
+
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+
+        return trimmed.isEmpty()
+                ? null
+                : trimmed;
     }
 }
