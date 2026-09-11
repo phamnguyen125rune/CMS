@@ -566,18 +566,13 @@ public class DatabaseInitializer {
                 (5, 'Đã hoàn thành', '/du-an?loai=hoan-thanh', 1, 2, 1),
                 (NULL, 'Trang chủ', '/', 1, 1, 1);
 
+            INSERT IGNORE INTO collaborator_settings (columns_per_row, updated_by)
+                SELECT 3, NULL
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM collaborator_settings
+                );
 
             INSERT IGNORE INTO collaborator (
-                position,
-                created_at,
-                created_by
-            ) VALUES (
-                4,
-                '2026-09-11 11:40:55',
-                1
-            );
-
-            INSERT INTO collaborator (
                 collab_name,
                 description,
                 position,
