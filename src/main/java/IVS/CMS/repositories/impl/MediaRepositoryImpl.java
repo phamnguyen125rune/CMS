@@ -119,7 +119,6 @@ public class MediaRepositoryImpl implements MediaRepository {
                 mapperDb);
     }
 
-
     private void appendFileTypeCondition(
             StringBuilder sql,
             String fileType) {

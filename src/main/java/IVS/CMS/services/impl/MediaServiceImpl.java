@@ -19,10 +19,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import IVS.CMS.security.SecurityService;
 import IVS.CMS.domain.Media;
 import IVS.CMS.services.dto.response.ResMediaDTO;
 import IVS.CMS.repositories.MediaRepository;
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.MediaService;
 
 @Service
