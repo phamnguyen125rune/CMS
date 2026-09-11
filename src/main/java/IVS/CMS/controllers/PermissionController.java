@@ -6,12 +6,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import IVS.CMS.services.PermissionService;
+import IVS.CMS.services.dto.request.role.PermissionLinkDTO;
 import IVS.CMS.services.dto.request.role.ReqPermissionApiLinkDTO;
 import IVS.CMS.services.dto.request.role.ReqPermissionIdDTO;
 import IVS.CMS.services.dto.response.role.ResApiActionDTO;
@@ -44,6 +46,18 @@ public class PermissionController {
     public ResponseEntity<String> updateRolePermissionsByApiLink(@PathVariable("roleId") long roleId, @Valid @RequestBody ReqPermissionApiLinkDTO req) {
         return ResponseEntity.ok(
                 permissionService.assignPermissionToRoleByApiLink(roleId, req)
+        );
+    }
+
+    @PostMapping("/check")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> checkPermission(
+            @RequestBody PermissionLinkDTO req) {
+        return ResponseEntity.ok(
+                permissionService.checkPermission(
+                        req.getApiLink(),
+                        req.getActionName()
+                )
         );
     }
 }

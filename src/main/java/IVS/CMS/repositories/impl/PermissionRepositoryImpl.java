@@ -164,6 +164,42 @@ public class PermissionRepositoryImpl implements PermissionRepository {
         return count;
     }
 
+    @Override 
+    public boolean hasPermission(Long userId, String apiLink, String actionName) {
+        String sql = """
+                SELECT COUNT(*)
+                FROM users u
+                JOIN roles r
+                    ON r.role_id = u.role_id
+                JOIN role_permission rp
+                    ON rp.role_id = r.role_id
+                JOIN permissions p
+                    ON p.permission_id = rp.permission_id
+                JOIN actions a
+                    ON a.action_id = p.action_id
+                JOIN apis api
+                    ON api.api_id = p.api_id
+                WHERE u.user_id = :userId
+                  AND u.is_active = TRUE
+                  AND r.is_active = TRUE
+                  AND api.api_link = :apiLink
+                  AND a.action_name = :actionName
+                """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("apiLink", apiLink)
+                .addValue("actionName", actionName);
+
+        Integer count = jdbcTemplate.queryForObject(
+                sql,
+                params,
+                Integer.class
+        );
+
+        return count != null && count > 0;
+    }
+
     @Override
     public Optional<Permission> findById(long id) {
         // TODO Auto-generated method stub
