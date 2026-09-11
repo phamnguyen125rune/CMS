@@ -20,8 +20,6 @@ public class AuditLogRowMapper implements RowMapper<ResAuditLogDTO> {
             dto.setUserId(((Number) userIdObj).longValue());
         }
 
-        dto.setUserFullName(rs.getString("user_full_name"));
-        dto.setUserEmail(rs.getString("user_email"));
         dto.setEntityType(rs.getString("entity_type"));
 
         Object entityIdObj = rs.getObject("entity_id");

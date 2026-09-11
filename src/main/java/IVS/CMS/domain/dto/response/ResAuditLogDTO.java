@@ -12,8 +12,6 @@ import lombok.Setter;
 public class ResAuditLogDTO {
     private Long logId;
     private Long userId;
-    private String userFullName;
-    private String userEmail;
     private String entityType;
     private Integer entityId;
     private String action;

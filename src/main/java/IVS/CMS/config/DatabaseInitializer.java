@@ -157,7 +157,11 @@ public class DatabaseInitializer {
                         old_value TEXT,
                         new_value TEXT,
                         created_at DATETIME(6),
-                        status_code INTEGER NOT NULL
+                        status_code INTEGER NOT NULL,
+                        INDEX idx_audit_created_at (created_at DESC),
+                        INDEX idx_audit_entity (entity_type, entity_id, created_at DESC),
+                        INDEX idx_audit_user (user_id, created_at DESC),
+                        INDEX idx_audit_status (status_code, created_at DESC)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
                     -- ============================================================

@@ -137,17 +137,18 @@ public class AuditDataSanitizer {
      * TODO: Trực tiếp return "[PROTECTED]" nếu trong tương lai không cần.
      */
     private String createHashFingerprint(String rawText) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(rawText.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder("[HASH: ");
-            for (int i = 0; i < 4; i++) {
-                hexString.append(String.format("%02x", hash[i]));
-            }
-            hexString.append("]");
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            return "[PROTECTED]";
-        }
+        return "[PROTECTED]";
+        // try {
+        //     MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        //     byte[] hash = digest.digest(rawText.getBytes(StandardCharsets.UTF_8));
+        //     StringBuilder hexString = new StringBuilder("[FING: ");
+        //     for (int i = 0; i < 4; i++) {
+        //         hexString.append(String.format("%02x", hash[i]));
+        //     }
+        //     hexString.append("]");
+        //     return hexString.toString();
+        // } catch (NoSuchAlgorithmException e) {
+        //     return "[PROTECTED]";
+        // }
     }
 }
