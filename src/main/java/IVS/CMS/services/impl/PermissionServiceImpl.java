@@ -10,6 +10,7 @@ import IVS.CMS.domain.Permission;
 import IVS.CMS.domain.Role;
 import IVS.CMS.repositories.PermissionRepository;
 import IVS.CMS.repositories.RoleRepository;
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.PermissionService;
 import IVS.CMS.services.dto.request.role.PermissionDTO;
 import IVS.CMS.services.dto.request.role.PermissionLinkDTO;
@@ -89,5 +90,13 @@ public class PermissionServiceImpl implements PermissionService {
             return "Gán permission cho role thành công!!!";
         }
         return "Thất bại gán permission cho role!!!";
+    }
+
+    @Override 
+    public boolean checkPermission(String apiLink, String actionName){
+        Long currentUserId = SecurityService.getCurrentUserId()
+            .orElseThrow(() -> new RuntimeException("User chưa đăng nhập"));
+
+        return permissionRepository.hasPermission(currentUserId, apiLink, actionName);
     }
 }

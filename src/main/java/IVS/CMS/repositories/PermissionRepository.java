@@ -22,4 +22,6 @@ public interface PermissionRepository {
     Permission findByLinkApi(String apiLink, String actionName);
 
     List<Permission> findByRoleId(long roleId);
+
+    boolean hasPermission(Long userId, String apiLink,String actionName);
 }

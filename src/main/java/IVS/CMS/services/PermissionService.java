@@ -10,7 +10,9 @@ import IVS.CMS.services.dto.response.role.ResApiActionDTO;
 public interface PermissionService {
     List<ResApiActionDTO> getAllApiActions();
 
-    public String assignPermissionToRoleById(long roleId, ReqPermissionIdDTO req);
+    String assignPermissionToRoleById(long roleId, ReqPermissionIdDTO req);
 
     String assignPermissionToRoleByApiLink(long roleId, ReqPermissionApiLinkDTO req);
+
+    boolean checkPermission(String apiLink, String actionName);
 }
