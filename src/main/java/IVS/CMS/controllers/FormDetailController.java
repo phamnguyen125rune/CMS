@@ -27,7 +27,6 @@ public class FormDetailController {
 
     // Client endpoint: Gửi form liên hệ
     @PostMapping
-    @PreAuthorize("@permissionService.hasPermission('contact', 'CREATE')")
     public ResponseEntity<RestResponse<FormDetail>> createFormDetail(@Valid @RequestBody ReqCreateFormDetailDTO dto) {
         FormDetail formDetail = formDetailService.createFormDetail(dto);
         RestResponse<FormDetail> response = new RestResponse<>();
