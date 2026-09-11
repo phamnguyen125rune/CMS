@@ -15,9 +15,13 @@ public interface PostService {
 
     ResultPaginationDTO getAllPosts(ReqPostFilterDTO filter, int page, int pageSize);
 
+    ResultPaginationDTO getPublicPosts(ReqPostFilterDTO filter, int page, int pageSize);
+
     void deletePost(long id);
 
     void changeStatus(long id, String status);
 
     ResPostDTO getPostBySlug(String slug);
+
+    ResPostDTO getPublicPostBySlug(String slug);
 }

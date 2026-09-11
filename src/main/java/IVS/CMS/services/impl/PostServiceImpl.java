@@ -169,6 +169,14 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ResultPaginationDTO getPublicPosts(ReqPostFilterDTO filter, int page, int pageSize) {
+        ReqPostFilterDTO publicFilter = filter == null ? new ReqPostFilterDTO() : filter;
+        publicFilter.setStatus(PostStatusEnum.PUBLISHED.name());
+        return getAllPosts(publicFilter, page, pageSize);
+    }
+
+    @Override
     @Transactional
     public void deletePost(long id) {
         Post post = this.postRepository.findById(id)
@@ -238,6 +246,25 @@ public class PostServiceImpl implements PostService {
         resDTO.setTags(this.postRepository.getTagsByPostId(post.getPostId()));
         resDTO.setMediaList(this.postRepository.getMediaByPostId(post.getPostId()));
 
+        return resDTO;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResPostDTO getPublicPostBySlug(String slug) {
+        Post post = this.postRepository.findBySlugAndStatus(slug, PostStatusEnum.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại hoặc chưa được xuất bản"));
+
+        PostCategory category = null;
+        if (post.getCategoryId() != null && post.getCategoryId() > 0) {
+            category = this.categoryRepository.findById(post.getCategoryId()).orElse(null);
+        }
+
+        String authorName = getAuthorName(post.getCreatedBy());
+        String ogImageUrl = getOgImageUrl(post);
+        ResPostDTO resDTO = this.postMapper.postToResPostDTO(post, category, authorName, ogImageUrl);
+        resDTO.setTags(this.postRepository.getTagsByPostId(post.getPostId()));
+        resDTO.setMediaList(this.postRepository.getMediaByPostId(post.getPostId()));
         return resDTO;
     }
 

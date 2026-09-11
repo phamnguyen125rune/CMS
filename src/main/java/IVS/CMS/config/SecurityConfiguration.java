@@ -53,7 +53,7 @@ public class SecurityConfiguration {
                                 .authorizeHttpRequests(authz -> authz
                                                 .requestMatchers(publicEndpoints).permitAll()
                                                 .requestMatchers(HttpMethod.GET,
-                                                                "/api/v1/posts/**",
+                                                                "/api/v1/posts/public/**",
                                                                 "/api/v1/categories/**",
                                                                 "/api/v1/tags/**",
                                                                 "/api/v1/comments/**",
