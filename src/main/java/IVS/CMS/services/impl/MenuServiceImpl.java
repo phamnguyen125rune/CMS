@@ -67,7 +67,9 @@ public class MenuServiceImpl implements MenuService {
         menu.setLevel(request.getLevel());
         menu.setVisible(request.getVisible());
         menu.setUpdatedAt(LocalDateTime.now());
+
         SecurityService.getCurrentUserId().ifPresent(menu::setUpdatedBy);
+
         menuRepository.update(menu);
 
         return toResponse(menu);

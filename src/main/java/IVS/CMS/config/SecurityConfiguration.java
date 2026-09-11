@@ -30,6 +30,7 @@ public class SecurityConfiguration {
                         "/api/v1/auth/forgot-password/request-otp",
                         "/api/v1/auth/forgot-password/verify-otp",
                         "/api/v1/auth/forgot-password/reset",
+                        "/api/v1/menus/**"
         };
 
         @Bean
