@@ -79,4 +79,17 @@ public class PostController {
     public ResponseEntity<ResPostDTO> getPostBySlug(@PathVariable("slug") String slug) {
         return ResponseEntity.ok(this.postService.getPostBySlug(slug));
     }
+
+    @GetMapping("/public")
+    public ResponseEntity<ResultPaginationDTO> getPublicPosts(
+            @ModelAttribute ReqPostFilterDTO filter,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(this.postService.getPublicPosts(filter, page, pageSize));
+    }
+
+    @GetMapping("/public/slug/{slug}")
+    public ResponseEntity<ResPostDTO> getPublicPostBySlug(@PathVariable("slug") String slug) {
+        return ResponseEntity.ok(this.postService.getPublicPostBySlug(slug));
+    }
 }

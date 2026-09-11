@@ -475,7 +475,7 @@ public class DatabaseInitializer {
             -- ============================================================
             INSERT IGNORE INTO post_categories (category_name, slug)
             VALUES
-                ('Công nghệ', 'cong-nghe'),
+                ('Tuyển dụng', 'tuyen-dung'),
                 ('Phát triển phần mềm', 'phat-trien-phan-mem'),
                 ('Trí tuệ nhân tạo', 'tri-tue-nhan-tao'),
                 ('Điện toán đám mây', 'dien-toan-dam-may'),
