@@ -5,6 +5,7 @@ import IVS.CMS.repositories.MenuRepository;
 import IVS.CMS.services.MenuService;
 import IVS.CMS.services.dto.request.ReqMenuDTO;
 import IVS.CMS.services.dto.response.ResMenuDTO;
+import IVS.CMS.security.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,8 @@ public class MenuServiceImpl implements MenuService {
         LocalDateTime now = LocalDateTime.now();
         menu.setCreatedAt(now);
 
+        SecurityService.getCurrentUserId().ifPresent(menu::setCreatedBy);
+
         menuRepository.save(menu);
 
         return toResponse(menu);
@@ -64,6 +67,8 @@ public class MenuServiceImpl implements MenuService {
         menu.setLevel(request.getLevel());
         menu.setVisible(request.getVisible());
         menu.setUpdatedAt(LocalDateTime.now());
+
+        SecurityService.getCurrentUserId().ifPresent(menu::setUpdatedBy);
 
         menuRepository.update(menu);
 
