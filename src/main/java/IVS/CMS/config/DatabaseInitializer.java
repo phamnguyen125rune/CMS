@@ -191,7 +191,7 @@ public class DatabaseInitializer {
                             -- ============================================================
                             CREATE TABLE IF NOT EXISTS media (
                                 media_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                                file_name VARCHAR(50) NOT NULL,
+                                file_name VARCHAR(500) NOT NULL,
                                 upload_file VARCHAR(255),
                                 file_path TEXT NOT NULL,
                                 mime_type VARCHAR(255) NOT NULL,
