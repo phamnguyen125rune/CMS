@@ -1,25 +1,39 @@
-// package IVS.CMS.repositories;
+package IVS.CMS.repositories;
 
-// import java.util.List;
-// import java.util.Optional;
+import java.util.List;
 
-// import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Repository;
 
-// import IVS.CMS.domain.Role;
+import IVS.CMS.domain.Role;
+import IVS.CMS.domain.User;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
-// @Repository
-// public interface RoleRepository {
-//     Role save(Role role);
+@Repository
+public interface RoleRepository {
 
-//     Optional<Role> findById(long id);
+    List<ResRoleDTO> findAll();
 
-//     List<Role> findAll();
+    List<User> getUsersByRoleId(Long roleId);
 
-//     void delete(Role role);
+    Role save(Role role);
 
-//     void updateRolePermissions(long roleId, List<Long> permissionIds);
+    Role updateById(Role role);
 
-//     boolean existsByName(String name);
+    Role updateByRoleName(Role role);
 
-//     Optional<Role> findByName(String name);
-// }
+    Role findById(Long id);
+
+    Role changeRoleStatus(Role role);
+
+    Role findByRoleName(String roleName);
+
+    List<User> searchUsersNotInRole(Long roleId, String keyword);
+
+    int updateUsersRole(List<Long> userIds, Long roleId);
+
+    int setUsersToDefaultRole(List<Long> userIds);
+
+    Boolean checkIsSystemRole(Long id);
+
+    void delete(Role role);
+}

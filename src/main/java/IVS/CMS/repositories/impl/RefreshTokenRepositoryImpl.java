@@ -58,8 +58,8 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
                     FROM refresh_tokens rt
                     INNER JOIN users u ON rt.user_id = u.user_id
                     WHERE rt.token = :token
-                      AND u.email = :email
-                      AND u.deleted_at IS NULL
+                    AND u.email = :email
+                    AND u.deleted_at IS NULL
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("token", token)

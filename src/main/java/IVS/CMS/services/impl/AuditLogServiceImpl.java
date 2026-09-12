@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
-import IVS.CMS.domain.dto.request.ReqAuditLogFilterDTO;
-import IVS.CMS.domain.dto.response.ResAuditLogDTO;
-import IVS.CMS.domain.dto.response.ResAuditLogSearchDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
+import IVS.CMS.services.dto.request.ReqAuditLogFilterDTO;
+import IVS.CMS.services.dto.response.ResAuditLogDTO;
+import IVS.CMS.services.dto.response.ResAuditLogSearchDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import IVS.CMS.repositories.AuditLogRepository;
 import IVS.CMS.services.AuditLogService;
 import lombok.RequiredArgsConstructor;

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -22,8 +23,9 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Service;
 
-import IVS.CMS.domain.dto.response.ResLoginDTO;
 import com.nimbusds.jose.util.Base64;
+
+import IVS.CMS.services.dto.response.ResLoginDTO;
 
 @Service
 public class SecurityService {

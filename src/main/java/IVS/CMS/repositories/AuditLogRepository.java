@@ -2,9 +2,9 @@ package IVS.CMS.repositories;
 
 import java.util.List;
 import IVS.CMS.domain.AuditLog;
-import IVS.CMS.domain.dto.request.ReqAuditLogFilterDTO;
-import IVS.CMS.domain.dto.response.ResAuditLogDTO;
-import IVS.CMS.domain.dto.response.ResAuditLogSearchDTO;
+import IVS.CMS.services.dto.request.ReqAuditLogFilterDTO;
+import IVS.CMS.services.dto.response.ResAuditLogDTO;
+import IVS.CMS.services.dto.response.ResAuditLogSearchDTO;
 
 public interface AuditLogRepository {
     void save(AuditLog log);

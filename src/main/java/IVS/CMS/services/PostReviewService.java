@@ -1,9 +1,9 @@
 package IVS.CMS.services;
 
 import IVS.CMS.domain.PostReview;
-import IVS.CMS.domain.dto.request.ReqPostReviewDTO;
-import IVS.CMS.domain.dto.request.ReqPostReviewUpdateDTO;
-import IVS.CMS.domain.dto.response.ResPostReviewDTO;
+import IVS.CMS.services.dto.request.ReqPostReviewDTO;
+import IVS.CMS.services.dto.request.ReqPostReviewUpdateDTO;
+import IVS.CMS.services.dto.response.ResPostReviewDTO;
 
 import java.util.List;
 

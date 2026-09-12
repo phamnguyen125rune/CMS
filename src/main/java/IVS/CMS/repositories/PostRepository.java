@@ -3,9 +3,10 @@ package IVS.CMS.repositories;
 import java.util.List;
 import java.util.Optional;
 import IVS.CMS.domain.Post;
-import IVS.CMS.domain.dto.request.ReqPostFilterDTO;
-import IVS.CMS.domain.dto.response.ResPostDTO;
-import IVS.CMS.domain.dto.response.ResPostListDTO;
+import IVS.CMS.domain.constants.PostStatusEnum;
+import IVS.CMS.services.dto.request.ReqPostFilterDTO;
+import IVS.CMS.services.dto.response.ResPostDTO;
+import IVS.CMS.services.dto.response.ResPostListDTO;
 
 public interface PostRepository {
     Post save(Post post);
@@ -35,4 +36,8 @@ public interface PostRepository {
     List<ResPostDTO.TagInfo> getTagsByPostId(long postId);
 
     List<ResPostDTO.MediaInfo> getMediaByPostId(long postId);
+
+    Optional<Post> findBySlug(String slug);
+
+    Optional<Post> findBySlugAndStatus(String slug, PostStatusEnum status);
 }

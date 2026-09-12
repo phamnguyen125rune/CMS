@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 @Setter
 public class Menu {
     private Long menuId;
+    private Long parentId;
     private String title;
     private String url;
-    private Integer menuType;
     private Integer displayOrder;
     private Integer level;
     private Boolean visible;

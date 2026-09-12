@@ -1,16 +1,18 @@
 package IVS.CMS.services;
 
 import java.util.List;
-import IVS.CMS.domain.Permission;
+
+import IVS.CMS.services.dto.request.role.ReqPermissionApiLinkDTO;
+import IVS.CMS.services.dto.request.role.ReqPermissionIdDTO;
+import IVS.CMS.services.dto.response.role.ResApiActionDTO;
+
 
 public interface PermissionService {
-    Permission create(Permission permission);
+    List<ResApiActionDTO> getAllApiActions();
 
-    Permission update(long id, Permission permission);
+    String assignPermissionToRoleById(long roleId, ReqPermissionIdDTO req);
 
-    Permission fetchById(long id);
+    String assignPermissionToRoleByApiLink(long roleId, ReqPermissionApiLinkDTO req);
 
-    List<Permission> fetchAll();
-
-    void delete(long id);
+    boolean checkPermission(String apiLink, String actionName);
 }

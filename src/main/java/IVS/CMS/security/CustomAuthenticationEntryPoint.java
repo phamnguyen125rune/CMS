@@ -9,9 +9,9 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthen
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-import IVS.CMS.domain.dto.response.RestResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import IVS.CMS.services.dto.response.RestResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

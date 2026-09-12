@@ -2,6 +2,7 @@ package IVS.CMS.config;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,7 +45,7 @@ public class JwtConfiguration {
             try {
                 org.springframework.security.oauth2.jwt.Jwt jwt = jwtDecoder.decode(token);
                 return jwt;
-            } catch (Exception e) {
+            } catch (ExceptionInInitializerError e) {
                 System.out.println(">>> JWT error: " + e.getMessage());
                 throw new JwtException("Token không hợp lệ", e);
             }

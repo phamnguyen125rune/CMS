@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
-import IVS.CMS.domain.dto.response.ResMediaDTO;
+import IVS.CMS.services.dto.response.ResMediaDTO;
 
 public interface MediaService {
     ResMediaDTO upload(MultipartFile file);
@@ -16,7 +16,7 @@ public interface MediaService {
 
     List<ResMediaDTO> getAllMedia();
 
-    List<ResMediaDTO> search(String keyword);
+    List<ResMediaDTO> searchAndFilter(String keyword, String fileType);
 
     void delete(long mediaId);
 }

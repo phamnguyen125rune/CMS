@@ -3,10 +3,10 @@ package IVS.CMS.services.mapper;
 import org.springframework.stereotype.Component;
 
 import IVS.CMS.domain.User;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
-import IVS.CMS.domain.dto.request.ReqUserUpdateDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.request.ReqUserCreateDTO;
+import IVS.CMS.services.dto.request.ReqUserUpdateDTO;
+import IVS.CMS.services.dto.response.ResUserCreateDTO;
+import IVS.CMS.services.dto.response.ResUserDTO;
 
 @Component
 public class UserMapper {
@@ -22,7 +22,6 @@ public class UserMapper {
         user.setAddress(dto.getAddress());
         user.setGender(dto.getGender());
         user.setDateOfBirth(dto.getDateOfBirth());
-        user.setRoleId(dto.getRoleId());
         return user;
     }
 
@@ -86,7 +85,6 @@ public class UserMapper {
         req.setAddress(user.getAddress());
         req.setGender(user.getGender());
         req.setDateOfBirth(user.getDateOfBirth());
-        req.setRoleId(user.getRoleId());
         req.setIsActive(user.getIsActive());
         return req;
     }

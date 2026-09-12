@@ -1,9 +1,11 @@
 package IVS.CMS.controllers;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,65 +15,118 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-import IVS.CMS.domain.dto.request.ReqChangePasswordDTO;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
-import IVS.CMS.domain.dto.request.ReqUserUpdateDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 import IVS.CMS.services.UserService;
+import IVS.CMS.services.dto.request.ReqUpdateProfileDTO;
+import IVS.CMS.services.dto.request.ReqUserCreateDTO;
+import IVS.CMS.services.dto.request.ReqUserUpdateDTO;
+import IVS.CMS.services.dto.response.ResUserCreateDTO;
+import IVS.CMS.services.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("api/v1/users")
-@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
     @PostMapping
+    @PreAuthorize("@permissionService.hasPermission('user', 'CREATE')")
     public ResponseEntity<ResUserCreateDTO> create(@Valid @RequestBody ReqUserCreateDTO user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.createUser(user));
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResUserDTO> getMyProfile() {
+        return ResponseEntity.ok(this.userService.getMyProfile());
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResUserDTO> updateMyProfile(@Valid @RequestBody ReqUpdateProfileDTO req) {
+        return ResponseEntity.ok(this.userService.updateMyProfile(req));
+    }
+
     @GetMapping("/{id}")
+    @PreAuthorize("@permissionService.hasPermission('user', 'VIEW')")
     public ResponseEntity<ResUserDTO> getUserById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(this.userService.getUserById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResUserDTO> updateUser(
+    @PreAuthorize("@permissionService.hasPermission('user', 'UPDATE')")
+    public ReqUserUpdateDTO putUser(@PathVariable("id") Long id, @Valid @RequestBody ReqUserUpdateDTO req) {
+        return this.userService.UpdateUser(id, req);
+    }
+
+    @PostMapping("/{id}/avatar")
+    @PreAuthorize("@permissionService.hasPermission('user', 'UPDATE')")
+    public ResponseEntity<Map<String, String>> uploadUserAvatar(
             @PathVariable("id") Long id,
-            @Valid @RequestBody ReqUserUpdateDTO req) {
-        return ResponseEntity.ok(this.userService.updateUser(id, req));
+            @RequestParam("file") MultipartFile file) {
+        String avatarUrl = this.userService.uploadUserAvatar(id, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("avatarUrl", avatarUrl));
     }
 
     @GetMapping
+    @PreAuthorize("@permissionService.hasPermission('user', 'VIEW')")
     public ResponseEntity<ResultPaginationDTO> getAll(
-            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "page", defaultValue = "1") int pages,
             @RequestParam(value = "size", defaultValue = "10") int pageSize) {
-        return ResponseEntity.ok(this.userService.findAll(page, pageSize));
+        return ResponseEntity.ok(this.userService.findAll(pages, pageSize));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@permissionService.hasPermission('user', 'DELETE')")
     public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
-        this.userService.deleteUser(id);
+        this.userService.softDeleteUser(id);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/hard")
+    @PreAuthorize("@permissionService.hasPermission('user', 'DELETE')")
+    public ResponseEntity<Void> hardDeleteUser(@PathVariable("id") Long id) {
+        this.userService.hardDeleteUser(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/restore")
+    @PreAuthorize("@permissionService.hasPermission('user', 'UPDATE')")
+    public ResponseEntity<Void> restoreUser(@PathVariable("id") Long id) {
+        this.userService.restoreUser(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/deleted")
+    @PreAuthorize("@permissionService.hasPermission('user', 'VIEW')")
+    public ResponseEntity<List<ResUserDTO>> getDeletedUsers() {
+        return ResponseEntity.ok(this.userService.getDeletedUsers());
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable("id") Long id,
-            @RequestBody Map<String, Boolean> body) {
-        this.userService.updateStatus(id, body.get("isActive"));
+    @PreAuthorize("@permissionService.hasPermission('user', 'UPDATE')")
+    public ResponseEntity<Void> toggleStatus(@PathVariable("id") long id, @RequestBody Map<String, String> body) {
+        this.userService.toggleUserStatus(id, body.get("status"));
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/change-password")
-    public ResponseEntity<Void> changePassword(@Valid @RequestBody ReqChangePasswordDTO req) {
-        this.userService.changePassword(req);
+    @PutMapping("/{id}/reset-password")
+    @PreAuthorize("@permissionService.hasPermission('user', 'UPDATE')")
+    public ResponseEntity<Void> resetPassword(@PathVariable("id") long id) {
+        this.userService.resetUserPassword(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<Map<String, String>> uploadMyAvatar(@RequestParam("file") MultipartFile file) {
+        String avatarUrl = this.userService.uploadMyAvatar(file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("avatarUrl", avatarUrl));
     }
 }

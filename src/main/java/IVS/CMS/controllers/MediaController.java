@@ -3,6 +3,7 @@ package IVS.CMS.controllers;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import IVS.CMS.domain.dto.response.ResMediaDTO;
+import IVS.CMS.services.dto.response.ResMediaDTO;
 import IVS.CMS.services.MediaService;
 
 @RestController
@@ -26,34 +27,36 @@ public class MediaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ResMediaDTO>> getMedia(@RequestParam(required = false) String keyword) {
-
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return ResponseEntity.ok(mediaService.getAllMedia());
-        }
-        return ResponseEntity.ok(mediaService.search(keyword));
+    @PreAuthorize("@permissionService.hasPermission('media', 'VIEW')")
+    public ResponseEntity<List<ResMediaDTO>> getMedia(@RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String fileType) {
+        return ResponseEntity.ok(
+                mediaService.searchAndFilter(keyword, fileType));
     }
 
     @PostMapping("/upload")
+    @PreAuthorize("@permissionService.hasPermission('media', 'CREATE')")
     public ResponseEntity<ResMediaDTO> upload(@RequestParam("file") MultipartFile file) {
         ResMediaDTO result = mediaService.upload(file);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{mediaId}/view")
+    @PreAuthorize("@permissionService.hasPermission('media', 'VIEW')")
     public ResponseEntity<Resource> viewMedia(
-            @PathVariable long mediaId) {
+            @PathVariable("mediaId") long mediaId) {
         return mediaService.view(mediaId);
     }
 
-
     @GetMapping("/{mediaId}/download")
+    @PreAuthorize("@permissionService.hasPermission('media', 'VIEW')")
     public ResponseEntity<Resource> downloadMedia(
-            @PathVariable long mediaId) {
+            @PathVariable("mediaId") long mediaId) {
         return mediaService.download(mediaId);
     }
 
     @DeleteMapping("/{mediaId}")
+    @PreAuthorize("@permissionService.hasPermission('media', 'DELETE')")
     public ResponseEntity<Void> deleteMedia(@PathVariable long mediaId) {
         mediaService.delete(mediaId);
         return ResponseEntity.noContent().build();

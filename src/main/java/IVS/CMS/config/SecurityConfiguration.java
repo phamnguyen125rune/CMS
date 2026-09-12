@@ -2,9 +2,11 @@ package IVS.CMS.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import IVS.CMS.security.CustomAuthenticationEntryPoint;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfiguration {
 
         private final String[] publicEndpoints = {
@@ -23,7 +26,11 @@ public class SecurityConfiguration {
                         "/api/v1/auth/refresh",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
-                        "/swagger-ui.html"
+                        "/swagger-ui.html",
+                        "/api/v1/auth/forgot-password/request-otp",
+                        "/api/v1/auth/forgot-password/verify-otp",
+                        "/api/v1/auth/forgot-password/reset",
+                        "/api/v1/menus/**"
         };
 
         @Bean
@@ -46,6 +53,14 @@ public class SecurityConfiguration {
                                 .csrf(c -> c.disable())
                                 .authorizeHttpRequests(authz -> authz
                                                 .requestMatchers(publicEndpoints).permitAll()
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/v1/posts/public/**",
+                                                                "/api/v1/categories/**",
+                                                                "/api/v1/tags/**",
+                                                                "/api/v1/comments/**",
+                                                                "/api/v1/media/**",
+                                                                "/api/v1/general-info")
+                                                .permitAll()
                                                 .anyRequest().authenticated())
                                 .oauth2ResourceServer(oauth2 -> oauth2
                                                 .jwt(Customizer.withDefaults())

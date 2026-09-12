@@ -7,9 +7,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.AuditLog;
-import IVS.CMS.domain.dto.request.ReqAuditLogFilterDTO;
-import IVS.CMS.domain.dto.response.ResAuditLogDTO;
-import IVS.CMS.domain.dto.response.ResAuditLogSearchDTO;
+import IVS.CMS.services.dto.request.ReqAuditLogFilterDTO;
+import IVS.CMS.services.dto.response.ResAuditLogDTO;
+import IVS.CMS.services.dto.response.ResAuditLogSearchDTO;
 import IVS.CMS.repositories.AuditLogRepository;
 import IVS.CMS.repositories.rowMapper.AuditLogRowMapper;
 import lombok.RequiredArgsConstructor;

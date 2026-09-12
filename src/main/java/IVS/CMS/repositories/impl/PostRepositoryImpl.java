@@ -10,9 +10,10 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import IVS.CMS.domain.Post;
-import IVS.CMS.domain.dto.request.ReqPostFilterDTO;
-import IVS.CMS.domain.dto.response.ResPostDTO;
-import IVS.CMS.domain.dto.response.ResPostListDTO;
+import IVS.CMS.domain.constants.PostStatusEnum;
+import IVS.CMS.services.dto.request.ReqPostFilterDTO;
+import IVS.CMS.services.dto.response.ResPostDTO;
+import IVS.CMS.services.dto.response.ResPostListDTO;
 import IVS.CMS.repositories.PostRepository;
 import IVS.CMS.repositories.rowMapper.PostRowMapper;
 
@@ -176,9 +177,9 @@ public class PostRepositoryImpl implements PostRepository {
                 UPDATE posts
                 SET status = :status,
                     published_at = CASE
-                                     WHEN :status = 'PUBLISHED' AND published_at IS NULL THEN NOW(6)
-                                     ELSE published_at
-                                   END,
+                                    WHEN :status = 'PUBLISHED' AND published_at IS NULL THEN NOW(6)
+                                    ELSE published_at
+                                    END,
                     updated_at = NOW(6),
                     updated_by = :updatedBy
                 WHERE post_id = :id
@@ -266,5 +267,21 @@ public class PostRepositoryImpl implements PostRepository {
             media.setAltText(rs.getString("file_name"));
             return media;
         });
+    }
+
+    @Override
+    public Optional<Post> findBySlug(String slug) {
+        String sql = "SELECT * FROM posts WHERE slug = :slug";
+        MapSqlParameterSource params = new MapSqlParameterSource("slug", slug);
+        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+    }
+
+    @Override
+    public Optional<Post> findBySlugAndStatus(String slug, PostStatusEnum status) {
+        String sql = "SELECT * FROM posts WHERE slug = :slug AND status = :status";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("slug", slug)
+                .addValue("status", status.name().toLowerCase());
+        return jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
     }
 }

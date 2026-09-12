@@ -1,8 +1,8 @@
 package IVS.CMS.services;
 
-import IVS.CMS.domain.dto.request.ReqAuditLogFilterDTO;
-import IVS.CMS.domain.dto.response.ResAuditLogSearchDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
+import IVS.CMS.services.dto.request.ReqAuditLogFilterDTO;
+import IVS.CMS.services.dto.response.ResAuditLogSearchDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 
 public interface AuditLogService {
     ResAuditLogSearchDTO searchAuditLogs(ReqAuditLogFilterDTO filter, long requestStartTime);

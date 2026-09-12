@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import IVS.CMS.domain.dto.response.ResAuditLogDTO;
+import IVS.CMS.services.dto.response.ResAuditLogDTO;
 
 @Component
 public class AuditLogRowMapper implements RowMapper<ResAuditLogDTO> {
