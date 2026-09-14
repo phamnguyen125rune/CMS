@@ -3,8 +3,6 @@ package IVS.CMS.services.error;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -20,12 +18,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import IVS.CMS.domain.dto.response.RestResponse;
+import IVS.CMS.services.dto.response.RestResponse;
 
 @RestControllerAdvice
 public class GlobalException {
-    private static final Logger log = LoggerFactory.getLogger(GlobalException.class);
-
     @ExceptionHandler(value = BadRequestException.class)
     public ResponseEntity<RestResponse<Object>> handleBadRequestException(BadRequestException exception) {
         RestResponse<Object> res = new RestResponse<>();
@@ -92,13 +88,23 @@ public class GlobalException {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
-        log.error("Unhandled application exception", ex);
-
         RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         res.setError("Lỗi hệ thống");
         res.setMessage("Đã xảy ra lỗi, vui lòng thử lại");
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<RestResponse<Object>> handleConflictException(
+            ConflictException ex) {
+
+        RestResponse<Object> res = new RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("Xung đột dữ liệu");
+        res.setMessage(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
     }
 }

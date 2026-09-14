@@ -1,34 +1,33 @@
 package IVS.CMS.services.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import IVS.CMS.domain.Role;
 import IVS.CMS.domain.User;
-import IVS.CMS.domain.dto.request.ReqChangePasswordDTO;
-import IVS.CMS.domain.dto.request.ReqUpdateProfileDTO;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
-import IVS.CMS.domain.dto.request.ReqUserUpdateDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
-import IVS.CMS.domain.dto.response.ResultPaginationDTO;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.repositories.UserRepository;
-import IVS.CMS.services.PermissionCacheService;
-import IVS.CMS.services.SecurityService;
+import IVS.CMS.security.SecurityService;
+import IVS.CMS.services.FileUploadService;
 import IVS.CMS.services.UserService;
+import IVS.CMS.services.dto.request.ReqChangePasswordDTO;
+import IVS.CMS.services.dto.request.ReqUpdateProfileDTO;
+import IVS.CMS.services.dto.request.ReqUserCreateDTO;
+import IVS.CMS.services.dto.request.ReqUserUpdateDTO;
+import IVS.CMS.services.dto.response.ResUserCreateDTO;
+import IVS.CMS.services.dto.response.ResUserDTO;
+import IVS.CMS.services.dto.response.ResultPaginationDTO;
 import IVS.CMS.services.error.BadRequestException;
 import IVS.CMS.services.error.ForbiddenException;
 import IVS.CMS.services.error.ResourceNotFoundException;
 import IVS.CMS.services.mapper.UserMapper;
-import IVS.CMS.services.FileUploadService;
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -38,57 +37,77 @@ public class UserServiceImpl implements UserService {
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String STATUS_LOCKED = "LOCKED";
     private static final String DEFAULT_RESET_PASSWORD = "123456";
+    private static final long DEFAULT_USER_ROLE_ID = 0L;
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long[] LOCK_MINUTES = { 1, 5, 15, 30, 60 };
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final RoleRepository roleRepository;
     private final FileUploadService fileUploadService;
-    private final PermissionCacheService permissionCacheService;
 
     @Override
     @Transactional
-
     public synchronized ResUserCreateDTO createUser(ReqUserCreateDTO req) {
         User user = userMapper.reqCreateToUser(req);
+        user.setRoleId(DEFAULT_USER_ROLE_ID);
+        user.setEmail(normalizeEmail(user.getEmail()));
+        user.setFullName(resolveStaffFullname(user.getFullName(), user.getEmail()));
 
-        if (this.userRepository.existsByEmail(user.getEmail())) {
-            throw new BadRequestException("Email " + req.getEmail() + " đã tồn tại!");
+        User existing = this.userRepository.findByEmailOrEmployeeCodeIncludeDeleted(user.getEmail());
+        if (existing != null) {
+            if (existing.getDeletedAt() == null) {
+                throw new BadRequestException("Email " + user.getEmail() + " đã tồn tại!");
+            }
+            restoreDeletedStaffUser(existing, user);
+            existing = this.userRepository.save(existing);
+            existing = this.userRepository.findById(existing.getUserId())
+                    .orElse(existing);
+            return this.userMapper.userToResCreateDTO(existing);
         }
 
         validateCreatableRole(user);
-        user.setStatus(STATUS_ACTIVE);
+        applyStaffAccountDefaults(user);
         user.setEmployeeCode(generateEmployeeCode());
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
+        LocalDateTime now = LocalDateTime.now();
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(null);
+        user.setCreatedAt(now);
+        user.setCreatedBy(currentUserId);
+        user.setUpdatedAt(now);
+        user.setUpdatedBy(currentUserId);
         user = this.userRepository.save(user);
-
+        user = this.userRepository.findById(user.getUserId())
+                .orElse(user);
         return this.userMapper.userToResCreateDTO(user);
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public User fetchUserById(long id) {
         return this.userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User với id " + id + " không tồn tại"));
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ResUserDTO getUserById(long id) {
         User user = this.fetchUserById(id);
         return userMapper.userToResUserDTO(user);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResultPaginationDTO findAll(int page, int pageSize) {
         if (page < 1)
             page = 1;
         if (pageSize < 1)
             pageSize = 10;
+
         long total = this.userRepository.count();
         int pages = (int) Math.ceil((double) total / pageSize);
         int offset = (page - 1) * pageSize;
+
         List<User> users = this.userRepository.findAll(pageSize, offset);
         List<ResUserDTO> listUserRes = users.stream()
                 .map(userMapper::userToResUserDTO)
@@ -103,7 +122,6 @@ public class UserServiceImpl implements UserService {
         ResultPaginationDTO res = new ResultPaginationDTO();
         res.setMeta(meta);
         res.setResult(listUserRes);
-
         return res;
     }
 
@@ -118,17 +136,17 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("Email đã được sử dụng");
         }
 
-        userCurrent.setFullname(req.getFullname());
+        userCurrent.setFullName(req.getFullName());
         userCurrent.setEmail(req.getEmail());
-        userCurrent.setAge(req.getAge());
         userCurrent.setGender(req.getGender());
-        userCurrent.setPhone(req.getPhone());
+        userCurrent.setPhoneNumber(req.getPhoneNumber());
         userCurrent.setAddress(req.getAddress());
         userCurrent.setAvatarUrl(req.getAvatarUrl());
         userCurrent.setDateOfBirth(req.getDateOfBirth());
+        userCurrent.setUpdatedAt(LocalDateTime.now());
+        userCurrent.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         userCurrent = this.userRepository.save(userCurrent);
-        this.permissionCacheService.evictUser(userCurrent.getId());
         return this.userMapper.userToReqUserUpdate(userCurrent);
     }
 
@@ -141,45 +159,23 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
         }
-
-        if (!this.passwordEncoder.matches(req.getOldPassword(), user.getPassword())) {
+        if (!this.passwordEncoder.matches(req.getOldPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Mật khẩu cũ không chính xác");
         }
-
-        if (this.passwordEncoder.matches(req.getNewPassword(), user.getPassword())) {
+        if (this.passwordEncoder.matches(req.getNewPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Mật khẩu mới không được trùng mật khẩu cũ");
         }
-        user.setPassword(this.passwordEncoder.encode(req.getNewPassword()));
-        user.setRefreshToken(null);
-        this.userRepository.save(user);
-        this.permissionCacheService.evictUser(user.getId());
+
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(0L);
+        String newHash = this.passwordEncoder.encode(req.getNewPassword());
+
+        this.userRepository.updatePassword(user.getUserId(), newHash, currentUserId, LocalDateTime.now());
+        this.userRepository.clearLoginFailures(user.getUserId());
     }
 
     @Override
     public User handleGetUserByEmail(String username) {
-        User user = this.userRepository.findByEmail(username);
-
-        if (user != null && user.getRole() != null && user.getRole().getId() > 0) {
-            Role fullRole = this.roleRepository.findById(user.getRole().getId()).orElse(null);
-            user.setRole(fullRole);
-        }
-        return user;
-    }
-
-    @Override
-    @Transactional
-    public void updateUserToken(String token, String email) {
-        User currentUser = this.handleGetUserByEmail(email);
-        if (currentUser != null) {
-            currentUser.setRefreshToken(token);
-            this.userRepository.save(currentUser);
-        }
-    }
-
-    @Override
-    @Transactional
-    public User getUserByRefreshTokenAndEmail(String refreshToken, String email) {
-        return this.userRepository.findByRefreshTokenAndEmail(refreshToken, email);
+        return this.userRepository.findByEmail(username);
     }
 
     @Override
@@ -190,13 +186,26 @@ public class UserServiceImpl implements UserService {
         }
         User user = this.userMapper.reqCreateToUser(req);
         applyDefaultRegisteredRole(user);
-        user.setStatus(STATUS_ACTIVE);
+        user.setIsActive(true);
+        user.setIsSystem(false);
+        user.setFailedLoginAttempts(0);
+        user.setLockCount(0);
+        user.setLockedUntil(null);
         user.setEmployeeCode(generateEmployeeCode());
+        LocalDateTime now = LocalDateTime.now();
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(null);
+        user.setCreatedAt(now);
+        user.setCreatedBy(currentUserId);
+        user.setUpdatedAt(now);
+        user.setUpdatedBy(currentUserId);
 
-        user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+        if (isBlank(req.getPassword())) {
+            throw new BadRequestException("Mật khẩu không được để trống");
+        }
+        user.setPasswordHash(this.passwordEncoder.encode(req.getPassword()));
 
-        User user2 = this.userRepository.save(user);
-        return this.userMapper.userToResCreateDTO(user2);
+        User savedUser = this.userRepository.save(user);
+        return this.userMapper.userToResCreateDTO(savedUser);
     }
 
     @Override
@@ -213,15 +222,13 @@ public class UserServiceImpl implements UserService {
                 "Không thể xóa tài khoản SUPER_ADMIN");
 
         int affectedRows = this.userRepository.softDelete(
-                targetUser.getId(),
-                currentUser.getId(),
-                currentUser.getEmail());
+                targetUser.getUserId(),
+                currentUser.getUserId(),
+                LocalDateTime.now());
 
         if (affectedRows != 1) {
-            throw new ForbiddenException("Không thể xóa tài khoản được bảo vệ");
+            throw new ForbiddenException("Không thể xóa tài khoản này");
         }
-
-        this.permissionCacheService.evictUser(targetUser.getId());
     }
 
     @Override
@@ -237,16 +244,10 @@ public class UserServiceImpl implements UserService {
                 "Không thể xóa vĩnh viễn tài khoản đang đăng nhập",
                 "Không thể xóa vĩnh viễn tài khoản SUPER_ADMIN");
 
-        if (!Boolean.TRUE.equals(targetUser.getDeleted())) {
-            throw new BadRequestException("Chỉ có thể xóa vĩnh viễn người dùng trong thùng rác");
-        }
-
-        int affectedRows = this.userRepository.hardDelete(targetUser.getId(), currentUser.getId());
+        int affectedRows = this.userRepository.hardDelete(targetUser.getUserId(), currentUser.getUserId());
         if (affectedRows != 1) {
-            throw new ForbiddenException("Không thể xóa vĩnh viễn tài khoản được bảo vệ");
+            throw new ForbiddenException("Không thể xóa vĩnh viễn tài khoản này");
         }
-
-        this.permissionCacheService.evictUser(targetUser.getId());
     }
 
     @Override
@@ -254,36 +255,8 @@ public class UserServiceImpl implements UserService {
     public void restoreUser(Long id) {
         User user = this.userRepository.findByIdIncludeDeleted(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
-
-        this.userRepository.restore(user.getId());
-        this.permissionCacheService.evictUser(user.getId());
-    }
-
-    @Override
-    @Transactional
-    public void resetPasswordByEmail(String email, String newPassword) {
-        User user = this.userRepository.findByEmail(email);
-        if (user == null) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng");
-        }
-
-        user.setPassword(this.passwordEncoder.encode(newPassword));
-        user.setRefreshToken(null);
-        this.userRepository.save(user);
-        this.permissionCacheService.evictUser(user.getId());
-    }
-
-    private String generateEmployeeCode() {
-        String maxCode = this.userRepository.findMaxEmployeeCode();
-        if (maxCode == null || maxCode.trim().isEmpty()) {
-            return "EMP0001";
-        }
-        try {
-            int currentNum = Integer.parseInt(maxCode.substring(3));
-            return String.format("EMP%04d", currentNum + 1);
-        } catch (Exception e) {
-            return "EMP0001";
-        }
+        long currentUserId = SecurityService.getCurrentUserId().orElse(0L);
+        this.userRepository.restore(user.getUserId(), currentUserId, LocalDateTime.now());
     }
 
     @Override
@@ -305,8 +278,9 @@ public class UserServiceImpl implements UserService {
             assertNotSuperAdmin(user, "Không thể khóa tài khoản SUPER_ADMIN");
         }
 
-        this.userRepository.updateStatus(id, normalizedStatus);
-        this.permissionCacheService.evictUser(id);
+        long currentUserId = SecurityService.getCurrentUserId().orElse(0L);
+        boolean isActive = !STATUS_LOCKED.equals(normalizedStatus);
+        this.userRepository.updateStatus(id, isActive, currentUserId, LocalDateTime.now());
     }
 
     @Override
@@ -318,10 +292,62 @@ public class UserServiceImpl implements UserService {
         assertNotSelf(user, "Không thể reset mật khẩu tài khoản đang đăng nhập");
         assertNotSuperAdmin(user, "Không thể reset mật khẩu tài khoản SUPER_ADMIN");
 
-        user.setPassword(this.passwordEncoder.encode(DEFAULT_RESET_PASSWORD));
-        user.setRefreshToken(null);
-        this.userRepository.save(user);
-        this.permissionCacheService.evictUser(user.getId());
+        long currentUserId = SecurityService.getCurrentUserId().orElse(0L);
+        this.userRepository.updatePassword(user.getUserId(), this.passwordEncoder.encode(DEFAULT_RESET_PASSWORD),
+                currentUserId, LocalDateTime.now());
+        this.userRepository.clearLoginFailures(user.getUserId());
+    }
+
+    @Override
+    @Transactional
+    public void resetPasswordByEmail(String email, String newPassword) {
+        User user = this.userRepository.findByEmail(email);
+        if (user == null) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng");
+        }
+        long currentUserId = SecurityService.getCurrentUserId().orElse(0L);
+        this.userRepository.updatePassword(user.getUserId(), this.passwordEncoder.encode(newPassword), currentUserId,
+                LocalDateTime.now());
+        this.userRepository.clearLoginFailures(user.getUserId());
+    }
+
+    @Override
+    @Transactional
+    public String recordFailedLogin(User user) {
+        if (user == null) {
+            return "Email hoặc mật khẩu không chính xác";
+        }
+        int failedAttempts = (user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0) + 1;
+        int remainingAttempts = MAX_LOGIN_ATTEMPTS - failedAttempts;
+
+        if (remainingAttempts <= 0) {
+            int lockCount = (user.getLockCount() != null ? user.getLockCount() : 0) + 1;
+            long lockMinutes = resolveLockMinutes(lockCount);
+            LocalDateTime lockedUntil = LocalDateTime.now().plusMinutes(lockMinutes);
+
+            this.userRepository.updateLoginSecurity(user.getUserId(), 0, lockCount, lockedUntil);
+            return "Bạn đã nhập sai mật khẩu quá nhiều lần. Tài khoản bị khóa trong "
+                    + lockMinutes + " phút. Vui lòng thử lại sau hoặc Quên mật khẩu.";
+        }
+
+        this.userRepository.updateLoginSecurity(user.getUserId(), failedAttempts,
+                user.getLockCount() != null ? user.getLockCount() : 0, null);
+        if (remainingAttempts == 1) {
+            return "Mật khẩu không chính xác. Bạn còn 1 lần thử trước khi tài khoản bị khóa.";
+        }
+        return "Email hoặc mật khẩu không chính xác. Bạn còn " + remainingAttempts + " lần thử.";
+    }
+
+    @Override
+    @Transactional
+    public void clearLoginFailures(long id) {
+        this.userRepository.clearLoginFailures(id);
+    }
+
+    @Override
+    @Transactional
+    public void resetLoginSecurity(long id) {
+        this.userRepository.clearLoginFailures(id);
     }
 
     @Override
@@ -329,20 +355,30 @@ public class UserServiceImpl implements UserService {
     public String uploadMyAvatar(MultipartFile file) {
         String email = SecurityService.getCurrentUserLogin()
                 .orElseThrow(() -> new BadRequestException("Bạn chưa đăng nhập"));
-
         User user = this.userRepository.findByEmail(email);
         if (user == null) {
             throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
         }
-
         if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
             this.fileUploadService.deleteAvatar(user.getAvatarUrl());
         }
-
         String avatarUrl = this.fileUploadService.uploadAvatar(file);
         user.setAvatarUrl(avatarUrl);
         this.userRepository.save(user);
+        return avatarUrl;
+    }
 
+    @Override
+    @Transactional
+    public String uploadUserAvatar(long id, MultipartFile file) {
+        User user = this.userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            this.fileUploadService.deleteAvatar(user.getAvatarUrl());
+        }
+        String avatarUrl = this.fileUploadService.uploadAvatar(file);
+        user.setAvatarUrl(avatarUrl);
+        this.userRepository.save(user);
         return avatarUrl;
     }
 
@@ -351,13 +387,13 @@ public class UserServiceImpl implements UserService {
     public ResUserDTO getMyProfile() {
         String email = SecurityService.getCurrentUserLogin()
                 .orElseThrow(() -> new BadRequestException("Bạn chưa đăng nhập"));
-
         User user = this.userRepository.findByEmail(email);
-
         if (user == null) {
             throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
         }
-
+        if (!isUsableAccount(user)) {
+            throw new ForbiddenException("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+        }
         return this.userMapper.userToResUserDTO(user);
     }
 
@@ -366,95 +402,108 @@ public class UserServiceImpl implements UserService {
     public ResUserDTO updateMyProfile(ReqUpdateProfileDTO req) {
         String email = SecurityService.getCurrentUserLogin()
                 .orElseThrow(() -> new BadRequestException("Bạn chưa đăng nhập"));
-
         User user = this.userRepository.findByEmail(email);
-
         if (user == null) {
             throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
         }
-
-        user.setFullname(req.getFullname());
-        user.setPhone(req.getPhone());
-        user.setAge(req.getAge());
+        user.setFullName(req.getFullname());
+        user.setPhoneNumber(req.getPhone());
         user.setAddress(req.getAddress());
         user.setGender(req.getGender());
         user.setDateOfBirth(req.getDateOfBirth());
-
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
         User updatedUser = this.userRepository.save(user);
-
         return this.userMapper.userToResUserDTO(updatedUser);
     }
 
     @Override
     public User handleGetUserByEmailOrEmployeeCode(String loginId) {
-        User user = this.userRepository.findByEmailOrEmployeeCode(loginId);
-
-        if (user != null && user.getRole() != null && user.getRole().getId() > 0) {
-            Role fullRole = this.roleRepository.findById(user.getRole().getId()).orElse(null);
-            user.setRole(fullRole);
-        }
-
-        return user;
+        return this.userRepository.findByEmailOrEmployeeCode(loginId);
     }
 
+    @Override
+    public User handleGetUserByEmailOrEmployeeCodeIncludeDeleted(String loginId) {
+        return this.userRepository.findByEmailOrEmployeeCodeIncludeDeleted(loginId);
+    }
+
+    // ================= PRIVATE HELPER METHODS (BUSINESS LOGIC MANG TỪ NHÁNH CỦA
+    // BẠN CẬU) ================= //
+
     private void validateCreatableRole(User user) {
-        if (user == null || user.getRole() == null || user.getRole().getId() <= 0) {
+        if (user == null || user.getRoleId() == null || user.getRoleId() <= 0) {
             return;
         }
-
-        Role role = this.roleRepository.findById(user.getRole().getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Role với id " + user.getRole().getId() + " không tồn tại"));
-
-        if (isSuperAdminRole(role)) {
-            throw new BadRequestException("Không được tạo người dùng với role SUPER_ADMIN");
+        Role role = this.roleRepository.findById(user.getRoleId());
+        if (role == null) {
+            throw new ResourceNotFoundException("Role với id " + user.getRoleId() + " không tồn tại");
         }
+        if (isSuperAdminRole(role)) {
+            throw new BadRequestException("Không thể tạo người dùng với role SUPER_ADMIN");
+        }
+    }
 
-        user.setRole(role);
+    private void restoreDeletedStaffUser(User existing, User requested) {
+        existing.setFullName(resolveStaffFullname(requested.getFullName(), requested.getEmail()));
+        existing.setEmail(normalizeEmail(requested.getEmail()));
+        existing.setAvatarUrl(requested.getAvatarUrl());
+        existing.setPhoneNumber(requested.getPhoneNumber());
+        existing.setAddress(requested.getAddress());
+        existing.setGender(requested.getGender());
+        existing.setDateOfBirth(requested.getDateOfBirth());
+        existing.setRoleId(requested.getRoleId());
+
+        validateCreatableRole(existing);
+        applyStaffAccountDefaults(existing);
+
+        existing.setDeletedAt(null);
+        existing.setDeletedBy(null);
+    }
+
+    private void applyStaffAccountDefaults(User user) {
+        user.setIsActive(true);
+        user.setIsSystem(false);
+        user.setFailedLoginAttempts(0);
+        user.setLockCount(0);
+        user.setLockedUntil(null);
+        user.setPasswordHash(passwordEncoder.encode(DEFAULT_RESET_PASSWORD));
     }
 
     private void applyDefaultRegisteredRole(User user) {
-        if (user == null) {
+        if (user == null)
             return;
+        Role normalUserRole = this.roleRepository.findByRoleName("NORMAL_USER");
+        if (normalUserRole == null) {
+            throw new ResourceNotFoundException("Role NORMAL_USER không tồn tại");
         }
-
-        Role normalUserRole = this.roleRepository.findByName("NORMAL_USER")
-                .orElseThrow(() -> new ResourceNotFoundException("Role NORMAL_USER không tồn tại"));
-        user.setRole(normalUserRole);
+        user.setRoleId(normalUserRole.getRoleId());
     }
 
     private User getCurrentAuthenticatedUser() {
         String currentEmail = SecurityService.getCurrentUserLogin()
                 .orElseThrow(() -> new ForbiddenException("Không xác định được tài khoản đang đăng nhập"));
-
         User currentUser = this.userRepository.findByEmail(currentEmail);
         if (currentUser == null) {
             throw new ForbiddenException("Không tìm thấy tài khoản đang đăng nhập");
         }
-
         return currentUser;
     }
 
-    private void assertDeleteAllowed(
-            User currentUser,
-            User targetUser,
-            String selfDeleteMessage,
+    private void assertDeleteAllowed(User currentUser, User targetUser, String selfDeleteMessage,
             String superAdminMessage) {
-        if (currentUser.getId() == targetUser.getId()) {
+        if (currentUser.getUserId().equals(targetUser.getUserId())) {
             throw new ForbiddenException(selfDeleteMessage);
         }
-
         if (isSuperAdminUser(targetUser)) {
             throw new ForbiddenException(superAdminMessage);
         }
     }
 
     private boolean isSuperAdminUser(User user) {
-        if (user == null || user.getRole() == null || user.getRole().getId() <= 0) {
+        if (user == null || user.getRoleId() == null || user.getRoleId() <= 0) {
             return false;
         }
-
-        Role role = this.roleRepository.findById(user.getRole().getId()).orElse(user.getRole());
+        Role role = this.roleRepository.findById(user.getRoleId());
         return isSuperAdminRole(role);
     }
 
@@ -467,29 +516,75 @@ public class UserServiceImpl implements UserService {
     }
 
     private void assertNotSuperAdmin(User targetUser, String message) {
-        if (targetUser.getRole() == null || targetUser.getRole().getId() <= 0) {
+        if (targetUser.getRoleId() == null || targetUser.getRoleId() <= 0) {
             return;
         }
-        Role role = this.roleRepository.findById(targetUser.getRole().getId()).orElse(targetUser.getRole());
+        Role role = this.roleRepository.findById(targetUser.getRoleId());
         if (isSuperAdminRole(role)) {
             throw new BadRequestException(message);
         }
     }
 
     private boolean isSuperAdminRole(Role role) {
-        return role != null && role.getName() != null && ROLE_SUPER_ADMIN.equalsIgnoreCase(role.getName().trim());
+        return role != null && role.getRoleName() != null
+                && ROLE_SUPER_ADMIN.equalsIgnoreCase(role.getRoleName().trim());
+    }
+
+    private boolean isUsableAccount(User user) {
+        return user != null
+                && user.getDeletedAt() == null
+                && Boolean.TRUE.equals(user.getIsActive());
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private String resolveStaffFullname(String fullname, String email) {
+        if (!isBlank(fullname)) {
+            return fullname.trim();
+        }
+        if (isBlank(email) || !email.contains("@")) {
+            return "Nhân viên mới";
+        }
+        String localPart = email.substring(0, email.indexOf('@'))
+                .replace('.', ' ')
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .trim();
+        return localPart.isEmpty() ? "Nhân viên mới" : localPart;
+    }
+
+    private long resolveLockMinutes(int lockCount) {
+        int index = Math.max(0, Math.min(lockCount - 1, LOCK_MINUTES.length - 1));
+        return LOCK_MINUTES[index];
     }
 
     private String normalizeStatus(String status) {
         if (status == null || status.trim().isEmpty()) {
-            throw new BadRequestException("Trạng thái không được để trống");
+            throw new BadRequestException("Trạng thái không được trống");
         }
-
         String normalizedStatus = status.trim().toUpperCase();
         if (!STATUS_ACTIVE.equals(normalizedStatus) && !STATUS_LOCKED.equals(normalizedStatus)) {
-            throw new BadRequestException("Trạng thái không hợp lệ. Chỉ hỗ trợ ACTIVE hoặc LOCKED");
+            throw new BadRequestException("Trạng thái không hợp lệ. Chỉ nhận ACTIVE hoặc LOCKED");
         }
         return normalizedStatus;
     }
 
+    private String generateEmployeeCode() {
+        String maxCode = this.userRepository.findMaxEmployeeCode();
+        if (maxCode == null || maxCode.trim().isEmpty()) {
+            return "EMP0001";
+        }
+        try {
+            int currentNum = Integer.parseInt(maxCode.substring(3));
+            return String.format("EMP%04d", currentNum + 1);
+        } catch (ExceptionInInitializerError e) {
+            return "EMP0001";
+        }
+    }
 }

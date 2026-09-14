@@ -2,10 +2,8 @@ package IVS.CMS.controllers;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import IVS.CMS.domain.Permission;
 import IVS.CMS.services.PermissionService;
-
+import IVS.CMS.services.dto.request.role.PermissionLinkDTO;
+import IVS.CMS.services.dto.request.role.ReqPermissionApiLinkDTO;
+import IVS.CMS.services.dto.request.role.ReqPermissionIdDTO;
+import IVS.CMS.services.dto.response.role.ResApiActionDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -27,36 +27,37 @@ public class PermissionController {
 
     private final PermissionService permissionService;
 
-    @PostMapping
-    @PreAuthorize("hasAuthority('permissions:EDIT')")
-    public ResponseEntity<Permission> createPermission(@Valid @RequestBody Permission permission) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.permissionService.create(permission));
+    @GetMapping("/apiAction")
+    @PreAuthorize("@permissionService.hasPermission('permission', 'VIEW')")
+    public ResponseEntity<List<ResApiActionDTO>> getAllActions() {
+        return ResponseEntity.ok(this.permissionService.getAllApiActions());
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('permissions:EDIT')")
-    public ResponseEntity<Permission> updatePermission(@PathVariable("id") long id,
-            @Valid @RequestBody Permission permission) {
-        return ResponseEntity.ok(this.permissionService.update(id, permission));
+    @PutMapping("/update/{roleId}")
+    @PreAuthorize("@permissionService.hasPermission('permission', 'UPDATE')")
+    public ResponseEntity<String> updateRolePermissionsById(@PathVariable("roleId") long roleId, @Valid @RequestBody ReqPermissionIdDTO req) {
+        return ResponseEntity.ok(
+                permissionService.assignPermissionToRoleById(roleId, req)
+        );
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('permissions:VIEW')")
-    public ResponseEntity<Permission> getPermissionById(@PathVariable("id") long id) {
-        return ResponseEntity.ok(this.permissionService.fetchById(id));
+    @PutMapping("/update/link/{roleId}")
+    @PreAuthorize("@permissionService.hasPermission('permission', 'UPDATE')")
+    public ResponseEntity<String> updateRolePermissionsByApiLink(@PathVariable("roleId") long roleId, @Valid @RequestBody ReqPermissionApiLinkDTO req) {
+        return ResponseEntity.ok(
+                permissionService.assignPermissionToRoleByApiLink(roleId, req)
+        );
     }
 
-    @GetMapping
-    @PreAuthorize("hasAuthority('permissions:VIEW')")
-    public ResponseEntity<List<Permission>> getAllPermissions() {
-        return ResponseEntity.ok(this.permissionService.fetchAll());
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('permissions:EDIT')")
-    public ResponseEntity<Void> deletePermission(@PathVariable("id") long id) {
-        this.permissionService.delete(id);
-        return ResponseEntity.ok().build();
+    @PostMapping("/check")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> checkPermission(
+            @RequestBody PermissionLinkDTO req) {
+        return ResponseEntity.ok(
+                permissionService.checkPermission(
+                        req.getApiLink(),
+                        req.getActionName()
+                )
+        );
     }
 }

@@ -1,5 +1,5 @@
 package IVS.CMS.domain.constants;
 
 public enum GenderEnum {
-    FEMALE, MALE, OTHER
+    FEMALE, MALE, OTHERS
 }

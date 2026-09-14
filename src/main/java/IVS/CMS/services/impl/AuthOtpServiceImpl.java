@@ -19,14 +19,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.User;
-import IVS.CMS.domain.dto.request.ReqResetPasswordWithOtpDTO;
-import IVS.CMS.domain.dto.request.ReqUserCreateDTO;
-import IVS.CMS.domain.dto.response.ResOtpVerifyDTO;
-import IVS.CMS.domain.dto.response.ResUserCreateDTO;
+import IVS.CMS.services.dto.request.ReqResetPasswordWithOtpDTO;
+import IVS.CMS.services.dto.request.ReqUserCreateDTO;
+import IVS.CMS.services.dto.response.ResOtpVerifyDTO;
+import IVS.CMS.services.dto.response.ResUserCreateDTO;
 import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.services.AuthOtpService;
 import IVS.CMS.services.UserService;
 import IVS.CMS.services.error.BadRequestException;
+import lombok.Data;
 
 @Service
 public class AuthOtpServiceImpl implements AuthOtpService {
@@ -240,6 +241,7 @@ public class AuthOtpServiceImpl implements AuthOtpService {
         return value == null || value.trim().isEmpty();
     }
 
+    @Data
     private static class PendingOtp {
         private String email;
         private String purpose;
@@ -252,84 +254,5 @@ public class AuthOtpServiceImpl implements AuthOtpService {
         private String resetToken;
         private Instant resetTokenExpiresAt;
 
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getPurpose() {
-            return purpose;
-        }
-
-        public void setPurpose(String purpose) {
-            this.purpose = purpose;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        public void setCode(String code) {
-            this.code = code;
-        }
-
-        public Instant getExpiresAt() {
-            return expiresAt;
-        }
-
-        public void setExpiresAt(Instant expiresAt) {
-            this.expiresAt = expiresAt;
-        }
-
-        public Instant getNextResendAt() {
-            return nextResendAt;
-        }
-
-        public void setNextResendAt(Instant nextResendAt) {
-            this.nextResendAt = nextResendAt;
-        }
-
-        public int getAttempts() {
-            return attempts;
-        }
-
-        public void setAttempts(int attempts) {
-            this.attempts = attempts;
-        }
-
-        public boolean isSent() {
-            return sent;
-        }
-
-        public void setSent(boolean sent) {
-            this.sent = sent;
-        }
-
-        public ReqUserCreateDTO getPendingRegistration() {
-            return pendingRegistration;
-        }
-
-        public void setPendingRegistration(ReqUserCreateDTO pendingRegistration) {
-            this.pendingRegistration = pendingRegistration;
-        }
-
-        public String getResetToken() {
-            return resetToken;
-        }
-
-        public void setResetToken(String resetToken) {
-            this.resetToken = resetToken;
-        }
-
-        public Instant getResetTokenExpiresAt() {
-            return resetTokenExpiresAt;
-        }
-
-        public void setResetTokenExpiresAt(Instant resetTokenExpiresAt) {
-            this.resetTokenExpiresAt = resetTokenExpiresAt;
-        }
     }
 }

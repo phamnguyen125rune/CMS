@@ -1,214 +1,160 @@
 package IVS.CMS.services.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.Role;
 import IVS.CMS.domain.User;
-import IVS.CMS.domain.dto.request.ReqRoleDTO;
-import IVS.CMS.domain.dto.response.ResUserDTO;
 import IVS.CMS.repositories.RoleRepository;
-import IVS.CMS.repositories.UserRepository;
-import IVS.CMS.services.PermissionCacheService;
+import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.RoleService;
-import IVS.CMS.services.error.BadRequestException;
+import IVS.CMS.services.dto.request.role.ReqRoleDTO;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
+import IVS.CMS.services.error.ConflictException;
 import IVS.CMS.services.error.ResourceNotFoundException;
-import IVS.CMS.services.mapper.UserMapper;
-
 import lombok.RequiredArgsConstructor;
+
+
 
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
-
-    private static final String ROLE_NORMAL_USER = "NORMAL_USER";
-    private static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
-
-    private final RoleRepository roleRepository;
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
-    private final PermissionCacheService permissionCacheService;
+    
+    final RoleRepository roleRepository;
 
     @Override
-    @Transactional
-    public Role create(ReqRoleDTO req) {
-        String roleName = normalizeRoleName(req.getName());
-        if (roleName.isBlank()) {
-            throw new BadRequestException("Tên role không được để trống");
+    public Role createRole(ReqRoleDTO req) {
+        if (roleRepository.findByRoleName(req.getRoleName()) != null) {
+            throw new ConflictException("Role name already exists");
         }
-        if (isSystemRoleName(roleName)) {
-            throw new BadRequestException("Không được tạo trùng tên role hệ thống");
-        }
-        if (this.roleRepository.existsByName(roleName)) {
-            throw new BadRequestException("Role với tên " + roleName + " đã tồn tại");
-        }
-
         Role role = new Role();
-        role.setName(roleName);
-        role.setDescription(req.getDescription());
-        role.setActive(req.isActive());
-
-        Role savedRole = this.roleRepository.save(role);
-
-        if (req.getPermissionIds() != null && !req.getPermissionIds().isEmpty()) {
-            this.roleRepository.updateRolePermissions(savedRole.getId(), req.getPermissionIds());
-            this.permissionCacheService.evictUsersByRoleId(savedRole.getId());
-        }
-
-        return this.fetchById(savedRole.getId());
+        role.setRoleName(req.getRoleName());
+        role.setRoleDescription(req.getRoleDescription());
+        role.setIsActive(true);
+        role.setIsSystem(req.isSystem());
+        role.setCreatedAt(LocalDateTime.now());
+        role.setCreatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from security context
+        return roleRepository.save(role);
     }
 
     @Override
-    @Transactional
-    public Role update(long id, ReqRoleDTO req) {
-        Role currentRole = this.roleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Role với id " + id + " không tồn tại"));
-
-        if (isSystemRole(currentRole)) {
-            throw new BadRequestException("Không được chỉnh sửa role hệ thống " + currentRole.getName());
-        }
-
-        String newName = normalizeRoleName(req.getName());
-        if (newName.isBlank()) {
-            throw new BadRequestException("Tên role không được để trống");
-        }
-        if (isSystemRoleName(newName)) {
-            throw new BadRequestException("Không được đổi role thường thành tên role hệ thống");
-        }
-        String currentName = normalizeRoleName(currentRole.getName());
-
-        if (!currentName.equalsIgnoreCase(newName) && this.roleRepository.existsByName(newName)) {
-            throw new BadRequestException("Role với tên " + req.getName() + " đã tồn tại");
-        }
-
-        currentRole.setName(newName);
-        currentRole.setDescription(req.getDescription());
-        currentRole.setActive(req.isActive());
-
-        this.roleRepository.save(currentRole);
-
-        if (req.getPermissionIds() != null) {
-            this.roleRepository.updateRolePermissions(currentRole.getId(), req.getPermissionIds());
-            this.permissionCacheService.evictUsersByRoleId(currentRole.getId());
-        }
-
-        return this.fetchById(currentRole.getId());
+    public List<ResRoleDTO> getAllRoles() {
+        return roleRepository.findAll();
     }
 
     @Override
-    public Role fetchById(long id) {
-        return this.roleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Role với id " + id + " không tồn tại"));
+    public List<User> getUsersByRole(Long id){
+        Role role = roleRepository.findById(id);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        return roleRepository.getUsersByRoleId(id);
+    }
+
+    @Override 
+    public List<User> findUsersNotInRole(String keyword, Long id){
+        Role role = roleRepository.findById(id);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        return roleRepository.searchUsersNotInRole(id, keyword);
     }
 
     @Override
-    public List<Role> fetchAll() {
-        return this.roleRepository.findAll();
+    public String updateUsersRole(List<Long> userIds, Long roleId) {
+        if (userIds == null || userIds.isEmpty()) {
+            throw new ConflictException("User list cannot be empty");
+        }
+        Long currentUserId = SecurityService.getCurrentUserId().orElseThrow();
+
+        if (userIds.contains(currentUserId)) {
+            throw new ConflictException("Cannot change your own role");
+        }
+        Role role = roleRepository.findById(roleId);
+        if (role == null) {
+            throw new ResourceNotFoundException(
+                    "Role not found with id " + roleId
+            );
+        }
+        if (!Boolean.TRUE.equals(role.getIsActive())) {
+            throw new ConflictException(
+                    "Cannot assign users to inactive role"
+            );
+        }
+        int updatedCount = roleRepository.updateUsersRole(userIds, roleId);
+        return "Cập nhật thành công role của " + updatedCount + " user";
     }
 
     @Override
-    @Transactional
-    public void delete(long id) {
-        Role role = this.fetchById(id);
-        if (isSystemRole(role)) {
-            throw new BadRequestException("Không được xóa role hệ thống " + role.getName());
+    public String setUsersToDefaultRole(List<Long> userIds){
+        if (userIds == null || userIds.isEmpty()) {
+            throw new ConflictException("User list cannot be empty");
         }
+        Long currentUserId = SecurityService.getCurrentUserId().orElseThrow();
 
-        long assignedUsers = this.userRepository.countByRoleId(role.getId());
-        if (assignedUsers > 0) {
-            throw new BadRequestException("Không thể xóa nhóm quyền đang có thành viên");
+        if (userIds.contains(currentUserId)) {
+            throw new ConflictException("Cannot change your own role");
         }
-
-        this.permissionCacheService.evictUsersByRoleId(role.getId());
-        this.roleRepository.delete(role);
+        int updatedCount = roleRepository.setUsersToDefaultRole(userIds);
+        return "Cập nhật thành công role của " + updatedCount + " user";
     }
 
     @Override
-    public List<ResUserDTO> fetchUsersByRoleId(long roleId) {
-        this.fetchById(roleId);
-
-        return this.userRepository.findByRoleId(roleId).stream()
-                .map(userMapper::userToResUserDTO)
-                .collect(Collectors.toList());
+    public Role updateRole(Long id, ReqRoleDTO req) {
+        Role role = roleRepository.findById(id);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        role.setRoleName(req.getRoleName());
+        role.setRoleDescription(req.getRoleDescription());
+        role.setIsActive(role.getIsActive()); // Keep the current active status
+        role.setUpdatedAt(LocalDateTime.now());
+        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from security context
+        return roleRepository.updateById(role);
     }
 
     @Override
-    public List<ResUserDTO> fetchAvailableUserRoleUsers() {
-        return this.userRepository.findByRoleName(ROLE_NORMAL_USER).stream()
-                .map(userMapper::userToResUserDTO)
-                .collect(Collectors.toList());
+    public Role updateRoleByRoleName(ReqRoleDTO req) {
+        Role role = roleRepository.findByRoleName(req.getRoleName());
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found");
+        }
+        role.setRoleName(req.getRoleName());
+        role.setRoleDescription(req.getRoleDescription());
+        role.setIsActive(role.getIsActive()); // Keep the current active status
+        role.setUpdatedAt(LocalDateTime.now());
+        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null)); // TODO: Replace with actual user ID from security context
+        return roleRepository.updateByRoleName(role);
     }
 
     @Override
-    @Transactional
-    public ResUserDTO addUserToRole(long roleId, long userId) {
-        Role targetRole = this.fetchById(roleId);
-
-        if (ROLE_NORMAL_USER.equalsIgnoreCase(targetRole.getName())) {
-            throw new BadRequestException("Không thể thêm nhân viên vào chính nhóm NORMAL_USER");
+    public Role updateActiveRole(Long id){
+        Role role = roleRepository.findById(id);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found with id " + id);
         }
-
-        if (ROLE_SUPER_ADMIN.equalsIgnoreCase(targetRole.getName())) {
-            throw new BadRequestException("Không thể thêm nhân viên vào nhóm SUPER_ADMIN");
+        if (roleRepository.checkIsSystemRole(id)) {
+            throw new ConflictException("Can't update status of system role");
         }
+        role.setUpdatedAt(LocalDateTime.now());
+        role.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
 
-        User user = this.userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User với id " + userId + " không tồn tại"));
-
-        if (user.getRole() == null || user.getRole().getName() == null
-                || !ROLE_NORMAL_USER.equalsIgnoreCase(user.getRole().getName())) {
-            throw new BadRequestException("Chỉ được thêm nhân viên đang thuộc role NORMAL_USER vào nhóm quyền khác");
-        }
-
-        user.setRole(targetRole);
-        user = this.userRepository.save(user);
-        this.permissionCacheService.evictUser(user.getId());
-
-        return this.userMapper.userToResUserDTO(user);
+        return roleRepository.changeRoleStatus(role);
     }
 
     @Override
-    @Transactional
-    public ResUserDTO removeUserFromRole(long roleId, long userId) {
-        Role currentRole = this.fetchById(roleId);
-
-        if (ROLE_NORMAL_USER.equalsIgnoreCase(currentRole.getName())
-                || ROLE_SUPER_ADMIN.equalsIgnoreCase(currentRole.getName())) {
-            throw new BadRequestException("Không thể loại người dùng khỏi nhóm hệ thống NORMAL_USER hoặc SUPER_ADMIN");
+    public void deleteRole(Long id){
+        Role role = roleRepository.findById(id);
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found with id " + id);
         }
 
-        Role normalUserRole = this.roleRepository.findByName(ROLE_NORMAL_USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Role NORMAL_USER không tồn tại"));
-
-        User user = this.userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User với id " + userId + " không tồn tại"));
-
-        if (user.getRole() == null || user.getRole().getId() != roleId) {
-            throw new BadRequestException("Người dùng không thuộc nhóm đang chọn");
+        if (roleRepository.checkIsSystemRole(id)) {
+            throw new ConflictException("Can't delete system role");
         }
-
-        user.setRole(normalUserRole);
-        user = this.userRepository.save(user);
-        this.permissionCacheService.evictUser(user.getId());
-
-        return this.userMapper.userToResUserDTO(user);
-    }
-
-    private boolean isSystemRole(Role role) {
-        return role != null && isSystemRoleName(role.getName());
-    }
-
-    private boolean isSystemRoleName(String roleName) {
-        String normalized = normalizeRoleName(roleName);
-        return ROLE_NORMAL_USER.equalsIgnoreCase(normalized)
-                || ROLE_SUPER_ADMIN.equalsIgnoreCase(normalized);
-    }
-
-    private String normalizeRoleName(String roleName) {
-        return roleName == null ? "" : roleName.trim();
+        roleRepository.delete(role);
     }
 
 }

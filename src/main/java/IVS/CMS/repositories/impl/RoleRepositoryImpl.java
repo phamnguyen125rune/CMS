@@ -1,127 +1,355 @@
 package IVS.CMS.repositories.impl;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.Role;
-import IVS.CMS.repositories.PermissionRepository;
+import IVS.CMS.domain.User;
 import IVS.CMS.repositories.RoleRepository;
 import IVS.CMS.repositories.rowMapper.RoleRowMapper;
+import IVS.CMS.repositories.rowMapper.UserRowMapper;
+import IVS.CMS.security.SecurityService;
+import IVS.CMS.services.dto.response.role.PermissionLinkDTO;
+import IVS.CMS.services.dto.response.role.ResRoleDTO;
 
 @Repository
 public class RoleRepositoryImpl implements RoleRepository {
+
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final RoleRowMapper mapperDb;
-    private final PermissionRepository permissionRepository;
+    private final UserRowMapper userRowMapper;
 
-    public RoleRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, RoleRowMapper mapperDb,
-            PermissionRepository permissionRepository) {
+    public RoleRepositoryImpl(
+            NamedParameterJdbcTemplate jdbcTemplate,
+            RoleRowMapper mapperDb,
+            UserRowMapper userRowMapper
+    ) {
         this.jdbcTemplate = jdbcTemplate;
         this.mapperDb = mapperDb;
-        this.permissionRepository = permissionRepository;
+        this.userRowMapper = userRowMapper;
     }
 
     @Override
     public Role save(Role role) {
-        if (role.getId() == 0) {
-            role.handleBeforeCreate();
-            String sql = "INSERT INTO roles (name, description, active, created_at, created_by, updated_at, updated_by) "
-                    + "VALUES (:name, :description, :active, :createdAt, :createdBy, :updatedAt, :updatedBy)";
+
+        if (role.getRoleId() == 0) {
+
+            String sql = """
+                    INSERT INTO roles (
+                        role_name,
+                        role_description,
+                        is_active,
+                        is_system,
+                        created_at,
+                        created_by
+                    )
+                    VALUES (
+                        :roleName,
+                        :roleDescription,
+                        :isActive,
+                        :isSystem,
+                        :createdAt,
+                        :createdBy
+                    )
+                    """;
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(sql, mapperDb.toParams(role), keyHolder, new String[] { "id" });
 
-            if (keyHolder.getKey() != null) {
-                role.setId(keyHolder.getKey().longValue());
+            jdbcTemplate.update(
+                    sql,
+                    mapperDb.toParams(role),
+                    keyHolder,
+                    new String[]{"role_id"}
+            );
+
+            Number key = keyHolder.getKey();
+
+            if (key != null) {
+                role.setRoleId(key.longValue());
             }
-        } else {
-            role.handleUpdate();
-            String sql = "UPDATE roles SET name = :name, description = :description, active = :active, "
-                    + "updated_at = :updatedAt, updated_by = :updatedBy WHERE id = :id";
 
-            MapSqlParameterSource params = mapperDb.toParams(role);
-            params.addValue("id", role.getId());
-            jdbcTemplate.update(sql, params);
         }
+
         return role;
     }
 
     @Override
-    public Optional<Role> findById(long id) {
-        String sql = "SELECT * FROM roles WHERE id = :id";
-        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
-        Optional<Role> roleOpt = jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+    public List<ResRoleDTO> findAll() {
 
-        roleOpt.ifPresent(role -> {
-            role.setPermissions(permissionRepository.findByRoleId(role.getId()));
-        });
+        String roleSql = """
+            SELECT
+                r.role_id,
+                r.role_name,
+                r.role_description,
+                r.is_active,
+                r.is_system,
+                COUNT(u.user_id) AS member_count
+            FROM roles r
+            LEFT JOIN users u
+                ON r.role_id = u.role_id
+            GROUP BY
+                r.role_id,
+                r.role_name,
+                r.role_description,
+                r.is_active,
+                r.is_system
+            ORDER BY r.role_id ASC
+            """;
 
-        return roleOpt;
+        String permissionSql = """
+            SELECT
+                rp.role_id,
+                a.api_link,
+                ac.action_name
+            FROM role_permission rp
+            JOIN permissions p
+                ON rp.permission_id = p.permission_id
+            JOIN apis a
+                ON p.api_id = a.api_id
+            JOIN actions ac
+                ON p.action_id = ac.action_id
+            ORDER BY rp.role_id ASC, p.permission_id ASC
+            """;
+
+        // Query roles + member count
+        List<Map<String, Object>> roleRows =
+                jdbcTemplate.queryForList(roleSql,
+                    new MapSqlParameterSource());
+
+        // Query permissions
+        List<Map<String, Object>> permissionRows =
+                jdbcTemplate.queryForList(permissionSql,
+                        new MapSqlParameterSource());
+
+        // Group permissions theo role_id
+        Map<Long, List<PermissionLinkDTO>> permissionsByRole =
+                permissionRows.stream()
+                        .collect(Collectors.groupingBy(
+                                row -> ((Number) row.get("role_id")).longValue(),
+                                Collectors.mapping(
+                                        row -> new PermissionLinkDTO(
+                                                (String) row.get("api_link"),
+                                                (String) row.get("action_name")
+                                        ),
+                                        Collectors.toList()
+                                )
+                        ));
+
+        return roleRows.stream()
+                .map(row -> {
+
+                    long roleId = ((Number) row.get("role_id")).longValue();
+
+                    ResRoleDTO dto = new ResRoleDTO();
+
+                    dto.setRoleId(roleId);
+                    dto.setRoleName((String) row.get("role_name"));
+                    dto.setRoleDescription((String) row.get("role_description"));
+                    dto.setIsActive((Boolean) row.get("is_active"));
+                    dto.setIsSystem((Boolean) row.get("is_system"));
+
+                    dto.setMemmberCount(
+                            ((Number) row.get("member_count")).longValue()
+                    );
+
+                    dto.setPermissions(
+                            permissionsByRole.getOrDefault(
+                                    roleId,
+                                    Collections.emptyList()
+                            )
+                    );
+
+                    return dto;
+                })
+                .toList();
     }
 
     @Override
-    public List<Role> findAll() {
-        String sql = "SELECT * FROM roles";
-        List<Role> roles = jdbcTemplate.query(sql, mapperDb);
-        roles.forEach(role -> role.setPermissions(permissionRepository.findByRoleId(role.getId())));
-        return roles;
+    public List<User> getUsersByRoleId(Long roleId) {
+        String sql = """
+            SELECT *
+            FROM users
+            WHERE role_id = :roleId
+            """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("roleId", roleId);
+
+        return jdbcTemplate.query(sql, params, userRowMapper);
+    }
+    
+    @Override
+    public Role updateById(Role role) {
+        String sql = """
+                UPDATE roles
+                SET
+                    role_name = :roleName,
+                    role_description = :roleDescription,
+                    is_active = :isActive,
+                    is_system = :isSystem,
+                    updated_at = :updatedAt,
+                    updated_by = :updatedBy
+                WHERE role_id = :roleId
+                """;
+
+        jdbcTemplate.update(
+                sql,
+                mapperDb.toParams(role)
+        );
+
+        return role;
     }
 
     @Override
-    @Transactional
-    public void delete(Role role) {
-        String deleteMappingSql = "DELETE FROM role_permission WHERE role_id = :roleId";
-        jdbcTemplate.update(deleteMappingSql, new MapSqlParameterSource("roleId", role.getId()));
+    public Role updateByRoleName(Role role) {
+        String sql = """
+                UPDATE roles
+                SET
+                    role_name = :roleName,
+                    role_description = :roleDescription,
+                    is_active = :isActive,
+                    is_system = :isSystem,
+                    updated_at = :updatedAt,
+                    updated_by = :updatedBy
+                WHERE role_name = :roleName
+                """;
 
-        String sql = "DELETE FROM roles WHERE id = :id";
-        jdbcTemplate.update(sql, new MapSqlParameterSource("id", role.getId()));
+        jdbcTemplate.update(
+                sql,
+                mapperDb.toParams(role)
+        );
+
+        return role;
     }
 
     @Override
-    @Transactional
-    public void updateRolePermissions(long roleId, List<Long> permissionIds) {
-        String deleteSql = "DELETE FROM role_permission WHERE role_id = :roleId";
-        jdbcTemplate.update(deleteSql, new MapSqlParameterSource("roleId", roleId));
+    public Role findById(Long id) {
+        String sql = "SELECT * FROM roles WHERE role_id = :id";
+        List<Role> roles = jdbcTemplate.query(sql, new MapSqlParameterSource("id", id), mapperDb);
+        return roles.isEmpty() ? null : roles.get(0);
+    }
 
-        if (permissionIds != null && !permissionIds.isEmpty()) {
-            String insertSql = "INSERT INTO role_permission (role_id, permission_id) VALUES (:roleId, :permissionId)";
+    @Override
+    public Role findByRoleName(String roleName) {
+        String sql = "SELECT * FROM roles WHERE LOWER(role_name) = LOWER(:roleName)";
+        List<Role> roles = jdbcTemplate.query(sql, new MapSqlParameterSource("roleName", roleName), mapperDb);
+        return roles.isEmpty() ? null : roles.get(0);
+    }
 
-            MapSqlParameterSource[] batchParams = permissionIds.stream()
-                    .map(permissionId -> new MapSqlParameterSource()
-                            .addValue("roleId", roleId)
-                            .addValue("permissionId", permissionId))
-                    .toArray(MapSqlParameterSource[]::new);
+    @Override
+    public Role changeRoleStatus(Role role) {
 
-            jdbcTemplate.batchUpdate(insertSql, batchParams);
+        String sql = """
+                UPDATE roles
+                SET is_active = NOT is_active,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE role_id = :id
+                """;
+
+        int rowsAffected = jdbcTemplate.update(
+                sql,
+                new MapSqlParameterSource("id", role.getRoleId())
+        );
+
+        if (rowsAffected == 0) {
+            return null;
         }
 
+        return role;
+    }
+
+    @Override 
+    public List<User> searchUsersNotInRole(Long roleId, String keyword) {
+        String sql = """
+                SELECT *
+                FROM users
+                WHERE role_id <> :roleId
+                  AND user_id <> :currentUserId
+                  AND
+                   (
+                        employee_code LIKE :keyword
+                        OR full_name LIKE :keyword
+                        OR email LIKE :keyword
+                  )
+                ORDER BY full_name ASC
+                """;
+        
+        String searchKeyword = "%" + (keyword == null ? "" : keyword.trim()) + "%";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("roleId", roleId)
+                .addValue("keyword", searchKeyword)
+                .addValue("currentUserId", SecurityService.getCurrentUserId().orElse(null));
+        return jdbcTemplate.query(sql, params, userRowMapper);
     }
 
     @Override
-    public boolean existsByName(String name) {
-        String sql = "SELECT COUNT(1) FROM roles WHERE name = :name";
-        MapSqlParameterSource params = new MapSqlParameterSource("name", name);
-        Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
-        return count != null && count > 0;
+    public int updateUsersRole(List<Long> userIds, Long roleId) {
+        if (userIds == null || userIds.isEmpty()) {
+            return 0;
+        }
+
+        String sql = """
+                UPDATE users
+                SET
+                    role_id = :roleId,
+                    updated_at = CURRENT_TIMESTAMP,
+                    updated_by = :currentUserId
+                WHERE user_id IN (:userIds)
+                """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("roleId", roleId)
+                .addValue("userIds", userIds)
+                .addValue("currentUserId", SecurityService.getCurrentUserId().orElse(null));
+
+        return jdbcTemplate.update(sql, params);
+    }
+
+    @Override 
+    public int setUsersToDefaultRole(List<Long> userIds){
+                if (userIds == null || userIds.isEmpty()) {
+            return 0;
+        }
+
+        String sql = """
+                UPDATE users
+                SET
+                    role_id = (
+                        SELECT role_id
+                        FROM roles
+                        WHERE role_name = 'DEFAULT_ROLE'
+                        LIMIT 1
+                    ),
+                    updated_at = CURRENT_TIMESTAMP,
+                    updated_by = :currentUserId
+                WHERE user_id IN (:userIds)
+                """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userIds", userIds)
+                .addValue("currentUserId", SecurityService.getCurrentUserId().orElse(null));
+
+        return jdbcTemplate.update(sql, params);
     }
 
     @Override
-    public Optional<Role> findByName(String name) {
-        String sql = "SELECT * FROM roles WHERE LOWER(name) = LOWER(:name)";
-        MapSqlParameterSource params = new MapSqlParameterSource("name", name);
-        Optional<Role> roleOpt = jdbcTemplate.query(sql, params, mapperDb).stream().findFirst();
+    public void delete(Role role) {
+        String sql = "DELETE FROM roles WHERE role_id = :id";
+        jdbcTemplate.update(sql, new MapSqlParameterSource("id", role.getRoleId()));
+    }
 
-        roleOpt.ifPresent(role -> {
-            role.setPermissions(permissionRepository.findByRoleId(role.getId()));
-        });
-
-        return roleOpt;
+    @Override
+    public Boolean checkIsSystemRole(Long id) {
+        String sql = "SELECT is_system FROM roles WHERE role_id = :id";
+        Boolean isSystem = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource("id", id), Boolean.class);
+        return isSystem != null && isSystem;
     }
 }
