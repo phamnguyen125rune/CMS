@@ -63,6 +63,7 @@ public class SecurityConfiguration {
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/v1/posts/public/**",
                                                                 "/api/v1/categories/**",
+                                                                "/api/v1/categories",
                                                                 "/api/v1/tags/**",
                                                                 "/api/v1/comments/**",
                                                                 "/api/v1/media/**",

@@ -47,7 +47,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    @PreAuthorize("@permissionService.hasPermission('category', 'VIEW')")
+    // @PreAuthorize("@permissionService.hasPermission('category', 'VIEW')")
     public ResponseEntity<List<PostCategory>> getAllCategories() {
         return ResponseEntity.ok(this.categoryService.fetchAll());
     }

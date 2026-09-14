@@ -1,6 +1,7 @@
 package IVS.CMS.services.impl;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.RefreshToken;
+import IVS.CMS.domain.Role;
 import IVS.CMS.domain.User;
 import IVS.CMS.repositories.RefreshTokenRepository;
 import IVS.CMS.security.SecurityService;
@@ -33,12 +35,15 @@ public class AuthTokenServiceImpl implements AuthTokenService {
     @Override
     @Transactional
     public ResLoginDTO issueTokens(User user, HttpServletResponse response) {
+        ResLoginDTO.RoleLogin roleLogin = toRoleLogin(user.getRole());
+
         ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
                 user.getUserId(),
                 user.getEmail(),
                 user.getEmployeeCode(),
                 user.getFullName(),
-                user.getAvatarUrl());
+                user.getAvatarUrl(),
+                roleLogin);
 
         String accessToken = securityService.createAccessToken(userLogin);
         String refreshToken = securityService.createRefreshToken(userLogin);
@@ -73,5 +78,16 @@ public class AuthTokenServiceImpl implements AuthTokenService {
                 .maxAge(maxAge)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private ResLoginDTO.RoleLogin toRoleLogin(Role role) {
+        if (role == null) {
+            return null;
+        }
+
+        return new ResLoginDTO.RoleLogin(
+                role.getRoleId(),
+                role.getRoleName(),
+                List.of());
     }
 }

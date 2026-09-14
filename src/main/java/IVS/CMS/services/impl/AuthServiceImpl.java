@@ -2,6 +2,7 @@ package IVS.CMS.services.impl;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import IVS.CMS.domain.RefreshToken;
+import IVS.CMS.domain.Role;
 import IVS.CMS.domain.User;
 import IVS.CMS.repositories.RefreshTokenRepository;
 import IVS.CMS.repositories.UserRepository;
@@ -114,12 +116,14 @@ public class AuthServiceImpl implements AuthService {
         User currentUser = userService.handleGetUserByEmailOrEmployeeCode(loginId);
         ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
         if (currentUser != null) {
+            ResLoginDTO.RoleLogin roleLogin = toRoleLogin(currentUser.getRole());
             userGetAccount.setUser(new ResLoginDTO.UserLogin(
                     currentUser.getUserId(),
                     currentUser.getEmail(),
                     currentUser.getEmployeeCode(),
                     currentUser.getFullName(),
-                    currentUser.getAvatarUrl()));
+                    currentUser.getAvatarUrl(),
+                    roleLogin));
         }
         return userGetAccount;
     }
@@ -184,5 +188,16 @@ public class AuthServiceImpl implements AuthService {
     private long resolveLockMinutes(int lockCount) {
         int index = Math.max(0, Math.min(lockCount - 1, LOCK_MINUTES.length - 1));
         return LOCK_MINUTES[index];
+    }
+
+    private ResLoginDTO.RoleLogin toRoleLogin(Role role) {
+        if (role == null) {
+            return null;
+        }
+
+        return new ResLoginDTO.RoleLogin(
+                role.getRoleId(),
+                role.getRoleName(),
+                List.of());
     }
 }
