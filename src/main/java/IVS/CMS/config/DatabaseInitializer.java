@@ -397,6 +397,18 @@ public class DatabaseInitializer {
                                 updated_by INTEGER UNSIGNED
                             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+                            -- ============================================================
+                            -- 21. OAUTH LOGIN TICKETS
+                            -- ============================================================
+                            CREATE TABLE IF NOT EXISTS oauth_login_tickets (
+                                ticket_hash CHAR(64) NOT NULL PRIMARY KEY,
+                                user_id INTEGER UNSIGNED NOT NULL,
+                                expired_at DATETIME(6) NOT NULL,
+                                created_at DATETIME(6) NOT NULL,
+                                CONSTRAINT fk_oauth_login_ticket_user
+                                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
             CREATE TABLE IF NOT EXISTS collaborator (
                 collab_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 collab_name VARCHAR(255) NOT NULL,
