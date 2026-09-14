@@ -13,6 +13,7 @@ public class User {
     private String employeeCode;
     private String fullName;
     private String email;
+    private String googleSub;
     private String passwordHash;
     private String avatarUrl;
     private String phoneNumber;
