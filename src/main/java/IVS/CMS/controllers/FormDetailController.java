@@ -106,4 +106,9 @@ public class FormDetailController {
 
         return ResponseEntity.ok(response);
     }
+    @PostMapping("/sync-gmail")
+public ResponseEntity<?> syncGmail() {
+    formDetailService.syncEmailsFromGmail();
+    return ResponseEntity.ok("Đồng bộ thư mới từ Gmail thành công");
+}
 }

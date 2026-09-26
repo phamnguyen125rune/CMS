@@ -30,7 +30,10 @@ public class SecurityConfiguration {
                         "/api/v1/auth/forgot-password/request-otp",
                         "/api/v1/auth/forgot-password/verify-otp",
                         "/api/v1/auth/forgot-password/reset",
-                        "/api/v1/menus/**"
+                        "/api/v1/menus/**",
+                        "/api/v1/gmail/oauth/**",       // Cho phép trình duyệt gọi luồng OAuth Google
+                        "/api/v1/form-details",         // Cho phép khách gửi form liên hệ ngoài website
+                        "/api/v1/form-categories/**"    // Cho phép lấy danh mục form ra ngoài website
         };
 
         @Bean
@@ -59,6 +62,7 @@ public class SecurityConfiguration {
                                                                 "/api/v1/tags/**",
                                                                 "/api/v1/comments/**",
                                                                 "/api/v1/media/**",
+                                                                
                                                                 "/api/v1/general-info")
                                                 .permitAll()
                                                 .anyRequest().authenticated())

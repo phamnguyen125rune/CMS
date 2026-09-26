@@ -17,5 +17,8 @@ public class FormDetail {
     private String message;
     private String status;
     private String replyMessage;
+    private String gmailMessageId;
+    private String gmailThreadId;
+    private LocalDateTime repliedAt;
     private LocalDateTime createdAt;
 }

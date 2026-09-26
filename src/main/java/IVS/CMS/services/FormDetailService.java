@@ -12,4 +12,5 @@ public interface FormDetailService {
     FormDetail replyFormDetail(Long id, ReqReplyFormDetailDTO dto);
     void deleteFormDetail(Long id);
     FormDetail updateFormDetailStatus(Long id, String status);
+    void syncEmailsFromGmail();
 }

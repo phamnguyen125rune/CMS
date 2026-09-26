@@ -30,11 +30,11 @@ public class FormDetailRepositoryImpl implements FormDetailRepository {
 
     @Override
     public FormDetail save(FormDetail formDetail) {
-        // Tự động tạo formCode nếu chưa có (Ví dụ: FORM-...)
         String formCode = formDetail.getFormCode() != null ? formDetail.getFormCode() : "FORM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         
-        String sql = "INSERT INTO form_details (form_code, full_name, email, phone_number, company, form_category_id, message, status, created_at) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // Bổ sung lưu gmail_message_id và gmail_thread_id
+        String sql = "INSERT INTO form_details (form_code, full_name, email, phone_number, company, form_category_id, message, status, gmail_message_id, gmail_thread_id, created_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         LocalDateTime now = LocalDateTime.now();
 
@@ -48,7 +48,9 @@ public class FormDetailRepositoryImpl implements FormDetailRepository {
             ps.setLong(6, formDetail.getFormCategoryId());
             ps.setString(7, formDetail.getMessage());
             ps.setString(8, formDetail.getStatus());
-            ps.setTimestamp(9, Timestamp.valueOf(now));
+            ps.setString(9, formDetail.getGmailMessageId());
+            ps.setString(10, formDetail.getGmailThreadId());
+            ps.setTimestamp(11, Timestamp.valueOf(now));
             return ps;
         }, keyHolder);
 
@@ -117,20 +119,35 @@ public class FormDetailRepositoryImpl implements FormDetailRepository {
 
     @Override
     public void updateStatus(Long id, String status) {
-        // Trong model FormDetail bạn không có updatedAt, nên tôi chỉ update status
         String sql = "UPDATE form_details SET status = ? WHERE form_id = ?";
         jdbcTemplate.update(sql, status, id);
     }
 
     @Override
-    public void updateReply(Long id, String replyMessage, String status) {
-        String sql = "UPDATE form_details SET reply_message = ?, status = ? WHERE form_id = ?";
-        jdbcTemplate.update(sql, replyMessage, status, id);
+    public void updateReply(Long id, String replyMessage, String status, String gmailMessageId, String gmailThreadId, LocalDateTime repliedAt) {
+        String sql = "UPDATE form_details SET reply_message = ?, status = ?, gmail_message_id = ?, gmail_thread_id = ?, replied_at = ? WHERE form_id = ?";
+        jdbcTemplate.update(
+                sql,
+                replyMessage,
+                status,
+                gmailMessageId,
+                gmailThreadId,
+                repliedAt != null ? Timestamp.valueOf(repliedAt) : null,
+                id
+        );
     }
 
     @Override
     public void deleteById(Long id) {
         String sql = "DELETE FROM form_details WHERE form_id = ?";
         jdbcTemplate.update(sql, id);
+    }
+
+    @Override
+    public boolean existsByGmailMessageId(String gmailMessageId) {
+        if (gmailMessageId == null || gmailMessageId.isBlank()) return false;
+        String sql = "SELECT COUNT(*) FROM form_details WHERE gmail_message_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, gmailMessageId);
+        return count != null && count > 0;
     }
 }
