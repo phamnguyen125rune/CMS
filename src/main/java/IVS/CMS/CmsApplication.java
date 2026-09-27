@@ -14,7 +14,10 @@ public class CmsApplication {
     }
 
     private static void loadDotEnv() {
-        File envFile = new File("CMS/.env");
+        File envFile = new File(".env");
+        if (!envFile.exists()) {
+            envFile = new File("CMS/.env");
+        }
         if (envFile.exists()) {
             try {
                 Files.readAllLines(envFile.toPath()).forEach(line -> {

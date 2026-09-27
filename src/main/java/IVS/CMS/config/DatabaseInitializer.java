@@ -171,20 +171,24 @@ public class DatabaseInitializer {
                 CONSTRAINT fk_refresh_token_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-            
-            -- 8. AUDIT LOGS
-            
-            CREATE TABLE IF NOT EXISTS audit_logs (
-                log_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                user_id INTEGER UNSIGNED,
-                entity_type VARCHAR(255) NOT NULL,
-                entity_id INTEGER NOT NULL,
-                action VARCHAR(255) NOT NULL,
-                old_value TEXT,
-                new_value TEXT,
-                created_at DATETIME(6),
-                status_code INTEGER NOT NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                            -- ============================================================
+                            -- 8. AUDIT LOGS
+                            -- ============================================================
+                            CREATE TABLE IF NOT EXISTS audit_logs (
+                                log_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                                user_id INTEGER UNSIGNED,
+                                entity_type VARCHAR(255) NOT NULL,
+                                entity_id INTEGER NOT NULL,
+                                action VARCHAR(255) NOT NULL,
+                                old_value TEXT,
+                                new_value TEXT,
+                                created_at DATETIME(6),
+                                status_code INTEGER NOT NULL,
+                                INDEX idx_audit_created_at (created_at DESC),
+                                INDEX idx_audit_entity (entity_type, entity_id, created_at DESC),
+                                INDEX idx_audit_user (user_id, created_at DESC),
+                                INDEX idx_audit_status (status_code, created_at DESC)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
             
             -- 9. MEDIA LIBRARY
