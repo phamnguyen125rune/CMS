@@ -19,6 +19,7 @@ import IVS.CMS.services.UserService;
 import IVS.CMS.services.dto.request.ReqChangePasswordDTO;
 import IVS.CMS.services.dto.request.ReqEmailDTO;
 import IVS.CMS.services.dto.request.ReqLoginDTO;
+import IVS.CMS.services.dto.request.ReqOAuthExchangeDTO;
 import IVS.CMS.services.dto.request.ReqResetPasswordWithOtpDTO;
 import IVS.CMS.services.dto.request.ReqVerifyOtpDTO;
 import IVS.CMS.services.dto.response.ResLoginDTO;
@@ -49,6 +50,13 @@ public class AuthController {
     @PostMapping("/auth/login")
     public ResponseEntity<ResLoginDTO> login(@Valid @RequestBody ReqLoginDTO loginDTO, HttpServletResponse response) {
         return ResponseEntity.ok(this.authService.login(loginDTO, response));
+    }
+
+    @PostMapping("/auth/oauth/exchange")
+    public ResponseEntity<ResLoginDTO> exchangeOAuthCode(
+            @Valid @RequestBody ReqOAuthExchangeDTO req,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(this.authService.exchangeOAuthCode(req.getCode(), response));
     }
 
     @GetMapping("/auth/refresh")

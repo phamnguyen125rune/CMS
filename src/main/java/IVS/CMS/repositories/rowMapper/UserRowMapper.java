@@ -25,6 +25,7 @@ public class UserRowMapper implements RowMapper<User> {
         user.setEmployeeCode(rs.getString("employee_code"));
         user.setFullName(rs.getString("full_name"));
         user.setEmail(rs.getString("email"));
+        user.setGoogleSub(rs.getString("google_sub"));
         user.setPasswordHash(rs.getString("password_hash"));
         user.setAvatarUrl(rs.getString("avatar_url"));
         user.setPhoneNumber(rs.getString("phone_number"));
@@ -87,6 +88,7 @@ public class UserRowMapper implements RowMapper<User> {
                 .addValue("employeeCode", user.getEmployeeCode())
                 .addValue("fullName", user.getFullName())
                 .addValue("email", user.getEmail())
+                .addValue("googleSub", user.getGoogleSub())
                 .addValue("passwordHash", user.getPasswordHash())
                 .addValue("avatarUrl", user.getAvatarUrl())
                 .addValue("phoneNumber", user.getPhoneNumber())

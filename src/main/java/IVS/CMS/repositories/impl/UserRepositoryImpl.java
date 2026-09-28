@@ -27,12 +27,12 @@ public class UserRepositoryImpl implements UserRepository {
         if (user.getUserId() == null || user.getUserId() == 0) {
             String sql = """
                     INSERT INTO users (
-                        employee_code, full_name, email, password_hash, avatar_url, phone_number,
+                        employee_code, full_name, email, google_sub, password_hash, avatar_url, phone_number,
                         date_of_birth, gender, address, role_id, is_active, is_system,
                         failed_login_attempts, lock_count, locked_until,
                         deleted_at, deleted_by, created_at, created_by, updated_at, updated_by
                     ) VALUES (
-                        :employeeCode, :fullName, :email, :passwordHash, :avatarUrl, :phoneNumber,
+                        :employeeCode, :fullName, :email, :googleSub, :passwordHash, :avatarUrl, :phoneNumber,
                         :dateOfBirth, :gender, :address, :roleId, :isActive, :isSystem,
                         :failedLoginAttempts, :lockCount, :lockedUntil,
                         :deletedAt, :deletedBy, :createdAt, :createdBy, :updatedAt, :updatedBy
@@ -48,6 +48,7 @@ public class UserRepositoryImpl implements UserRepository {
                     UPDATE users
                     SET full_name = :fullName,
                         email = :email,
+                        google_sub = :googleSub,
                         password_hash = :passwordHash,
                         avatar_url = :avatarUrl,
                         phone_number = :phoneNumber,
@@ -152,6 +153,33 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public User findByGoogleSub(String googleSub) {
+        String sql = """
+                SELECT u.*, r.role_name, r.role_description, r.is_active AS role_is_active
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.role_id
+                WHERE u.google_sub = :googleSub
+                """;
+        return jdbcTemplate.query(sql, new MapSqlParameterSource("googleSub", googleSub), mapperDb).stream().findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public void updateGoogleSub(long userId, String googleSub, LocalDateTime updatedAt) {
+        String sql = """
+                UPDATE users
+                SET google_sub = :googleSub,
+                    updated_at = :updatedAt
+                WHERE user_id = :userId
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("googleSub", googleSub)
+                .addValue("updatedAt", updatedAt);
+        jdbcTemplate.update(sql, params);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         String sql = "SELECT COUNT(1) FROM users WHERE LOWER(email) = LOWER(:email)";
         Integer count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource("email", email), Integer.class);
@@ -175,7 +203,6 @@ public class UserRepositoryImpl implements UserRepository {
                 Integer.class);
         return count != null && count > 0;
     }
-
 
     @Override
     public String findMaxEmployeeCode() {

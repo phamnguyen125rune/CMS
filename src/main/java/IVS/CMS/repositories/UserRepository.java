@@ -19,6 +19,10 @@ public interface UserRepository {
 
     User findByEmail(String email);
 
+    User findByGoogleSub(String googleSub);
+
+    void updateGoogleSub(long userId, String googleSub, LocalDateTime updatedAt);
+
     boolean existsByEmail(String email);
 
     int softDelete(long userId, long currentUserId, LocalDateTime deletedAt);
@@ -30,7 +34,6 @@ public interface UserRepository {
     boolean existsByEmailForUpdate(long userId, String email);
 
     boolean existsByPhoneNumber(String phoneNumber);
-
 
     Optional<User> findByIdIncludeDeleted(long userId);
 

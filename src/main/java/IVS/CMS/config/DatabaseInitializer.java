@@ -135,7 +135,8 @@ public class DatabaseInitializer {
                 employee_code VARCHAR(50) UNIQUE,
                 full_name VARCHAR(60) NOT NULL,
                 email VARCHAR(100) NOT NULL UNIQUE,
-                password_hash VARCHAR(255) NOT NULL,
+                google_sub VARCHAR(255) UNIQUE,
+                password_hash VARCHAR(255) NULL,
                 avatar_url VARCHAR(255) DEFAULT '/images/default-avatar.png',
                 phone_number VARCHAR(15) UNIQUE,
                 date_of_birth DATE,
@@ -490,9 +491,19 @@ public class DatabaseInitializer {
                                 updated_by INTEGER UNSIGNED
                             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+            -- 21. OAUTH LOGIN TICKETS
+
+            CREATE TABLE IF NOT EXISTS oauth_login_tickets (
+                ticket_hash CHAR(64) NOT NULL PRIMARY KEY,
+                user_id INTEGER UNSIGNED NOT NULL,
+                expired_at DATETIME(6) NOT NULL,
+                created_at DATETIME(6) NOT NULL,
+                CONSTRAINT fk_oauth_login_ticket_user
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-            -- 21. COLLABORATORS
+            -- 22. COLLABORATORS
 
             CREATE TABLE IF NOT EXISTS collaborator (
                 collab_id BIGINT AUTO_INCREMENT PRIMARY KEY,
