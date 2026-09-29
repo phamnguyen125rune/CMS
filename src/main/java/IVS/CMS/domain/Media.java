@@ -25,4 +25,6 @@ public class Media {
     @NotBlank(message = "Uploaded by cannot be blank")
     private Long uploadedBy;
     private LocalDateTime uploadedAt;
+    private Integer mediaWidth;
+    private Integer mediaHeight;
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
+
+import IVS.CMS.services.dto.request.ReqMediaResize;
 import IVS.CMS.services.dto.response.ResMediaDTO;
 
 public interface MediaService {
@@ -17,6 +19,8 @@ public interface MediaService {
     List<ResMediaDTO> getAllMedia();
 
     List<ResMediaDTO> searchAndFilter(String keyword, String fileType);
+
+    ResMediaDTO resize(long id, ReqMediaResize request);
 
     void delete(long mediaId);
 }

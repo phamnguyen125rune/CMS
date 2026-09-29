@@ -205,7 +205,9 @@ public class DatabaseInitializer {
                 updated_by INTEGER UNSIGNED,
                 updated_at DATETIME(6),
                 uploaded_at DATETIME(6),
-                uploaded_by INTEGER UNSIGNED
+                uploaded_by INTEGER UNSIGNED,
+                media_width INT UNSIGNED NULL,
+                media_height INT UNSIGNED NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

@@ -16,4 +16,6 @@ public class ResMediaDTO {
     private int fileSize;
     private Long uploadedBy;
     private LocalDateTime uploadedAt;
+    private Integer mediaWidth;
+    private Integer mediaHeight;
 }

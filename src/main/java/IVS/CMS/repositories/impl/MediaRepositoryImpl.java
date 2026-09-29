@@ -40,6 +40,8 @@ public class MediaRepositoryImpl implements MediaRepository {
                         mime_type,
                         file_type,
                         file_size,
+                        media_width,
+                        media_height,
                         uploaded_by,
                         uploaded_at
                     )
@@ -50,6 +52,8 @@ public class MediaRepositoryImpl implements MediaRepository {
                         :mimeType,
                         :fileType,
                         :fileSize,
+                        :mediaWidth,
+                        :mediaHeight,
                         :uploadedBy,
                         :uploadedAt
                     )
@@ -77,6 +81,8 @@ public class MediaRepositoryImpl implements MediaRepository {
                         mime_type = :mimeType,
                         file_type = :fileType,
                         file_size = :fileSize,
+                        media_width = :mediaWidth,
+                        media_height = :mediaHeight,
                         uploaded_by = :uploadedBy,
                         uploaded_at = :uploadedAt
                     WHERE media_id = :media_id
@@ -211,18 +217,24 @@ public class MediaRepositoryImpl implements MediaRepository {
 
         sql.append("""
                 ORDER BY uploaded_at DESC
-                                """);
+                """);
 
         return jdbcTemplate.query(sql.toString(), params, mapperDb);
     }
 
     @Override
     public boolean existsInPostMedia(long mediaId) {
+
         String sql = """
                 SELECT EXISTS(
                     SELECT 1
                     FROM post_media
                     WHERE media_id = :mediaId
+                )
+                OR EXISTS(
+                    SELECT 1
+                    FROM collaborator
+                    WHERE company_image = :mediaId
                 )
                 """;
 
@@ -251,7 +263,8 @@ public class MediaRepositoryImpl implements MediaRepository {
 
         String sql = "DELETE FROM media WHERE media_id = :media_id";
 
-        MapSqlParameterSource params = new MapSqlParameterSource("media_id", media.getMediaId());
+        MapSqlParameterSource params =
+                new MapSqlParameterSource("media_id", media.getMediaId());
 
         jdbcTemplate.update(sql, params);
     }
