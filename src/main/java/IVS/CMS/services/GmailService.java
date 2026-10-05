@@ -34,12 +34,20 @@ public class GmailService {
     private String refreshToken;
 
     private Gmail getGmailClient() {
+        String tokenToUse = (refreshToken != null && !refreshToken.isBlank())
+                ? refreshToken
+                : IVS.CMS.controllers.GmailAuthController.getStoredRefreshToken();
+
+        if (tokenToUse == null || tokenToUse.isBlank()) {
+            throw new RuntimeException("Chưa liên kết tài khoản Gmail. Vui lòng cấp quyền liên kết Gmail trước khi đồng bộ thư.");
+        }
+
         GoogleCredential credential = new GoogleCredential.Builder()
                 .setTransport(new NetHttpTransport())
                 .setJsonFactory(GsonFactory.getDefaultInstance())
                 .setClientSecrets(clientId, clientSecret)
                 .build()
-                .setRefreshToken(refreshToken);
+                .setRefreshToken(tokenToUse);
 
         return new Gmail.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
                 .setApplicationName("CMS-Mail-Manager")

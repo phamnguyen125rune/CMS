@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import IVS.CMS.security.CustomAuthenticationEntryPoint;
+import IVS.CMS.security.OAuth2LoginFailureHandler;
+import IVS.CMS.security.OAuth2LoginSuccessHandler;
 
 @Configuration
 @EnableMethodSecurity
@@ -24,6 +26,9 @@ public class SecurityConfiguration {
                         "/uploads/**",
                         "/api/v1/auth/login",
                         "/api/v1/auth/refresh",
+                        "/api/v1/auth/oauth/exchange",
+                        "/oauth2/**",
+                        "/login/oauth2/**",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
@@ -49,7 +54,9 @@ public class SecurityConfiguration {
         @Bean
         public SecurityFilterChain filterChain(
                         HttpSecurity http,
-                        CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
+                        CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+                        OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+                        OAuth2LoginFailureHandler oAuth2LoginFailureHandler) throws Exception {
 
                 http
                                 .cors(Customizer.withDefaults())
@@ -62,16 +69,19 @@ public class SecurityConfiguration {
                                                                 "/api/v1/tags/**",
                                                                 "/api/v1/comments/**",
                                                                 "/api/v1/media/**",
-                                                                
+                                                                "/api/v1/banners/public/**",
                                                                 "/api/v1/general-info")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
+                                .oauth2Login(oauth2 -> oauth2
+                                                .successHandler(oAuth2LoginSuccessHandler)
+                                                .failureHandler(oAuth2LoginFailureHandler))
                                 .oauth2ResourceServer(oauth2 -> oauth2
                                                 .jwt(Customizer.withDefaults())
                                                 .authenticationEntryPoint(customAuthenticationEntryPoint))
                                 .formLogin(f -> f.disable())
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                                                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
 
                 return http.build();
         }

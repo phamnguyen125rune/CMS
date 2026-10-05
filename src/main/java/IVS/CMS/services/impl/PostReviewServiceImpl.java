@@ -28,6 +28,7 @@ public class PostReviewServiceImpl implements PostReviewService {
 
     private final PostReviewRepository postReviewRepository;
     private final PostRepository postRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -64,6 +65,16 @@ public class PostReviewServiceImpl implements PostReviewService {
                 newStatus = post.getStatus().name();
         }
         postRepository.updateStatus(postId, newStatus, currentUserId);
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUserId,
+                "POST_REVIEW",
+                postId,
+                "REVIEW_" + req.getAction().name(),
+                req,
+                savedReview,
+                200
+        ));
 
         return savedReview;
     }

@@ -58,13 +58,18 @@ public class GlobalException {
                 reqInfo.put("query", request.getQueryString());
             }
 
+            Map<String, Object> respInfo = new HashMap<>();
+            respInfo.put("error", errorType);
+            respInfo.put("message", details);
+            respInfo.put("statusCode", statusCode);
+
             this.eventPublisher.publishEvent(new AuditLogEvent(
                     userId,
                     "API_ERROR",
                     0L,
                     action,
                     reqInfo,
-                    details,
+                    respInfo,
                     statusCode
             ));
         } catch (Exception e) {

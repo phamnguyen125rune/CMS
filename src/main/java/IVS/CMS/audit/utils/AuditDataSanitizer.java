@@ -60,10 +60,19 @@ public class AuditDataSanitizer {
             return null;
         }
         // Với responseData, tồn tại trường hợp responseData là String (ví dụ: khi
-        // response là string đơn giản), cần check loại bỏ chuỗi đó trước khi convert
-        // sang Map.
+        // response là string đơn giản), cần check xem chuỗi đã là JSON chưa.
         if (data instanceof String str) {
-            return str;
+            String trimmed = str.trim();
+            if ((trimmed.startsWith("{") && trimmed.endsWith("}"))
+                    || (trimmed.startsWith("[") && trimmed.endsWith("]"))
+                    || (trimmed.startsWith("\"") && trimmed.endsWith("\""))) {
+                return trimmed;
+            }
+            try {
+                return objectMapper.writeValueAsString(trimmed);
+            } catch (Exception e) {
+                return "{\"raw\":\"" + trimmed.replace("\"", "\\\"") + "\"}";
+            }
         }
         try {
             @SuppressWarnings("unchecked")
@@ -71,7 +80,11 @@ public class AuditDataSanitizer {
             Map<String, Object> sanitizedMap = sanitizeMap(rawMap);
             return objectMapper.writeValueAsString(sanitizedMap);
         } catch (Exception e) {
-            return "{\"raw\":\"" + data.toString() + "\"}";
+            try {
+                return objectMapper.writeValueAsString(data);
+            } catch (Exception ex) {
+                return "{\"raw\":\"" + data.toString().replace("\"", "\\\"") + "\"}";
+            }
         }
     }
 

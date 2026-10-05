@@ -60,11 +60,97 @@ public class DatabaseInitializer {
                         "others");
             }
 
+            ensureGeneralInfoColumns();
+            ensureBannerSchemaAndSeeds();
+
             log.info("Database initialization completed successfully.");
 
         } catch (Exception e) {
             log.error("Error initializing database", e);
             throw new IllegalStateException("Database initialization failed", e);
+        }
+    }
+
+    private void ensureGeneralInfoColumns() {
+        String[] columns = {
+            "show_topbar BOOLEAN NOT NULL DEFAULT TRUE",
+            "topbar_announcement_text VARCHAR(255)",
+            "topbar_announcement_url VARCHAR(255)",
+            "header_cta_text VARCHAR(100)",
+            "header_cta_url VARCHAR(255)",
+            "show_header_search BOOLEAN NOT NULL DEFAULT TRUE",
+            "show_theme_toggle BOOLEAN NOT NULL DEFAULT TRUE",
+            "show_language_switch BOOLEAN NOT NULL DEFAULT TRUE",
+            "footer_copyright VARCHAR(255)",
+            "show_newsletter BOOLEAN NOT NULL DEFAULT TRUE",
+            "newsletter_title VARCHAR(255)",
+            "newsletter_desc VARCHAR(255)",
+            "footer_columns_json JSON"
+        };
+        for (String colDef : columns) {
+            String colName = colDef.split(" ")[0];
+            try {
+                Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'general_info' AND COLUMN_NAME = ?",
+                    Integer.class, colName);
+                if (count == null || count == 0) {
+                    jdbcTemplate.execute("ALTER TABLE general_info ADD COLUMN " + colDef);
+                    log.info("Added column {} to general_info", colName);
+                }
+            } catch (Exception e) {
+                log.warn("Could not check/add column {} to general_info: {}", colName, e.getMessage());
+            }
+        }
+    }
+
+    private void ensureBannerSchemaAndSeeds() {
+        try {
+            // Seed banner API if not exists
+            Integer apiBannerCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM apis WHERE api_link = 'banner'",
+                Integer.class);
+            if (apiBannerCount == null || apiBannerCount == 0) {
+                jdbcTemplate.update("INSERT INTO apis (api_link, api_description) VALUES ('banner', 'Màn hình Quản lý Banner')");
+            }
+            Long bannerApiId = jdbcTemplate.queryForObject("SELECT api_id FROM apis WHERE api_link = 'banner'", Long.class);
+            if (bannerApiId != null) {
+                for (int actionId = 1; actionId <= 4; actionId++) {
+                    jdbcTemplate.update("INSERT IGNORE INTO permissions (action_id, api_id) VALUES (?, ?)", actionId, bannerApiId);
+                    Long permId = jdbcTemplate.queryForObject("SELECT permission_id FROM permissions WHERE action_id = ? AND api_id = ?", Long.class, actionId, bannerApiId);
+                    if (permId != null) {
+                        jdbcTemplate.update("INSERT IGNORE INTO role_permission (role_id, permission_id) VALUES (1, ?)", permId);
+                    }
+                }
+            }
+
+            // Seed default banner if banners table exists and is empty
+            Integer bannerCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM banners",
+                Integer.class);
+            if (bannerCount == null || bannerCount == 0) {
+                String insertBannerSql = "INSERT INTO banners " +
+                    "(title, highlight_text, subtitle, description, image_url, primary_btn_text, primary_btn_url, secondary_btn_text, secondary_btn_url, stats_json, floating_badge_text, position, display_order, is_active, created_at) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6))";
+                jdbcTemplate.update(
+                    insertBannerSql,
+                    "Kiến tạo tương lai số",
+                    "cho doanh nghiệp của bạn",
+                    "Đã phục vụ 500+ doanh nghiệp trên toàn quốc",
+                    "CMS cung cấp giải pháp công nghệ toàn diện — từ phát triển phần mềm đến chuyển đổi số — giúp doanh nghiệp tăng trưởng bền vững trong kỷ nguyên số.",
+                    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=560&h=420&fit=crop&auto=format",
+                    "Tư vấn miễn phí",
+                    "/lien-he",
+                    "Xem dự án",
+                    "/du-an",
+                    "[{\"num\": \"500+\", \"label\": \"Khách hàng\"}, {\"num\": \"200+\", \"label\": \"Dự án hoàn thành\"}, {\"num\": \"10+\", \"label\": \"Năm kinh nghiệm\"}]",
+                    "Đã phục vụ 500+ doanh nghiệp",
+                    "HOME_HERO",
+                    0,
+                    true);
+                log.info("Default banner seeded successfully.");
+            }
+        } catch (Exception e) {
+            log.warn("Banner schema/seeds check notice: {}", e.getMessage());
         }
     }
 
@@ -135,7 +221,8 @@ public class DatabaseInitializer {
                 employee_code VARCHAR(50) UNIQUE,
                 full_name VARCHAR(60) NOT NULL,
                 email VARCHAR(100) NOT NULL UNIQUE,
-                password_hash VARCHAR(255) NOT NULL,
+                google_sub VARCHAR(255) UNIQUE,
+                password_hash VARCHAR(255) NULL,
                 avatar_url VARCHAR(255) DEFAULT '/images/default-avatar.png',
                 phone_number VARCHAR(15) UNIQUE,
                 date_of_birth DATE,
@@ -490,9 +577,19 @@ public class DatabaseInitializer {
                                 updated_by INTEGER UNSIGNED
                             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+            -- 21. OAUTH LOGIN TICKETS
+
+            CREATE TABLE IF NOT EXISTS oauth_login_tickets (
+                ticket_hash CHAR(64) NOT NULL PRIMARY KEY,
+                user_id INTEGER UNSIGNED NOT NULL,
+                expired_at DATETIME(6) NOT NULL,
+                created_at DATETIME(6) NOT NULL,
+                CONSTRAINT fk_oauth_login_ticket_user
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-            -- 21. COLLABORATORS
+            -- 22. COLLABORATORS
 
             CREATE TABLE IF NOT EXISTS collaborator (
                 collab_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -516,6 +613,32 @@ public class DatabaseInitializer {
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 updated_by BIGINT UNSIGNED
             )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+            -- 23. BANNERS
+
+            CREATE TABLE IF NOT EXISTS banners (
+                banner_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                highlight_text VARCHAR(255),
+                subtitle VARCHAR(255),
+                description TEXT,
+                image_url VARCHAR(500) NOT NULL,
+                mobile_image_url VARCHAR(500),
+                primary_btn_text VARCHAR(100),
+                primary_btn_url VARCHAR(255),
+                secondary_btn_text VARCHAR(100),
+                secondary_btn_url VARCHAR(255),
+                stats_json JSON,
+                floating_badge_text VARCHAR(255),
+                position VARCHAR(50) NOT NULL DEFAULT 'HOME_HERO',
+                display_order INT NOT NULL DEFAULT 0,
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at DATETIME(6),
+                created_by INTEGER UNSIGNED,
+                updated_at DATETIME(6),
+                updated_by INTEGER UNSIGNED
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """;
 
     private static final String SEED_SQL = """
@@ -570,7 +693,8 @@ public class DatabaseInitializer {
                 ('tag', 'Màn hình Quản lý Thẻ'),
                 ('menu', 'Màn hình Quản lý Menu'),
                 ('collaborator', 'Màn hình Quản lý Đối tác'),
-                ('form', 'Màn hình Quản lý Biểu mẫu');
+                ('form', 'Màn hình Quản lý Biểu mẫu'),
+                ('banner', 'Màn hình Quản lý Banner');
 
 
             -- 4. SEED PERMISSIONS
@@ -584,7 +708,8 @@ public class DatabaseInitializer {
                 (1, 10), (2, 10), (3, 10), (4, 10),
                 (1, 11), (2, 11), (3, 11), (4, 11),
                 (1, 12), (2, 12), (3, 12), (4, 12),
-                (1, 13), (2, 13), (3, 13), (4, 13);
+                (1, 13), (2, 13), (3, 13), (4, 13),
+                (1, 14), (2, 14), (3, 14), (4, 14);
 
 
             -- 5. SEED ROLE_PERMISSIONS
@@ -596,7 +721,7 @@ public class DatabaseInitializer {
                 (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 19), (1, 20),
                 (1, 21), (1, 22), (1, 23), (1, 24), (1, 26), (1, 27), (1, 28), (1, 29),
                 (1, 30), (1, 31), (1, 32), (1, 33), (1, 34), (1, 35), (1, 36), (1, 37), (1, 38), (1, 39),
-                (1, 40), (1, 41), (1, 42), (1,43), (1, 44), (1, 45);
+                (1, 40), (1, 41), (1, 42), (1,43), (1, 44), (1, 45), (1, 46), (1, 47), (1, 48), (1, 49);
 
 
             -- 10. POST CATEGORIES

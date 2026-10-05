@@ -64,4 +64,21 @@ public class ReqUpdateGeneralInfoDTO {
     private String mapEmbedUrl;
 
     private String footerLinks;
+
+    // Header customization
+    private Boolean showTopbar = true;
+    private String topbarAnnouncementText;
+    private String topbarAnnouncementUrl;
+    private String headerCtaText;
+    private String headerCtaUrl;
+    private Boolean showHeaderSearch = true;
+    private Boolean showThemeToggle = true;
+    private Boolean showLanguageSwitch = true;
+
+    // Footer customization
+    private String footerCopyright;
+    private Boolean showNewsletter = true;
+    private String newsletterTitle;
+    private String newsletterDesc;
+    private String footerColumnsJson;
 }

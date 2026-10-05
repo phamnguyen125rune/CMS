@@ -103,12 +103,15 @@ public class GmailAuthController {
                 System.out.println(">>> Google không trả Refresh Token mới (tài khoản đã được liên kết trước đó).");
             }
 
-            // Chuyển hướng người dùng quay lại thẳng màn hình quản lý CMS
-            response.sendRedirect(frontendRedirect);
+            // Chuyển hướng người dùng quay lại thẳng màn hình quản lý CMS kèm trạng thái
+            String separator = frontendRedirect.contains("?") ? "&" : "?";
+            response.sendRedirect(frontendRedirect + separator + "gmail_linked=true");
 
         } catch (Exception e) {
             System.err.println("Lỗi xác thực OAuth: " + e.getMessage());
-            response.sendRedirect(frontendRedirect + "?error=" + e.getMessage());
+            String separator = frontendRedirect.contains("?") ? "&" : "?";
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            response.sendRedirect(frontendRedirect + separator + "error=" + java.net.URLEncoder.encode(errorMsg, java.nio.charset.StandardCharsets.UTF_8));
         }
     }
 }
