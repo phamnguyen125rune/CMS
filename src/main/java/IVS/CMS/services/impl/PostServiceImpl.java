@@ -23,9 +23,11 @@ import IVS.CMS.repositories.PostRepository;
 import IVS.CMS.repositories.UserRepository;
 import IVS.CMS.security.SecurityService;
 import IVS.CMS.services.PostService;
+import IVS.CMS.services.mapper.PostMapper;
 import IVS.CMS.services.error.BadRequestException;
 import IVS.CMS.services.error.ResourceNotFoundException;
-import IVS.CMS.services.mapper.PostMapper;
+import IVS.CMS.audit.events.AuditLogEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -36,6 +38,7 @@ public class PostServiceImpl implements PostService {
     private final PostCategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final PostMapper postMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -61,6 +64,17 @@ public class PostServiceImpl implements PostService {
         ResPostDTO resDTO = this.postMapper.postToResPostDTO(savedPost, category, authorName, ogImageUrl);
         resDTO.setTags(this.postRepository.getTagsByPostId(savedPost.getPostId()));
         resDTO.setMediaList(this.postRepository.getMediaByPostId(savedPost.getPostId()));
+
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(savedPost.getCreatedBy());
+        this.eventPublisher.publishEvent(new AuditLogEvent(
+                currentUserId,
+                "POST",
+                savedPost.getPostId(),
+                "CREATE",
+                req,
+                resDTO,
+                201
+        ));
 
         return resDTO;
     }
@@ -118,6 +132,17 @@ public class PostServiceImpl implements PostService {
         ResPostDTO resDTO = this.postMapper.postToResPostDTO(updatedPost, category, authorName, ogImageUrl);
         resDTO.setTags(this.postRepository.getTagsByPostId(id));
         resDTO.setMediaList(this.postRepository.getMediaByPostId(id));
+
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(null);
+        this.eventPublisher.publishEvent(new AuditLogEvent(
+                currentUserId,
+                "POST",
+                id,
+                "UPDATE",
+                req,
+                resDTO,
+                200
+        ));
 
         return resDTO;
     }
@@ -182,6 +207,17 @@ public class PostServiceImpl implements PostService {
         Post post = this.postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
         this.postRepository.delete(post.getPostId());
+
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(null);
+        this.eventPublisher.publishEvent(new AuditLogEvent(
+                currentUserId,
+                "POST",
+                id,
+                "DELETE",
+                java.util.Map.of("postId", id, "title", post.getTitle() != null ? post.getTitle() : ""),
+                java.util.Map.of("postId", id, "message", "Xóa bài viết thành công"),
+                200
+        ));
     }
 
     @Override
@@ -217,6 +253,21 @@ public class PostServiceImpl implements PostService {
 
         Long updatedBy = SecurityService.getCurrentUserId().orElse(null);
         this.postRepository.updateStatus(post.getPostId(), newStatus.name(), updatedBy);
+
+        this.eventPublisher.publishEvent(new AuditLogEvent(
+                updatedBy,
+                "POST",
+                id,
+                "UPDATE_STATUS",
+                java.util.Map.of("status", status),
+                java.util.Map.of(
+                        "postId", id,
+                        "oldStatus", post.getStatus() != null ? post.getStatus().name() : "N/A",
+                        "newStatus", newStatus.name(),
+                        "message", "Cập nhật trạng thái bài viết thành công"
+                ),
+                200
+        ));
     }
 
     @Override

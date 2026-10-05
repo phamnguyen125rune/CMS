@@ -15,6 +15,8 @@ public interface MediaRepository  {
 
     List<Media> searchAndFilter(String keyword, String fileType);
 
+    boolean existsInPostMedia(long mediaId);
+
     long count();
 
     void delete(Media Media);

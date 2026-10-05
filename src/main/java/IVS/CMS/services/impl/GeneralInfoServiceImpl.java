@@ -102,6 +102,21 @@ public class GeneralInfoServiceImpl implements GeneralInfoService {
 
         info.setFooterLinks(
                 trimToNull(dto.getFooterLinks()));
+
+        info.setShowTopbar(dto.getShowTopbar() != null ? dto.getShowTopbar() : true);
+        info.setTopbarAnnouncementText(trimToNull(dto.getTopbarAnnouncementText()));
+        info.setTopbarAnnouncementUrl(trimToNull(dto.getTopbarAnnouncementUrl()));
+        info.setHeaderCtaText(trimToNull(dto.getHeaderCtaText()));
+        info.setHeaderCtaUrl(trimToNull(dto.getHeaderCtaUrl()));
+        info.setShowHeaderSearch(dto.getShowHeaderSearch() != null ? dto.getShowHeaderSearch() : true);
+        info.setShowThemeToggle(dto.getShowThemeToggle() != null ? dto.getShowThemeToggle() : true);
+        info.setShowLanguageSwitch(dto.getShowLanguageSwitch() != null ? dto.getShowLanguageSwitch() : true);
+
+        info.setFooterCopyright(trimToNull(dto.getFooterCopyright()));
+        info.setShowNewsletter(dto.getShowNewsletter() != null ? dto.getShowNewsletter() : true);
+        info.setNewsletterTitle(trimToNull(dto.getNewsletterTitle()));
+        info.setNewsletterDesc(trimToNull(dto.getNewsletterDesc()));
+        info.setFooterColumnsJson(trimToNull(dto.getFooterColumnsJson()));
     }
 
     /**

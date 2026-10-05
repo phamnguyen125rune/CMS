@@ -25,11 +25,20 @@ public class FormDetailRowMapper implements RowMapper<FormDetail> {
         formDetail.setStatus(rs.getString("status"));
         formDetail.setReplyMessage(rs.getString("reply_message"));
 
-        Timestamp createdAt = rs.getTimestamp("created_at");
-        if (createdAt != null) formDetail.setCreatedAt(createdAt.toLocalDateTime());
+        // Map 3 cột Gmail mới
+        formDetail.setGmailMessageId(rs.getString("gmail_message_id"));
+        formDetail.setGmailThreadId(rs.getString("gmail_thread_id"));
 
-        System.out.println("[FormDetailRowMapper] Mapped row " + rowNum + ": form_id=" + formDetail.getFormId() + ", full_name=" + formDetail.getFullName() + ", status=" + formDetail.getStatus());
-        
+        Timestamp repliedAtTimestamp = rs.getTimestamp("replied_at");
+        if (repliedAtTimestamp != null) {
+            formDetail.setRepliedAt(repliedAtTimestamp.toLocalDateTime());
+        }
+
+        Timestamp createdAtTimestamp = rs.getTimestamp("created_at");
+        if (createdAtTimestamp != null) {
+            formDetail.setCreatedAt(createdAtTimestamp.toLocalDateTime());
+        }
+
         return formDetail;
     }
 }

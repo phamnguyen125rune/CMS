@@ -46,6 +46,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final FileUploadService fileUploadService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -79,7 +80,19 @@ public class UserServiceImpl implements UserService {
         user = this.userRepository.save(user);
         user = this.userRepository.findById(user.getUserId())
                 .orElse(user);
-        return this.userMapper.userToResCreateDTO(user);
+        ResUserCreateDTO res = this.userMapper.userToResCreateDTO(user);
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUserId,
+                "USER",
+                user.getUserId(),
+                "CREATE",
+                req,
+                res,
+                201
+        ));
+
+        return res;
     }
 
     @Override
@@ -147,7 +160,20 @@ public class UserServiceImpl implements UserService {
         userCurrent.setUpdatedBy(SecurityService.getCurrentUserId().orElse(null));
 
         userCurrent = this.userRepository.save(userCurrent);
-        return this.userMapper.userToReqUserUpdate(userCurrent);
+        ReqUserUpdateDTO res = this.userMapper.userToReqUserUpdate(userCurrent);
+
+        Long currentUserId = SecurityService.getCurrentUserId().orElse(null);
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUserId,
+                "USER",
+                id,
+                "UPDATE",
+                req,
+                res,
+                200
+        ));
+
+        return res;
     }
 
     @Override
@@ -171,6 +197,16 @@ public class UserServiceImpl implements UserService {
 
         this.userRepository.updatePassword(user.getUserId(), newHash, currentUserId, LocalDateTime.now());
         this.userRepository.clearLoginFailures(user.getUserId());
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUserId,
+                "USER",
+                user.getUserId(),
+                "CHANGE_PASSWORD",
+                req,
+                java.util.Map.of("message", "Đổi mật khẩu thành công"),
+                200
+        ));
     }
 
     @Override
@@ -229,6 +265,16 @@ public class UserServiceImpl implements UserService {
         if (affectedRows != 1) {
             throw new ForbiddenException("Không thể xóa tài khoản này");
         }
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUser.getUserId(),
+                "USER",
+                id,
+                "SOFT_DELETE",
+                java.util.Map.of("userId", id, "email", targetUser.getEmail()),
+                java.util.Map.of("userId", id, "message", "Đã chuyển tài khoản vào thùng rác"),
+                200
+        ));
     }
 
     @Override
@@ -248,6 +294,16 @@ public class UserServiceImpl implements UserService {
         if (affectedRows != 1) {
             throw new ForbiddenException("Không thể xóa vĩnh viễn tài khoản này");
         }
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUser.getUserId(),
+                "USER",
+                id,
+                "HARD_DELETE",
+                java.util.Map.of("userId", id, "email", targetUser.getEmail()),
+                java.util.Map.of("userId", id, "message", "Đã xóa vĩnh viễn tài khoản"),
+                200
+        ));
     }
 
     @Override
@@ -257,6 +313,16 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
         long currentUserId = SecurityService.getCurrentUserId().orElse(0L);
         this.userRepository.restore(user.getUserId(), currentUserId, LocalDateTime.now());
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUserId,
+                "USER",
+                id,
+                "RESTORE",
+                java.util.Map.of("userId", id, "email", user.getEmail()),
+                java.util.Map.of("userId", id, "message", "Đã khôi phục tài khoản"),
+                200
+        ));
     }
 
     @Override
@@ -281,6 +347,22 @@ public class UserServiceImpl implements UserService {
         long currentUserId = SecurityService.getCurrentUserId().orElse(0L);
         boolean isActive = !STATUS_LOCKED.equals(normalizedStatus);
         this.userRepository.updateStatus(id, isActive, currentUserId, LocalDateTime.now());
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUserId,
+                "USER",
+                id,
+                "TOGGLE_STATUS",
+                java.util.Map.of("status", status),
+                java.util.Map.of(
+                        "userId", id,
+                        "email", user.getEmail(),
+                        "isActive", isActive,
+                        "status", normalizedStatus,
+                        "message", "Thay đổi trạng thái tài khoản thành công"
+                ),
+                200
+        ));
     }
 
     @Override
@@ -296,6 +378,16 @@ public class UserServiceImpl implements UserService {
         this.userRepository.updatePassword(user.getUserId(), this.passwordEncoder.encode(DEFAULT_RESET_PASSWORD),
                 currentUserId, LocalDateTime.now());
         this.userRepository.clearLoginFailures(user.getUserId());
+
+        this.eventPublisher.publishEvent(new IVS.CMS.audit.events.AuditLogEvent(
+                currentUserId,
+                "USER",
+                id,
+                "RESET_PASSWORD",
+                null,
+                java.util.Map.of("userId", id, "email", user.getEmail(), "message", "Đã đặt lại mật khẩu về mặc định"),
+                200
+        ));
     }
 
     @Override

@@ -8,6 +8,8 @@ public interface AuthService {
 
     ResLoginDTO login(ReqLoginDTO loginDTO, HttpServletResponse response);
 
+    ResLoginDTO exchangeOAuthCode(String code, HttpServletResponse response);
+
     ResLoginDTO refresh(String refreshToken, HttpServletResponse response);
 
     ResLoginDTO.UserGetAccount getAccount();

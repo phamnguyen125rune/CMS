@@ -217,6 +217,23 @@ public class MediaRepositoryImpl implements MediaRepository {
     }
 
     @Override
+    public boolean existsInPostMedia(long mediaId) {
+        String sql = """
+                SELECT EXISTS(
+                    SELECT 1
+                    FROM post_media
+                    WHERE media_id = :mediaId
+                )
+                """;
+
+        return Boolean.TRUE.equals(
+                jdbcTemplate.queryForObject(
+                        sql,
+                        new MapSqlParameterSource("mediaId", mediaId),
+                        Boolean.class));
+    }
+
+    @Override
     public long count() {
 
         String sql = "SELECT COUNT(*) FROM media";

@@ -219,26 +219,24 @@ public class MediaServiceImpl implements MediaService {
 
         @Override
         public void delete(long id) {
-
                 Media media = mediaRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("File " + id + " không tồn tại"));
+                                .orElseThrow(() -> new RuntimeException("File không tồn tại"));
+
+                if (mediaRepository.existsInPostMedia(id)) {
+                        throw new RuntimeException("Ảnh đang được sử dụng trong bài viết");
+                }
 
                 try {
-
                         if (media.getUploadFile() != null && !media.getUploadFile().isBlank()) {
-
                                 Path uploadPath = getUploadPath();
-
                                 Path filePath = uploadPath.resolve(media.getUploadFile()).normalize();
-
                                 Files.deleteIfExists(filePath);
                         }
 
                         mediaRepository.delete(media);
 
                 } catch (IOException e) {
-
-                        throw new RuntimeException("Không thể xóa file", e);
+                        throw new RuntimeException("Không thể xóa file");
                 }
         }
 
